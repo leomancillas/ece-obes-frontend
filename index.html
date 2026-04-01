@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ECE OBES — Expediente Clínico de Obesidad</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* ─── VARIABLES ──────────────────────────────────────────── */
+    :root {
+      --primary:     #1A5276;
+      --primary-lt:  #2471A3;
+      --secondary:   #117A65;
+      --border:      #D5D8DC;
+      --bg:          #F4F6F7;
+      --surface:     #FFFFFF;
+      --text:        #1C2833;
+      --text-muted:  #717D7E;
+      --danger:      #C0392B;
+      --warning:     #D4AC0D;
+      --success:     #1D8348;
+      --radius:      8px;
+      --shadow:      0 2px 8px rgba(0,0,0,.10);
+
+      /* Module colors */
+      --mod-medico:  #1A5276;
+      --mod-nutri:   #1D8348;
+      --mod-psico:   #6C3483;
+      --mod-rehab:   #C0392B;
+      --mod-dental:  #0E6655;
+      --mod-sueno:   #154360;
+      --mod-adhoc:   #7D6608;
+
+      /* Traffic light */
+      --tl-green:    #1D8348;
+      --tl-yellow:   #D4AC0D;
+      --tl-red:      #C0392B;
+    }
+
+    /* ─── RESET & BASE ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; overflow: hidden; }
+    input, select, textarea, button { font-family: inherit; font-size: 13px; }
+    a { color: var(--primary); text-decoration: none; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+    /* ─── LAYOUT ─────────────────────────────────────────────── */
+    #app { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
+    #app.visible { display: flex; }
+
+    .app-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+      z-index: 100;
+    }
+    .app-header .logo { font-weight: 700; font-size: 17px; letter-spacing: -.3px; }
+    .app-header .logo span { opacity: .65; font-weight: 400; font-size: 13px; margin-left: 6px; }
+    .header-patient {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: background .15s;
+    }
+    .header-patient:hover { background: rgba(255,255,255,.12); }
+    .header-patient .pt-name { font-weight: 600; font-size: 15px; }
+    .header-patient .pt-meta { opacity: .75; font-size: 12px; }
+    .eoss-badge {
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .header-actions button {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background .15s;
+    }
+    .header-actions button:hover { background: rgba(255,255,255,.28); }
+    .user-chip {
+      display: flex; align-items: center; gap: 6px;
+      opacity: .85; font-size: 12px;
+    }
+    .user-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.3);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 11px;
+    }
+
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .sidebar-section { padding: 10px 0; }
+    .sidebar-label {
+      padding: 6px 16px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      cursor: pointer;
+      color: var(--text);
+      border-left: 3px solid transparent;
+      transition: background .12s, border-color .12s;
+    }
+    .sidebar-item:hover { background: var(--bg); }
+    .sidebar-item.active { background: #EBF5FB; border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .sidebar-item .mod-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Main content */
+    .main-content { flex: 1; overflow-y: auto; padding: 20px; }
+
+    /* ─── AUTH SCREEN ────────────────────────────────────────── */
+    #auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1A3A4A 0%, #1A5276 60%, #117A65 100%);
+    }
+    .auth-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 40px 36px;
+      width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+    .auth-logo { text-align: center; margin-bottom: 28px; }
+    .auth-logo .logo-main { font-size: 26px; font-weight: 800; color: var(--primary); }
+    .auth-logo .logo-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .auth-logo .logo-parent { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .15s;
+      color: var(--text);
+      background: var(--surface);
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26,82,118,.1);
+    }
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .08s;
+    }
+    .btn-primary:hover { background: var(--primary-lt); }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+    .auth-error { background: #FDEDEC; border: 1px solid #E74C3C; color: #C0392B; padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-top: 10px; display: none; }
+
+    /* ─── NO PATIENT ─────────────────────────────────────────── */
+    #no-patient {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+    #no-patient .np-icon { font-size: 52px; }
+    #no-patient h3 { font-size: 18px; color: var(--text); }
+    #no-patient p { font-size: 13px; }
+    #no-patient .btn-search {
+      margin-top: 8px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #no-patient .btn-search:hover { background: var(--primary-lt); }
+
+    /* ─── DASHBOARD ──────────────────────────────────────────── */
+    #view-dashboard { display: none; }
+    #view-dashboard.visible { display: block; }
+
+    /* Identity strip */
+    .identity-strip {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .pt-id-info .pt-full-name { font-size: 19px; font-weight: 700; }
+    .pt-id-info .pt-details { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .eoss-badge-lg {
+      background: var(--primary);
+      color: #fff;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .eoss-badge-lg.eoss-0 { background: #1D8348; }
+    .eoss-badge-lg.eoss-1 { background: #D4AC0D; color: #333; }
+    .eoss-badge-lg.eoss-2 { background: #E67E22; }
+    .eoss-badge-lg.eoss-3 { background: #C0392B; }
+    .eoss-badge-lg.eoss-4 { background: #6E2F1A; }
+    .identity-alerts { display: flex; gap: 6px; flex-wrap: wrap; }
+    .alert-chip {
+      background: #FDEDEC;
+      color: var(--danger);
+      border: 1px solid #F5B7B1;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .alert-chip.warn { background: #FEF9E7; color: #9A7D0A; border-color: #F9E79F; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 260px 1fr 240px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* Panel card */
+    .panel {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+    .panel-body { padding: 14px 16px; }
+
+    /* Left panel – biometrics */
+    .biometric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--bg);
+    }
+    .biometric-row:last-child { border-bottom: none; }
+    .bio-label { color: var(--text-muted); font-size: 12px; }
+    .bio-value { font-weight: 700; font-size: 14px; }
+    .bio-value.danger { color: var(--danger); }
+    .bio-value.warn { color: var(--warning); }
+    .bio-value.ok { color: var(--success); }
+    .chart-wrap { height: 100px; margin: 8px 0 4px; }
+
+    /* Traffic light */
+    .tl-grid { display: flex; flex-direction: column; gap: 8px; }
+    .tl-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      background: var(--bg);
+    }
+    .tl-dot {
+      width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+    }
+    .tl-dot.green { background: var(--tl-green); }
+    .tl-dot.yellow { background: var(--tl-yellow); }
+    .tl-dot.red { background: var(--tl-red); box-shadow: 0 0 6px rgba(192,57,43,.5); }
+    .tl-dot.gray { background: #BDC3C7; }
+    .tl-condition { font-size: 12px; font-weight: 600; flex: 1; }
+    .tl-status { font-size: 11px; color: var(--text-muted); }
+
+    /* Timeline */
+    .timeline { display: flex; flex-direction: column; gap: 1px; }
+    .tl-entry {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--bg);
+    }
+    .tl-entry:last-child { border-bottom: none; }
+    .tl-stripe {
+      width: 3px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      align-self: stretch;
+      min-height: 40px;
+    }
+    .tl-content .tl-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+    .tl-spec-tag { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; color: #fff; }
+    .tl-date { font-size: 11px; color: var(--text-muted); }
+    .tl-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+    .tl-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .tl-empty { text-align: center; color: var(--text-muted); padding: 20px; font-size: 13px; }
+
+    /* Right sidebar modules */
+    .mod-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      margin-bottom: 7px;
+      transition: border-color .15s, background .15s, transform .08s;
+      width: 100%;
+      text-align: left;
+    }
+    .mod-btn:hover { border-color: currentColor; background: var(--bg); }
+    .mod-btn:active { transform: scale(.97); }
+    .mod-btn .mod-icon { font-size: 18px; }
+    .mod-btn .mod-name { font-size: 12px; font-weight: 600; }
+    .mod-btn .mod-sub { font-size: 10px; color: var(--text-muted); }
+
+    /* ─── MODULE VIEWS ───────────────────────────────────────── */
+    .module-view { display: none; }
+    .module-view.visible { display: block; }
+
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .module-icon-lg {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .module-header h2 { font-size: 20px; font-weight: 700; }
+    .module-header .module-sub { font-size: 13px; color: var(--text-muted); }
+
+    .module-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .module-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .module-grid.full { grid-template-columns: 1fr; }
+
+    /* Section card */
+    .section-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .section-card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-card-title { font-size: 13px; font-weight: 700; }
+    .section-card-body { padding: 16px; }
+    .btn-add {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-add:hover { background: var(--primary-lt); }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-value { font-size: 22px; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .stat-delta { font-size: 11px; margin-top: 4px; }
+    .stat-delta.pos { color: var(--success); }
+    .stat-delta.neg { color: var(--danger); }
+
+    /* EOSS widget */
+    .eoss-stages { display: flex; gap: 4px; margin-top: 8px; }
+    .eoss-stage-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all .15s;
+    }
+    .eoss-stage-btn.s0 { background: #D5F5E3; color: #1D8348; }
+    .eoss-stage-btn.s1 { background: #FEF9E7; color: #9A7D0A; }
+    .eoss-stage-btn.s2 { background: #FDEBD0; color: #A04000; }
+    .eoss-stage-btn.s3 { background: #FDEDEC; color: #C0392B; }
+    .eoss-stage-btn.s4 { background: #F2F3F4; color: #6E2F1A; }
+    .eoss-stage-btn.selected { border-color: currentColor; transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+
+    /* Measurements history table */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      background: var(--bg);
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--bg);
+      font-size: 13px;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #F8F9FA; }
+    .table-empty { text-align: center; color: var(--text-muted); padding: 24px; font-style: italic; }
+
+    /* ─── MODALS ─────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.3);
+      width: 520px;
+      max-width: 95vw;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(16px) scale(.98);
+      transition: transform .2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+    .modal.wide { width: 700px; }
+    .modal-header {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      background: none; border: none;
+      color: var(--text-muted);
+      cursor: pointer; font-size: 20px; line-height: 1;
+      padding: 4px; border-radius: 4px;
+      transition: background .12s;
+    }
+    .modal-close:hover { background: var(--bg); }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .btn-secondary:hover { background: #E8EAED; }
+    .btn-save {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-save:hover { background: var(--primary-lt); }
+    .btn-save:disabled { opacity: .55; cursor: not-allowed; }
+
+    /* Form grid inside modal */
+    .form-row { display: grid; gap: 12px; margin-bottom: 14px; }
+    .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+    .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .calc-result {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+    .calc-label { font-size: 12px; color: var(--text-muted); }
+    .calc-value { font-size: 16px; font-weight: 800; color: var(--primary); }
+    .calc-value.danger { color: var(--danger); }
+    .calc-value.warn { color: #E67E22; }
+
+    /* Search modal */
+    #modal-search .modal { width: 580px; }
+    .search-input-wrap { position: relative; margin-bottom: 16px; }
+    .search-input-wrap input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    .search-input-wrap input:focus { border-color: var(--primary); }
+    .search-input-wrap .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--text-muted); }
+    .patient-result-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .patient-result-item:hover { background: var(--bg); }
+    .pt-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+      flex-shrink: 0;
+    }
+    .pt-result-name { font-weight: 600; font-size: 14px; }
+    .pt-result-meta { font-size: 12px; color: var(--text-muted); }
+
+    /* Lab section inside modal */
+    .lab-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); margin: 14px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+
+    /* ─── TOAST ──────────────────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: #2C3E50;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.25);
+      font-size: 13px;
+      max-width: 320px;
+      animation: toastIn .25s ease;
+      pointer-events: all;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warn { background: #E67E22; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ─── LOADING OVERLAY ────────────────────────────────────── */
+    .loading-overlay {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,.7);
+      backdrop-filter: blur(2px);
+      z-index: 400;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .loading-overlay.show { display: flex; }
+    .spinner {
+      width: 38px; height: 38px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── UTILITIES ──────────────────────────────────────────── */
+    .text-center { text-align: center; }
+    .text-muted { color: var(--text-muted); }
+    .text-sm { font-size: 12px; }
+    .mt-4 { margin-top: 4px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .mb-8 { margin-bottom: 8px; }
+    .flex { display: flex; }
+    .flex-center { display: flex; align-items: center; justify-content: center; }
+    .gap-8 { gap: 8px; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .pill.green { background: #D5F5E3; color: #1D8348; }
+    .pill.yellow { background: #FEF9E7; color: #9A7D0A; }
+    .pill.red { background: #FDEDEC; color: #C0392B; }
+    .pill.blue { background: #EBF5FB; color: #1A5276; }
+
+    @media (max-width: 1100px) {
+      .dashboard-grid { grid-template-columns: 1fr 1fr; }
+      .module-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .sidebar { width: 60px; }
+      .sidebar-item span:not(.mod-dot) { display: none; }
+      .sidebar-label { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── AUTH SCREEN ──────────────────────────────────────────── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-main">ECE OBES</div>
+      <div class="logo-sub">Expediente Clínico de Obesidad</div>
+      <div class="logo-parent">Sistema multidisciplinario · ECE META CORE</div>
+    </div>
+    <div class="form-group">
+      <label>Correo electrónico</label>
+      <input type="email" id="auth-email" placeholder="doctor@institución.mx" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn-primary" id="btn-login">Iniciar sesión</button>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="text-center text-muted text-sm mt-12">Mismas credenciales que ECE META CORE</div>
+  </div>
+</div>
+
+<!-- ─── APP SHELL ─────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo">ECE <span style="opacity:1;font-weight:700;color:#A9CCE3">OBES</span></div>
+
+    <div class="header-patient" id="header-patient-btn" onclick="openModal('modal-search')" title="Cambiar paciente">
+      <div id="header-patient-info">
+        <span style="opacity:.6;font-size:13px">← Seleccionar paciente</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button onclick="openModal('modal-search')">🔍 Paciente</button>
+      <a href="https://leomancillas.github.io/ece-metacore-frontend" target="_blank">
+        <button>↩ META CORE</button>
+      </a>
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar-hdr">?</div>
+        <span id="user-name-hdr">—</span>
+        <button onclick="logout()" style="margin-left:4px">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div class="app-body">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Paciente</div>
+        <div class="sidebar-item active" data-view="dashboard" onclick="switchView('dashboard')">
+          <span class="mod-dot" style="background:#BDC3C7"></span>
+          <span>Dashboard</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Módulos</div>
+        <div class="sidebar-item" data-view="medico" onclick="switchView('medico')">
+          <span class="mod-dot" style="background:var(--mod-medico)"></span>
+          <span>Médico / Endocrinología</span>
+        </div>
+        <div class="sidebar-item" data-view="nutricion" onclick="switchView('nutricion')">
+          <span class="mod-dot" style="background:var(--mod-nutri)"></span>
+          <span>Nutrición</span>
+        </div>
+        <div class="sidebar-item" data-view="psicologia" onclick="switchView('psicologia')">
+          <span class="mod-dot" style="background:var(--mod-psico)"></span>
+          <span>Psicología</span>
+        </div>
+        <div class="sidebar-item" data-view="rehabilitacion" onclick="switchView('rehabilitacion')">
+          <span class="mod-dot" style="background:var(--mod-rehab)"></span>
+          <span>Rehabilitación</span>
+        </div>
+        <div class="sidebar-item" data-view="dental" onclick="switchView('dental')">
+          <span class="mod-dot" style="background:var(--mod-dental)"></span>
+          <span>Dental</span>
+        </div>
+        <div class="sidebar-item" data-view="sueno" onclick="switchView('sueno')">
+          <span class="mod-dot" style="background:var(--mod-sueno)"></span>
+          <span>Medicina del Sueño</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content">
+
+      <!-- No patient selected -->
+      <div id="no-patient">
+        <div class="np-icon">🩺</div>
+        <h3>ECE OBES</h3>
+        <p>Expediente Clínico Multidisciplinario de Obesidad</p>
+        <p class="text-muted">Busca o selecciona un paciente para comenzar</p>
+        <button class="btn-search" onclick="openModal('modal-search')">🔍 Buscar paciente</button>
+      </div>
+
+      <!-- Dashboard view -->
+      <div id="view-dashboard" class="module-view">
+        <!-- Identity strip -->
+        <div class="identity-strip">
+          <div class="pt-id-info" style="flex:1">
+            <div class="pt-full-name" id="dash-pt-name">—</div>
+            <div class="pt-details" id="dash-pt-details">—</div>
+          </div>
+          <div class="eoss-badge-lg" id="dash-eoss-badge">EOSS ?</div>
+          <div class="identity-alerts" id="dash-alerts"></div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-peso">—</div>
+            <div class="stat-label">Peso actual (kg)</div>
+            <div class="stat-delta" id="stat-peso-delta"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-bmi">—</div>
+            <div class="stat-label">IMC (kg/m²)</div>
+            <div class="stat-delta" id="stat-bmi-cat"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-hba1c">—</div>
+            <div class="stat-label">HbA1c (%)</div>
+            <div class="stat-delta" id="stat-homa"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-twl">—</div>
+            <div class="stat-label">%TWL</div>
+            <div class="stat-delta" id="stat-twl-sub"></div>
+          </div>
+        </div>
+
+        <!-- 3-col grid -->
+        <div class="dashboard-grid">
+
+          <!-- Left: biometrics + chart -->
+          <div>
+            <div class="panel mb-8">
+              <div class="panel-header">
+                <span class="panel-title">📈 Tendencia de peso</span>
+              </div>
+              <div class="panel-body">
+                <div class="chart-wrap"><canvas id="chartWeight"></canvas></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">🩸 Últimos signos vitales</span>
+              </div>
+              <div class="panel-body" id="dash-vitals">
+                <div class="text-muted text-sm text-center" style="padding:8px">Sin registros</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center: timeline -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 Línea de tiempo clínica</span>
+              <button class="btn-add" onclick="switchView('medico')">+ Nueva nota</button>
+            </div>
+            <div class="panel-body">
+              <div class="timeline" id="dash-timeline">
+                <div class="tl-empty">Sin entradas aún</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: traffic lights + modules -->
+          <div>
+            <div class="panel mb-8" style="margin-bottom:12px">
+              <div class="panel-header">
+                <span class="panel-title">🚦 Comorbilidades</span>
+              </div>
+              <div class="panel-body">
+                <div class="tl-grid" id="dash-comorbidities">
+                  <div class="tl-item"><span class="tl-dot gray"></span><span class="tl-condition">DM2</span><span class="tl-status">—</span></div>
+                  <div class="tl-item"><span class="tl-dot gray"></span><span class="tl-condition">HTA</span><span class="tl-status">—</span></div>
+                  <div class="tl-item"><span class="tl-dot gray"></span><span class="tl-condition">Dislipidemia</span><span class="tl-status">—</span></div>
+                  <div class="tl-item"><span class="tl-dot gray"></span><span class="tl-condition">SAOS</span><span class="tl-status">—</span></div>
+                  <div class="tl-item"><span class="tl-dot gray"></span><span class="tl-condition">Depresión/Ansiedad</span><span class="tl-status">—</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><span class="panel-title">📂 Módulos</span></div>
+              <div class="panel-body" style="padding:10px">
+                <button class="mod-btn" style="color:var(--mod-medico)" onclick="switchView('medico')">
+                  <span class="mod-icon">🩻</span>
+                  <div><div class="mod-name">Médico / Endocrinología</div><div class="mod-sub">EOSS, labs, farmacoterapia</div></div>
+                </button>
+                <button class="mod-btn" style="color:var(--mod-nutri)" onclick="switchView('nutricion')">
+                  <span class="mod-icon">🥗</span>
+                  <div><div class="mod-name">Nutrición</div><div class="mod-sub">GET, plan, recordatorio 24h</div></div>
+                </button>
+                <button class="mod-btn" style="color:var(--mod-psico)" onclick="switchView('psicologia')">
+                  <span class="mod-icon">🧠</span>
+                  <div><div class="mod-name">Psicología</div><div class="mod-sub">BES, PHQ-9, GAD-7</div></div>
+                </button>
+                <button class="mod-btn" style="color:var(--mod-rehab)" onclick="switchView('rehabilitacion')">
+                  <span class="mod-icon">🏃</span>
+                  <div><div class="mod-name">Rehabilitación</div><div class="mod-sub">6MWT, FITT, IPAQ</div></div>
+                </button>
+                <button class="mod-btn" style="color:var(--mod-dental)" onclick="switchView('dental')">
+                  <span class="mod-icon">🦷</span>
+                  <div><div class="mod-name">Dental</div><div class="mod-sub">DMFT, BOP, OHIP-14</div></div>
+                </button>
+                <button class="mod-btn" style="color:var(--mod-sueno)" onclick="switchView('sueno')">
+                  <span class="mod-icon">😴</span>
+                  <div><div class="mod-name">Sueño</div><div class="mod-sub">STOP-BANG, PSQI, CPAP</div></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── MODULE 1: MÉDICO ────────────────────────────────── -->
+      <div id="view-medico" class="module-view">
+        <div class="module-header">
+          <div class="module-icon-lg" style="background:var(--mod-medico)">🩻</div>
+          <div>
+            <h2>Médico / Endocrinología</h2>
+            <div class="module-sub">EOSS · Antropometría · Laboratorios · Farmacoterapia</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn-add" onclick="openModal('modal-measurement')">+ Medición</button>
+            <button class="btn-add" style="background:var(--secondary)" onclick="openModal('modal-labs')">+ Laboratorios</button>
+          </div>
+        </div>
+
+        <!-- EOSS card -->
+        <div class="section-card mb-8" style="margin-bottom:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">📊 Estadificación EOSS — Edmonton Obesity Staging System</span>
+            <button class="btn-add" onclick="openModal('modal-eoss')">Actualizar EOSS</button>
+          </div>
+          <div class="section-card-body">
+            <div class="eoss-stages">
+              <div class="eoss-stage-btn s0" id="eoss-btn-0">
+                <div style="font-size:18px">0</div>
+                <div style="font-size:10px;font-weight:400;margin-top:2px">Sin factores de riesgo</div>
+              </div>
+              <div class="eoss-stage-btn s1" id="eoss-btn-1">
+                <div style="font-size:18px">1</div>
+                <div style="font-size:10px;font-weight:400;margin-top:2px">Factores subumbrales</div>
+              </div>
+              <div class="eoss-stage-btn s2" id="eoss-btn-2">
+                <div style="font-size:18px">2</div>
+                <div style="font-size:10px;font-weight:400;margin-top:2px">Comorbilidades establecidas</div>
+              </div>
+              <div class="eoss-stage-btn s3" id="eoss-btn-3">
+                <div style="font-size:18px">3</div>
+                <div style="font-size:10px;font-weight:400;margin-top:2px">Daño orgánico severo</div>
+              </div>
+              <div class="eoss-stage-btn s4" id="eoss-btn-4">
+                <div style="font-size:18px">4</div>
+                <div style="font-size:10px;font-weight:400;margin-top:2px">Etapa terminal</div>
+              </div>
+            </div>
+            <div id="eoss-description" class="text-muted text-sm mt-8" style="margin-top:10px;padding:8px;background:var(--bg);border-radius:6px">
+              Selecciona o actualiza el estadio EOSS del paciente.
+            </div>
+          </div>
+        </div>
+
+        <!-- Measurements + labs grid -->
+        <div class="module-grid">
+
+          <!-- Anthropometry history -->
+          <div class="section-card">
+            <div class="section-card-header">
+              <span class="section-card-title">⚖️ Historial antropométrico</span>
+            </div>
+            <div class="section-card-body" style="padding:0">
+              <table class="data-table" id="table-measurements">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Peso (kg)</th>
+                    <th>IMC</th>
+                    <th>Cintura (cm)</th>
+                    <th>ICC</th>
+                    <th>ICT</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-measurements">
+                  <tr><td colspan="6" class="table-empty">Sin mediciones registradas</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Calculated indices -->
+          <div class="section-card">
+            <div class="section-card-header">
+              <span class="section-card-title">🔢 Índices metabólicos actuales</span>
+            </div>
+            <div class="section-card-body">
+              <div class="calc-result">
+                <span class="calc-label">IMC</span>
+                <span class="calc-value" id="cur-bmi">—</span>
+              </div>
+              <div class="calc-result">
+                <span class="calc-label">Índice cintura-cadera (ICC)</span>
+                <span class="calc-value" id="cur-icc">—</span>
+              </div>
+              <div class="calc-result">
+                <span class="calc-label">Índice cintura-talla (ICT)</span>
+                <span class="calc-value" id="cur-ict">—</span>
+              </div>
+              <div class="calc-result">
+                <span class="calc-label">HOMA-IR</span>
+                <span class="calc-value" id="cur-homa">—</span>
+              </div>
+              <div class="calc-result">
+                <span class="calc-label">%TWL (desde inicio)</span>
+                <span class="calc-value" id="cur-twl">—</span>
+              </div>
+              <div class="calc-result">
+                <span class="calc-label">%EWL (desde inicio)</span>
+                <span class="calc-value" id="cur-ewl">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weight chart -->
+        <div class="section-card mt-16" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">📉 Curva de peso</span>
+          </div>
+          <div class="section-card-body">
+            <div style="height:200px"><canvas id="chartWeightMedico"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Labs history -->
+        <div class="section-card mt-16" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">🧪 Historial de laboratorios</span>
+          </div>
+          <div class="section-card-body" style="padding:0">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Glucosa</th><th>HbA1c</th><th>Insulina</th>
+                  <th>HOMA-IR</th><th>LDL</th><th>HDL</th><th>TG</th><th>TSH</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-labs">
+                <tr><td colspan="9" class="table-empty">Sin laboratorios registrados</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pharmacotherapy -->
+        <div class="section-card mt-16" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">💊 Farmacoterapia anti-obesidad</span>
+            <button class="btn-add" onclick="openModal('modal-medication')">+ Medicamento</button>
+          </div>
+          <div class="section-card-body" style="padding:0">
+            <table class="data-table">
+              <thead>
+                <tr><th>Medicamento</th><th>Clase</th><th>Dosis actual</th><th>Inicio</th><th>%TWL esperado</th><th>Estado</th></tr>
+              </thead>
+              <tbody id="tbody-medications">
+                <tr><td colspan="6" class="table-empty">Sin medicamentos registrados</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stub views for other modules -->
+      <div id="view-nutricion" class="module-view">
+        <div class="module-header">
+          <div class="module-icon-lg" style="background:var(--mod-nutri)">🥗</div>
+          <div><h2>Nutrición</h2><div class="module-sub">Mifflin-St Jeor · Plan nutricional · TFEQ-R21</div></div>
+        </div>
+        <div class="panel" style="padding:32px;text-align:center;color:var(--text-muted)">
+          <div style="font-size:40px;margin-bottom:12px">🚧</div>
+          <div style="font-size:16px;font-weight:600">Módulo en desarrollo — Fase 1</div>
+          <div style="font-size:13px;margin-top:6px">Disponible próximamente: GET, plan nutricional, recordatorio 24h, adherencia</div>
+        </div>
+      </div>
+      <div id="view-psicologia" class="module-view">
+        <div class="module-header">
+          <div class="module-icon-lg" style="background:var(--mod-psico)">🧠</div>
+          <div><h2>Psicología</h2><div class="module-sub">BES · PHQ-9 · GAD-7 · Prochaska</div></div>
+        </div>
+        <div class="panel" style="padding:32px;text-align:center;color:var(--text-muted)">
+          <div style="font-size:40px;margin-bottom:12px">🚧</div>
+          <div style="font-size:16px;font-weight:600">Módulo en desarrollo — Fase 2</div>
+        </div>
+      </div>
+      <div id="view-rehabilitacion" class="module-view">
+        <div class="module-header">
+          <div class="module-icon-lg" style="background:var(--mod-rehab)">🏃</div>
+          <div><h2>Rehabilitación / Deporte</h2><div class="module-sub">6MWT · PAR-Q · FITT · IPAQ</div></div>
+        </div>
+        <div class="panel" style="padding:32px;text-align:center;color:var(--text-muted)">
+          <div style="font-size:40px;margin-bottom:12px">🚧</div>
+          <div style="font-size:16px;font-weight:600">Módulo en desarrollo — Fase 2</div>
+        </div>
+      </div>
+      <div id="view-dental" class="module-view">
+        <div class="module-header">
+          <div class="module-icon-lg" style="background:var(--mod-dental)">🦷</div>
+          <div><h2>Dental</h2><div class="module-sub">DMFT · BOP · OHIP-14</div></div>
+        </div>
+        <div class="panel" style="padding:32px;text-align:center;color:var(--text-muted)">
+          <div style="font-size:40px;margin-bottom:12px">🚧</div>
+          <div style="font-size:16px;font-weight:600">Módulo en desarrollo — Fase 2</div>
+        </div>
+      </div>
+      <div id="view-sueno" class="module-view">
+        <div class="module-header">
+          <div class="module-icon-lg" style="background:var(--mod-sueno)">😴</div>
+          <div><h2>Medicina del Sueño</h2><div class="module-sub">STOP-BANG · Epworth · PSQI · CPAP</div></div>
+        </div>
+        <div class="panel" style="padding:32px;text-align:center;color:var(--text-muted)">
+          <div style="font-size:40px;margin-bottom:12px">🚧</div>
+          <div style="font-size:16px;font-weight:600">Módulo en desarrollo — Fase 2</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ─── MODALS ─────────────────────────────────────────────────── -->
+
+<!-- Patient Search -->
+<div class="modal-overlay" id="modal-search">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🔍 Buscar paciente</h3>
+      <button class="modal-close" onclick="closeModal('modal-search')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Nombre, apellido o expediente..." oninput="searchPatients(this.value)" />
+      </div>
+      <div id="search-results">
+        <div class="text-muted text-sm text-center" style="padding:20px">Escribe para buscar…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Measurement Modal -->
+<div class="modal-overlay" id="modal-measurement">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⚖️ Nueva medición antropométrica</h3>
+      <button class="modal-close" onclick="closeModal('modal-measurement')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="m-fecha" />
+        </div>
+        <div class="form-group">
+          <label>Peso (kg)</label>
+          <input type="number" id="m-peso" step="0.1" placeholder="ej. 95.5" oninput="calcMeasurements()" />
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Talla (cm)</label>
+          <input type="number" id="m-talla" step="0.1" placeholder="ej. 168" oninput="calcMeasurements()" />
+        </div>
+        <div class="form-group">
+          <label>Cintura (cm)</label>
+          <input type="number" id="m-cintura" step="0.1" placeholder="ej. 105" oninput="calcMeasurements()" />
+        </div>
+      </div>
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label>Cadera (cm)</label>
+          <input type="number" id="m-cadera" step="0.1" placeholder="ej. 115" oninput="calcMeasurements()" />
+        </div>
+        <div class="form-group">
+          <label>Cuello (cm)</label>
+          <input type="number" id="m-cuello" step="0.1" placeholder="ej. 42" />
+        </div>
+        <div class="form-group">
+          <label>% Grasa corporal</label>
+          <input type="number" id="m-grasa" step="0.1" placeholder="ej. 38.2" />
+        </div>
+      </div>
+
+      <!-- Calculated results -->
+      <div id="m-calcs" style="display:none">
+        <hr />
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px">Cálculos automáticos</div>
+        <div class="calc-result">
+          <span class="calc-label">IMC</span>
+          <span class="calc-value" id="m-bmi-result">—</span>
+        </div>
+        <div class="calc-result">
+          <span class="calc-label">Categoría IMC</span>
+          <span class="calc-value" id="m-bmi-cat">—</span>
+        </div>
+        <div class="calc-result" id="calc-icc-row" style="display:none">
+          <span class="calc-label">ICC (cintura/cadera)</span>
+          <span class="calc-value" id="m-icc-result">—</span>
+        </div>
+        <div class="calc-result" id="calc-ict-row" style="display:none">
+          <span class="calc-label">ICT (cintura/talla)</span>
+          <span class="calc-value" id="m-ict-result">—</span>
+        </div>
+        <div class="calc-result" id="calc-twl-row" style="display:none">
+          <span class="calc-label">%TWL (vs. peso inicial)</span>
+          <span class="calc-value" id="m-twl-result">—</span>
+        </div>
+      </div>
+
+      <div class="form-group mt-12" style="margin-top:14px">
+        <label>Notas (opcional)</label>
+        <textarea id="m-notas" rows="2" placeholder="Observaciones clínicas…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-measurement')">Cancelar</button>
+      <button class="btn-save" onclick="saveMeasurement()">💾 Guardar medición</button>
+    </div>
+  </div>
+</div>
+
+<!-- EOSS Modal -->
+<div class="modal-overlay" id="modal-eoss">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>📊 Actualizar estadio EOSS</h3>
+      <button class="modal-close" onclick="closeModal('modal-eoss')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;margin-bottom:16px;color:var(--text-muted)">
+        El sistema de estadificación EOSS (Edmonton Obesity Staging System) clasifica la severidad de la obesidad según el impacto clínico, no solo el IMC.
+      </div>
+
+      <div id="eoss-checklist">
+        <!-- Stage 0 -->
+        <div class="eoss-option" style="border:2px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer" onclick="selectEOSS(0)" id="eoss-opt-0">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px;font-weight:800;color:#1D8348">0</span>
+            <div>
+              <div style="font-weight:700">Sin riesgo</div>
+              <div class="text-sm text-muted">Sin factores de riesgo, síntomas ni limitación funcional relacionados con la obesidad</div>
+            </div>
+          </div>
+        </div>
+        <!-- Stage 1 -->
+        <div class="eoss-option" style="border:2px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer" onclick="selectEOSS(1)" id="eoss-opt-1">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px;font-weight:800;color:#9A7D0A">1</span>
+            <div>
+              <div style="font-weight:700">Factores de riesgo subumbrales</div>
+              <div class="text-sm text-muted">Pre-HTA, prediabetes, dislipidemia leve, síntomas ocasionales (disnea leve, ERGE, dolor articular leve)</div>
+            </div>
+          </div>
+        </div>
+        <!-- Stage 2 -->
+        <div class="eoss-option" style="border:2px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer" onclick="selectEOSS(2)" id="eoss-opt-2">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px;font-weight:800;color:#A04000">2</span>
+            <div>
+              <div style="font-weight:700">Comorbilidades establecidas</div>
+              <div class="text-sm text-muted">DM2, HTA, dislipidemia, SAOS, osteoartritis, limitación funcional moderada, impacto significativo en QoL</div>
+            </div>
+          </div>
+        </div>
+        <!-- Stage 3 -->
+        <div class="eoss-option" style="border:2px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer" onclick="selectEOSS(3)" id="eoss-opt-3">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px;font-weight:800;color:#C0392B">3</span>
+            <div>
+              <div style="font-weight:700">Daño orgánico significativo</div>
+              <div class="text-sm text-muted">ICC, insuficiencia renal, CAD, discapacidad mayor, depresión severa refractaria, apnea severa</div>
+            </div>
+          </div>
+        </div>
+        <!-- Stage 4 -->
+        <div class="eoss-option" style="border:2px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer" onclick="selectEOSS(4)" id="eoss-opt-4">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px;font-weight:800;color:#6E2F1A">4</span>
+            <div>
+              <div style="font-weight:700">Etapa terminal</div>
+              <div class="text-sm text-muted">Comorbilidades en etapa terminal, discapacidad severa, expectativa de vida significativamente reducida</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group mt-8">
+        <label>Notas clínicas del estadio</label>
+        <textarea id="eoss-notes" rows="2" placeholder="Justificación clínica del estadio seleccionado…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-eoss')">Cancelar</button>
+      <button class="btn-save" onclick="saveEOSS()">💾 Guardar EOSS</button>
+    </div>
+  </div>
+</div>
+
+<!-- Labs Modal -->
+<div class="modal-overlay" id="modal-labs">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h3>🧪 Registrar laboratorios</h3>
+      <button class="modal-close" onclick="closeModal('modal-labs')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Fecha de muestra</label>
+        <input type="date" id="lab-fecha" style="width:200px" />
+      </div>
+
+      <div class="lab-section-title">Metabolismo de glucosa</div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label>Glucosa en ayuno (mg/dL)</label><input type="number" id="lab-glucosa" placeholder="ej. 98" oninput="calcHOMA()" /></div>
+        <div class="form-group"><label>HbA1c (%)</label><input type="number" id="lab-hba1c" step="0.1" placeholder="ej. 6.5" /></div>
+        <div class="form-group"><label>Insulina en ayuno (µUI/mL)</label><input type="number" id="lab-insulina" step="0.1" placeholder="ej. 12.5" oninput="calcHOMA()" /></div>
+      </div>
+      <div class="calc-result" id="homa-calc-result" style="display:none;margin-bottom:12px">
+        <span class="calc-label">HOMA-IR calculado (glucosa × insulina / 405)</span>
+        <span class="calc-value" id="lab-homa-val">—</span>
+      </div>
+
+      <div class="lab-section-title">Perfil lipídico</div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label>Colesterol total (mg/dL)</label><input type="number" id="lab-col-total" placeholder="ej. 195" /></div>
+        <div class="form-group"><label>LDL (mg/dL)</label><input type="number" id="lab-ldl" placeholder="ej. 120" /></div>
+        <div class="form-group"><label>HDL (mg/dL)</label><input type="number" id="lab-hdl" placeholder="ej. 45" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label>Triglicéridos (mg/dL)</label><input type="number" id="lab-tg" placeholder="ej. 180" /></div>
+        <div class="form-group"><label>No-HDL (mg/dL)</label><input type="number" id="lab-nonhdl" placeholder="automático si hay datos" /></div>
+      </div>
+
+      <div class="lab-section-title">Función hepática</div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label>ALT / TGP (U/L)</label><input type="number" id="lab-alt" placeholder="ej. 38" /></div>
+        <div class="form-group"><label>AST / TGO (U/L)</label><input type="number" id="lab-ast" placeholder="ej. 30" /></div>
+        <div class="form-group"><label>GGT (U/L)</label><input type="number" id="lab-ggt" placeholder="ej. 45" /></div>
+      </div>
+
+      <div class="lab-section-title">Función renal</div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label>Creatinina (mg/dL)</label><input type="number" id="lab-creatinina" step="0.01" placeholder="ej. 0.9" /></div>
+        <div class="form-group"><label>BUN (mg/dL)</label><input type="number" id="lab-bun" placeholder="ej. 15" /></div>
+        <div class="form-group"><label>eGFR CKD-EPI (mL/min/1.73m²)</label><input type="number" id="lab-egfr" placeholder="ej. 92" /></div>
+      </div>
+
+      <div class="lab-section-title">Hormonas y otros</div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label>TSH (µUI/mL)</label><input type="number" id="lab-tsh" step="0.01" placeholder="ej. 2.1" /></div>
+        <div class="form-group"><label>Vitamina D (ng/mL)</label><input type="number" id="lab-vitd" placeholder="ej. 28" /></div>
+        <div class="form-group"><label>B12 (pg/mL)</label><input type="number" id="lab-b12" placeholder="ej. 380" /></div>
+      </div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label>Ferritina (ng/mL)</label><input type="number" id="lab-ferritina" placeholder="ej. 85" /></div>
+        <div class="form-group"><label>Ácido úrico (mg/dL)</label><input type="number" id="lab-urico" step="0.1" placeholder="ej. 6.2" /></div>
+        <div class="form-group"><label>hs-CRP (mg/L)</label><input type="number" id="lab-crp" step="0.1" placeholder="ej. 2.8" /></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-labs')">Cancelar</button>
+      <button class="btn-save" onclick="saveLabs()">💾 Guardar laboratorios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Medication Modal -->
+<div class="modal-overlay" id="modal-medication">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>💊 Farmacoterapia anti-obesidad</h3>
+      <button class="modal-close" onclick="closeModal('modal-medication')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Medicamento</label>
+          <select id="med-nombre" onchange="updateMedInfo()">
+            <option value="">— Seleccionar —</option>
+            <option value="semaglutide">Semaglutida (GLP-1) — Ozempic/Wegovy</option>
+            <option value="tirzepatide">Tirzepatida (GIP/GLP-1) — Mounjaro</option>
+            <option value="liraglutide">Liraglutida (GLP-1) — Saxenda</option>
+            <option value="orlistat">Orlistat — Xenical</option>
+            <option value="phentermine_topiramate">Fentermina/Topiramato — Qsymia</option>
+            <option value="bupropion_naltrexone">Bupropión/Naltrexona — Contrave</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dosis actual</label>
+          <input type="text" id="med-dosis" placeholder="ej. 1 mg/semana SC" />
+        </div>
+      </div>
+      <div id="med-info-box" style="display:none;background:var(--bg);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--text-muted)"></div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Fecha de inicio</label>
+          <input type="date" id="med-inicio" />
+        </div>
+        <div class="form-group">
+          <label>Indicación principal</label>
+          <select id="med-indicacion">
+            <option value="obesidad">Obesidad</option>
+            <option value="dm2_obesidad">DM2 + Obesidad</option>
+            <option value="prevencion_cv">Prevención cardiovascular</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notas / plan de titulación</label>
+        <textarea id="med-notas" rows="2" placeholder="Plan de escalada de dosis, tolerancia, metas…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-medication')">Cancelar</button>
+      <button class="btn-save" onclick="saveMedication()">💾 Guardar medicamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- Toasts -->
+<div id="toast-container"></div>
+
+<!-- ─── JAVASCRIPT ──────────────────────────────────────────────── -->
+<script>
+'use strict';
+
+// ─── CONFIG ───────────────────────────────────────────────────────
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:3000'
+  : 'https://ece-metacore-api-production.up.railway.app';
+
+// ─── STATE ────────────────────────────────────────────────────────
+let currentUser = null;
+let currentPatient = null;
+let obesData = {
+  measurements: [],
+  labs: [],
+  medications: [],
+  eoss: null,
+  eossNotes: '',
+};
+let weightChart = null;
+let weightChartMedico = null;
+let selectedEOSS = null;
+
+const EOSS_DESCRIPTIONS = {
+  0: 'Sin factores de riesgo, síntomas ni limitación funcional relacionados con la obesidad. No se requiere intervención médica activa por complicaciones.',
+  1: 'Factores de riesgo subumbrales: pre-HTA (PAS 120-139 o PAD 80-89), prediabetes (glucosa 100-125 mg/dL o HbA1c 5.7-6.4%), dislipidemia leve, síntomas leves (disnea de esfuerzo, ERGE, dolor articular ocasional).',
+  2: 'Comorbilidades establecidas: DM2, HTA, dislipidemia, SAOS moderado, osteoartritis, limitación funcional moderada. Impacto significativo en calidad de vida. Requiere tratamiento activo.',
+  3: 'Daño orgánico significativo: insuficiencia cardíaca, insuficiencia renal (TFG <60), enfermedad coronaria, discapacidad mayor, depresión severa refractaria, SAOS severo. Requiere manejo especializado.',
+  4: 'Comorbilidades en etapa terminal, discapacidad severa e irreversible, expectativa de vida significativamente reducida. Tratamiento paliativo y multidisciplinario intensivo.',
+};
+
+const MED_INFO = {
+  semaglutide:             { clase: 'Agonista GLP-1', twl: '15-20%', via: 'SC semanal', monitoreo: 'Náuseas, FC, PA, HbA1c' },
+  tirzepatide:             { clase: 'Agonista dual GIP+GLP-1', twl: '20-22%', via: 'SC semanal', monitoreo: 'Náuseas, amilasa, lipasa' },
+  liraglutide:             { clase: 'Agonista GLP-1', twl: '5-8%', via: 'SC diario', monitoreo: 'FC, PA, riesgo pancreatitis' },
+  orlistat:                { clase: 'Inhibidor lipasa pancreática', twl: '3-5%', via: 'VO 3×/día', monitoreo: 'Esteatorrea, vit. liposolubles' },
+  phentermine_topiramate:  { clase: 'Simpaticomimético + antiepiléptico', twl: '8-10%', via: 'VO diario', monitoreo: 'FC, PA, cognición, ánimo' },
+  bupropion_naltrexone:    { clase: 'Antidepresivo + antagonista opioide', twl: '5-7%', via: 'VO BID', monitoreo: 'PA, ánimo, náuseas' },
+};
+
+// ─── HELPERS ──────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const token = () => localStorage.getItem('ece_token');
+const authHeaders = () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + token() });
+
+function showLoading()  { $('loading-overlay').classList.add('show'); }
+function hideLoading()  { $('loading-overlay').classList.remove('show'); }
+
+function showToast(msg, type = 'success', ms = 3400) {
+  const c = $('toast-container');
+  const t = document.createElement('div');
+  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️';
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, ms);
+}
+
+function openModal(id) {
+  $(id).classList.add('open');
+  // Set today's date on date inputs
+  const todayVal = new Date().toISOString().split('T')[0];
+  const el = $(id);
+  el.querySelectorAll('input[type="date"]:not([value])').forEach(inp => { if (!inp.value) inp.value = todayVal; });
+}
+function closeModal(id) { $(id).classList.remove('open'); }
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+// Ctrl+Enter to save in any modal
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') {
+    const open = document.querySelector('.modal-overlay.open');
+    if (open) { const btn = open.querySelector('.btn-save'); if (btn) btn.click(); }
+  }
+  if (e.key === 'Escape') { const open = document.querySelector('.modal-overlay.open'); if (open) open.classList.remove('open'); }
+});
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: authHeaders(),
+    ...opts,
+  });
+  if (res.status === 401) { logout(); return null; }
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || err.message || 'Error del servidor'); }
+  return res.json();
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('ece_user');
+  if (token() && saved) {
+    currentUser = JSON.parse(saved);
+    showApp();
+  }
+  $('auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') $('btn-login').click(); });
+});
+
+$('btn-login').addEventListener('click', async () => {
+  const email = $('auth-email').value.trim();
+  const pwd   = $('auth-password').value;
+  if (!email || !pwd) { showAuthError('Ingresa correo y contraseña'); return; }
+  $('btn-login').disabled = true;
+  $('btn-login').textContent = 'Iniciando…';
+  $('auth-error').style.display = 'none';
+  try {
+    const data = await fetch(API + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pwd }),
+    }).then(r => r.json());
+    if (!data.token) throw new Error(data.error || data.message || 'Credenciales inválidas');
+    localStorage.setItem('ece_token', data.token);
+    localStorage.setItem('ece_user', JSON.stringify(data.user));
+    currentUser = data.user;
+    showApp();
+  } catch (err) {
+    showAuthError(err.message);
+  } finally {
+    $('btn-login').disabled = false;
+    $('btn-login').textContent = 'Iniciar sesión';
+  }
+});
+
+function showAuthError(msg) { const el = $('auth-error'); el.textContent = msg; el.style.display = 'block'; }
+
+function showApp() {
+  $('auth-screen').style.display = 'none';
+  $('app').classList.add('visible');
+  if (currentUser) {
+    const initials = (currentUser.name || 'U').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+    $('user-avatar-hdr').textContent = initials;
+    $('user-name-hdr').textContent = currentUser.name || currentUser.email;
+  }
+}
+
+function logout() {
+  localStorage.removeItem('ece_token');
+  localStorage.removeItem('ece_user');
+  location.reload();
+}
+
+// ─── PATIENT SEARCH ───────────────────────────────────────────────
+let searchTimeout = null;
+function searchPatients(q) {
+  clearTimeout(searchTimeout);
+  if (q.length < 2) { $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Escribe para buscar…</div>'; return; }
+  searchTimeout = setTimeout(async () => {
+    $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Buscando…</div>';
+    try {
+      const patients = await apiFetch(`/api/patients?search=${encodeURIComponent(q)}&limit=20`);
+      if (!patients || patients.length === 0) { $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Sin resultados</div>'; return; }
+      $('search-results').innerHTML = patients.map(p => {
+        const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
+        const initials = name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+        return `<div class="patient-result-item" onclick="selectPatient('${p.id}')">
+          <div class="pt-avatar">${initials}</div>
+          <div>
+            <div class="pt-result-name">${name}</div>
+            <div class="pt-result-meta">${p.edad ? p.edad + ' años · ' : ''}${p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : ''} ${p.expediente || ''}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      $('search-results').innerHTML = `<div class="text-muted text-sm text-center" style="padding:20px">Error: ${e.message}</div>`;
+    }
+  }, 350);
+}
+
+async function selectPatient(id) {
+  closeModal('modal-search');
+  showLoading();
+  try {
+    const p = await apiFetch(`/api/patients/${id}`);
+    if (!p) return;
+    currentPatient = p;
+    loadOBESData(p);
+    renderPatientHeader();
+    switchView('dashboard');
+    $('no-patient').style.display = 'none';
+  } catch (e) {
+    showToast('Error al cargar paciente: ' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ─── PATIENT HEADER ───────────────────────────────────────────────
+function renderPatientHeader() {
+  if (!currentPatient) return;
+  const p = currentPatient;
+  const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
+  const eoss = obesData.eoss !== null ? obesData.eoss : '?';
+  $('header-patient-info').innerHTML = `
+    <span class="pt-name">${name}</span>
+    <span class="pt-meta"> · ${p.edad ? p.edad + ' años' : ''} ${p.sexo ? '· ' + (p.sexo === 'M' ? 'M' : 'F') : ''}</span>
+    <span class="eoss-badge">EOSS ${eoss}</span>`;
+}
+
+// ─── OBES DATA (localStorage per patient until new API endpoints) ─
+const STORE_KEY = pid => `ece_obes_${pid}`;
+
+function loadOBESData(p) {
+  const raw = localStorage.getItem(STORE_KEY(p.id));
+  obesData = raw ? JSON.parse(raw) : { measurements: [], labs: [], medications: [], eoss: null, eossNotes: '' };
+  renderDashboard();
+  renderMedicoView();
+}
+
+function saveOBESData() {
+  if (!currentPatient) return;
+  localStorage.setItem(STORE_KEY(currentPatient.id), JSON.stringify(obesData));
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────
+function switchView(view) {
+  if (!currentPatient && view !== 'dashboard') { showToast('Selecciona un paciente primero', 'warn'); return; }
+  document.querySelectorAll('.module-view').forEach(v => v.classList.remove('visible'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+
+  const el = $('view-' + view);
+  if (el) el.classList.add('visible');
+
+  const sidebarItem = document.querySelector(`.sidebar-item[data-view="${view}"]`);
+  if (sidebarItem) sidebarItem.classList.add('active');
+
+  if (!currentPatient) { $('no-patient').style.display = 'flex'; } else { $('no-patient').style.display = 'none'; }
+}
+
+// ─── DASHBOARD RENDER ─────────────────────────────────────────────
+function renderDashboard() {
+  if (!currentPatient) return;
+  const p = currentPatient;
+  const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
+  $('dash-pt-name').textContent = name;
+  $('dash-pt-details').textContent = [
+    p.edad ? p.edad + ' años' : null,
+    p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : null,
+    p.expediente ? 'Exp. ' + p.expediente : null,
+  ].filter(Boolean).join(' · ');
+
+  // EOSS
+  const stage = obesData.eoss;
+  const eossBadge = $('dash-eoss-badge');
+  if (stage !== null) {
+    eossBadge.textContent = 'EOSS ' + stage;
+    eossBadge.className = 'eoss-badge-lg eoss-' + stage;
+  } else {
+    eossBadge.textContent = 'EOSS ?';
+    eossBadge.className = 'eoss-badge-lg';
+  }
+
+  // Stats
+  const measurements = obesData.measurements.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  const latest = measurements[0];
+  const first  = measurements[measurements.length - 1];
+
+  if (latest) {
+    $('stat-peso').textContent = latest.peso + ' kg';
+    if (latest.bmi) {
+      $('stat-bmi').textContent = latest.bmi;
+      $('stat-bmi-cat').textContent = bmiCategory(parseFloat(latest.bmi));
+      $('stat-bmi-cat').className = 'stat-delta';
+    }
+    if (first && first.peso !== latest.peso) {
+      const delta = (latest.peso - first.peso).toFixed(1);
+      const pEl = $('stat-peso-delta');
+      pEl.textContent = (delta > 0 ? '+' : '') + delta + ' kg desde inicio';
+      pEl.className = 'stat-delta ' + (delta < 0 ? 'pos' : 'neg');
+    }
+    if (first && first.peso) {
+      const twl = calcTWL(first.peso, latest.peso);
+      $('stat-twl').textContent = twl + '%';
+      $('stat-twl-sub').textContent = twl < 0 ? 'pérdida de peso' : 'sin pérdida';
+      $('stat-twl-sub').className = 'stat-delta ' + (twl < 0 ? 'pos' : '');
+    }
+  }
+
+  // Labs
+  const labs = obesData.labs.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  if (labs[0]) {
+    const l = labs[0];
+    if (l.hba1c) { $('stat-hba1c').textContent = l.hba1c + '%'; }
+    if (l.glucosa && l.insulina) {
+      const homa = ((l.glucosa * l.insulina) / 405).toFixed(2);
+      $('stat-homa').textContent = 'HOMA-IR: ' + homa;
+      $('stat-homa').className = 'stat-delta ' + (parseFloat(homa) > 2.5 ? 'neg' : 'pos');
+    }
+  }
+
+  // Weight chart on dashboard
+  renderWeightChart('chartWeight', measurements.slice().reverse());
+
+  // Vitals from META CORE API (async)
+  loadVitals();
+
+  // Timeline
+  renderTimeline();
+}
+
+function loadVitals() {
+  if (!currentPatient) return;
+  apiFetch(`/api/patients/${currentPatient.id}/vitals`).then(vitals => {
+    if (!vitals || vitals.length === 0) return;
+    const v = vitals[0];
+    $('dash-vitals').innerHTML = `
+      <div class="biometric-row"><span class="bio-label">Presión arterial</span><span class="bio-value ${v.pa_sist >= 140 || v.pa_diast >= 90 ? 'danger' : v.pa_sist >= 130 ? 'warn' : 'ok'}">${v.pa_sist}/${v.pa_diast} mmHg</span></div>
+      <div class="biometric-row"><span class="bio-label">Frecuencia cardíaca</span><span class="bio-value">${v.fc} lpm</span></div>
+      ${v.spo2 ? `<div class="biometric-row"><span class="bio-label">SpO₂</span><span class="bio-value ${v.spo2 < 90 ? 'danger' : ''}">${v.spo2}%</span></div>` : ''}
+      <div class="biometric-row text-sm text-muted"><span>Registrado</span><span>${new Date(v.fecha).toLocaleDateString('es-MX')}</span></div>
+    `;
+  }).catch(() => {});
+}
+
+function renderTimeline() {
+  const entries = [];
+  // From OBES data
+  obesData.measurements.forEach(m => {
+    entries.push({ date: m.fecha, spec: 'medico', color: 'var(--mod-medico)',
+      title: `Medición: ${m.peso} kg · IMC ${m.bmi}`, sub: `Cintura ${m.cintura || '—'} cm` });
+  });
+  obesData.labs.forEach(l => {
+    entries.push({ date: l.fecha, spec: 'medico', color: 'var(--mod-medico)',
+      title: `Labs: ${l.hba1c ? 'HbA1c ' + l.hba1c + '%' : ''} ${l.glucosa ? '· Glucosa ' + l.glucosa : ''}`.trim(),
+      sub: l.homa_ir ? `HOMA-IR: ${l.homa_ir}` : '' });
+  });
+  obesData.medications.forEach(m => {
+    entries.push({ date: m.inicio, spec: 'medico', color: 'var(--mod-medico)',
+      title: `Farmacoterapia: ${m.nombre} ${m.dosis}`, sub: 'Anti-obesidad' });
+  });
+  entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (!entries.length) { $('dash-timeline').innerHTML = '<div class="tl-empty">Sin entradas aún — agrega mediciones o laboratorios en el módulo Médico</div>'; return; }
+
+  $('dash-timeline').innerHTML = entries.slice(0, 20).map(e => `
+    <div class="tl-entry">
+      <div class="tl-stripe" style="background:${e.color}"></div>
+      <div class="tl-content">
+        <div class="tl-header">
+          <span class="tl-spec-tag" style="background:${e.color}">${e.spec}</span>
+          <span class="tl-date">${new Date(e.date).toLocaleDateString('es-MX', {day:'2-digit',month:'short',year:'numeric'})}</span>
+        </div>
+        <div class="tl-text">${e.title}</div>
+        ${e.sub ? `<div class="tl-sub">${e.sub}</div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+// ─── WEIGHT CHART ─────────────────────────────────────────────────
+function renderWeightChart(canvasId, data, destroy = false) {
+  const canvas = $(canvasId);
+  if (!canvas) return;
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+
+  if (!data || data.length === 0) return;
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: data.map(d => new Date(d.fecha).toLocaleDateString('es-MX', {month:'short', day:'numeric'})),
+      datasets: [{
+        label: 'Peso (kg)',
+        data: data.map(d => parseFloat(d.peso)),
+        borderColor: '#1A5276',
+        backgroundColor: 'rgba(26,82,118,.08)',
+        borderWidth: 2,
+        tension: 0.35,
+        fill: true,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { font: { size: 10 } }, grid: { color: '#EEE' } },
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+      },
+    },
+  });
+}
+
+// ─── MODULE 1: MÉDICO ──────────────────────────────────────────────
+function renderMedicoView() {
+  // EOSS stage buttons
+  for (let i = 0; i <= 4; i++) {
+    const btn = $(`eoss-btn-${i}`);
+    if (btn) btn.classList.toggle('selected', obesData.eoss === i);
+  }
+  if (obesData.eoss !== null) {
+    $('eoss-description').textContent = EOSS_DESCRIPTIONS[obesData.eoss];
+  }
+
+  // Measurements table
+  const mList = obesData.measurements.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  $('tbody-measurements').innerHTML = mList.length
+    ? mList.map(m => `<tr>
+        <td>${new Date(m.fecha).toLocaleDateString('es-MX')}</td>
+        <td><b>${m.peso}</b></td>
+        <td><span class="pill ${bmiPillClass(parseFloat(m.bmi))}">${m.bmi}</span></td>
+        <td>${m.cintura || '—'}</td>
+        <td>${m.icc || '—'}</td>
+        <td>${m.ict || '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="table-empty">Sin mediciones registradas</td></tr>';
+
+  // Current indices
+  if (mList[0]) {
+    const m = mList[0];
+    setCalc('cur-bmi', m.bmi, parseFloat(m.bmi) > 35 ? 'danger' : parseFloat(m.bmi) > 30 ? 'warn' : '');
+    setCalc('cur-icc', m.icc, m.sex === 'M' ? parseFloat(m.icc) > 0.9 : parseFloat(m.icc) > 0.85 ? 'danger' : '');
+    setCalc('cur-ict', m.ict, parseFloat(m.ict) > 0.5 ? 'warn' : '');
+  }
+  // HOMA from latest labs
+  const labs = obesData.labs.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  if (labs[0] && labs[0].homa_ir) {
+    setCalc('cur-homa', labs[0].homa_ir, parseFloat(labs[0].homa_ir) > 2.5 ? 'danger' : '');
+  }
+  // TWL / EWL
+  if (mList.length >= 2) {
+    const first = mList[mList.length - 1];
+    const latest = mList[0];
+    const twl = calcTWL(first.peso, latest.peso);
+    setCalc('cur-twl', twl + '%', parseFloat(twl) < -20 ? 'ok' : '');
+    const pesoIdeal = calcIdealWeight(currentPatient);
+    if (pesoIdeal) {
+      const ewl = (((first.peso - latest.peso) / (first.peso - pesoIdeal)) * 100).toFixed(1);
+      setCalc('cur-ewl', ewl + '%', parseFloat(ewl) > 50 ? 'ok' : '');
+    }
+  }
+
+  // Weight chart (module)
+  renderWeightChart('chartWeightMedico', mList.slice().reverse());
+
+  // Labs table
+  $('tbody-labs').innerHTML = labs.length
+    ? labs.map(l => `<tr>
+        <td>${new Date(l.fecha).toLocaleDateString('es-MX')}</td>
+        <td>${l.glucosa || '—'}</td>
+        <td>${l.hba1c || '—'}</td>
+        <td>${l.insulina || '—'}</td>
+        <td><span class="pill ${l.homa_ir > 2.5 ? 'red' : 'green'}">${l.homa_ir || '—'}</span></td>
+        <td>${l.ldl || '—'}</td>
+        <td>${l.hdl || '—'}</td>
+        <td>${l.tg || '—'}</td>
+        <td>${l.tsh || '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="9" class="table-empty">Sin laboratorios registrados</td></tr>';
+
+  // Medications table
+  $('tbody-medications').innerHTML = obesData.medications.length
+    ? obesData.medications.map(m => {
+        const info = MED_INFO[m.medKey] || {};
+        return `<tr>
+          <td><b>${m.nombre}</b></td>
+          <td>${info.clase || '—'}</td>
+          <td>${m.dosis}</td>
+          <td>${new Date(m.inicio).toLocaleDateString('es-MX')}</td>
+          <td><span class="pill blue">${info.twl || '—'}</span></td>
+          <td><span class="pill green">Activo</span></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" class="table-empty">Sin medicamentos registrados</td></tr>';
+}
+
+function setCalc(id, val, cls = '') {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = val || '—';
+  el.className = 'calc-value ' + cls;
+}
+
+// ─── CALCULATIONS ─────────────────────────────────────────────────
+function calcMeasurements() {
+  const peso    = parseFloat($('m-peso').value);
+  const talla   = parseFloat($('m-talla').value);
+  const cintura = parseFloat($('m-cintura').value);
+  const cadera  = parseFloat($('m-cadera').value);
+
+  if (!peso && !talla) { $('m-calcs').style.display = 'none'; return; }
+  $('m-calcs').style.display = 'block';
+
+  if (peso > 0 && talla > 0) {
+    const bmi = (peso / Math.pow(talla / 100, 2)).toFixed(1);
+    $('m-bmi-result').textContent = bmi;
+    $('m-bmi-result').className = 'calc-value ' + (bmi > 40 ? 'danger' : bmi > 30 ? 'warn' : '');
+    $('m-bmi-cat').textContent = bmiCategory(parseFloat(bmi));
+  }
+  if (cintura > 0 && cadera > 0) {
+    const icc = (cintura / cadera).toFixed(2);
+    $('m-icc-result').textContent = icc;
+    $('calc-icc-row').style.display = 'flex';
+  }
+  if (cintura > 0 && talla > 0) {
+    const ict = (cintura / talla).toFixed(2);
+    $('m-ict-result').textContent = ict;
+    $('m-ict-result').className = 'calc-value ' + (ict > 0.5 ? 'warn' : '');
+    $('calc-ict-row').style.display = 'flex';
+  }
+  // TWL vs baseline
+  const measures = obesData.measurements;
+  if (measures.length > 0 && peso > 0) {
+    const first = measures.slice().sort((a,b) => new Date(a.fecha) - new Date(b.fecha))[0];
+    const twl = calcTWL(first.peso, peso);
+    $('m-twl-result').textContent = twl + '%';
+    $('calc-twl-row').style.display = 'flex';
+  }
+}
+
+function calcHOMA() {
+  const g = parseFloat($('lab-glucosa').value);
+  const i = parseFloat($('lab-insulina').value);
+  if (g > 0 && i > 0) {
+    const homa = ((g * i) / 405).toFixed(2);
+    $('lab-homa-val').textContent = homa;
+    $('lab-homa-val').className = 'calc-value ' + (homa > 2.5 ? 'danger' : 'ok');
+    $('homa-calc-result').style.display = 'flex';
+  } else { $('homa-calc-result').style.display = 'none'; }
+}
+
+function bmiCategory(bmi) {
+  if (bmi < 18.5) return 'Bajo peso';
+  if (bmi < 25)   return 'Normal';
+  if (bmi < 30)   return 'Sobrepeso';
+  if (bmi < 35)   return 'Obesidad Grado I';
+  if (bmi < 40)   return 'Obesidad Grado II';
+  return 'Obesidad Grado III';
+}
+function bmiPillClass(bmi) {
+  if (bmi < 25)  return 'green';
+  if (bmi < 30)  return 'yellow';
+  return 'red';
+}
+function calcTWL(initial, current) { return (((initial - current) / initial) * 100).toFixed(1); }
+function calcIdealWeight(p) {
+  if (!p || !p.talla_cm) return null;
+  const cm = parseFloat(p.talla_cm);
+  if (!cm) return null;
+  // Hamwi formula
+  return p.sexo === 'M' ? 48 + 2.7 * ((cm - 152) / 2.54) : 45.4 + 2.3 * ((cm - 152) / 2.54);
+}
+
+// ─── SAVE MEASUREMENT ─────────────────────────────────────────────
+function saveMeasurement() {
+  if (!currentPatient) { showToast('Sin paciente', 'error'); return; }
+  const peso = parseFloat($('m-peso').value);
+  if (!peso) { showToast('El peso es obligatorio', 'error'); return; }
+
+  const talla   = parseFloat($('m-talla').value) || null;
+  const cintura = parseFloat($('m-cintura').value) || null;
+  const cadera  = parseFloat($('m-cadera').value) || null;
+  const bmi     = peso && talla ? (peso / Math.pow(talla / 100, 2)).toFixed(1) : null;
+  const icc     = cintura && cadera ? (cintura / cadera).toFixed(2) : null;
+  const ict     = cintura && talla ? (cintura / talla).toFixed(2) : null;
+
+  const entry = {
+    fecha:   $('m-fecha').value || new Date().toISOString().split('T')[0],
+    peso, talla, cintura, cadera,
+    cuello:  parseFloat($('m-cuello').value) || null,
+    grasa:   parseFloat($('m-grasa').value) || null,
+    bmi, icc, ict,
+    notas:   $('m-notas').value,
+    id:      Date.now(),
+  };
+  obesData.measurements.push(entry);
+  saveOBESData();
+  renderMedicoView();
+  renderDashboard();
+  closeModal('modal-measurement');
+  showToast('Medición guardada correctamente');
+
+  // Reset form
+  ['m-peso','m-talla','m-cintura','m-cadera','m-cuello','m-grasa','m-notas'].forEach(id => { $(id).value = ''; });
+  $('m-calcs').style.display = 'none';
+}
+
+// ─── SAVE LABS ────────────────────────────────────────────────────
+function saveLabs() {
+  if (!currentPatient) { showToast('Sin paciente', 'error'); return; }
+  const glucosa  = parseFloat($('lab-glucosa').value) || null;
+  const insulina = parseFloat($('lab-insulina').value) || null;
+  const homa_ir  = glucosa && insulina ? parseFloat(((glucosa * insulina) / 405).toFixed(2)) : null;
+
+  const entry = {
+    fecha:      $('lab-fecha').value || new Date().toISOString().split('T')[0],
+    glucosa,    insulina,   homa_ir,
+    hba1c:      parseFloat($('lab-hba1c').value) || null,
+    col_total:  parseFloat($('lab-col-total').value) || null,
+    ldl:        parseFloat($('lab-ldl').value) || null,
+    hdl:        parseFloat($('lab-hdl').value) || null,
+    tg:         parseFloat($('lab-tg').value) || null,
+    alt:        parseFloat($('lab-alt').value) || null,
+    ast:        parseFloat($('lab-ast').value) || null,
+    ggt:        parseFloat($('lab-ggt').value) || null,
+    creatinina: parseFloat($('lab-creatinina').value) || null,
+    egfr:       parseFloat($('lab-egfr').value) || null,
+    tsh:        parseFloat($('lab-tsh').value) || null,
+    vitd:       parseFloat($('lab-vitd').value) || null,
+    b12:        parseFloat($('lab-b12').value) || null,
+    ferritina:  parseFloat($('lab-ferritina').value) || null,
+    urico:      parseFloat($('lab-urico').value) || null,
+    crp:        parseFloat($('lab-crp').value) || null,
+    id:         Date.now(),
+  };
+  obesData.labs.push(entry);
+  saveOBESData();
+  renderMedicoView();
+  renderDashboard();
+  closeModal('modal-labs');
+  showToast('Laboratorios guardados');
+}
+
+// ─── SAVE EOSS ────────────────────────────────────────────────────
+function selectEOSS(stage) {
+  selectedEOSS = stage;
+  document.querySelectorAll('.eoss-option').forEach((el, i) => {
+    el.style.borderColor = i === stage ? 'var(--primary)' : 'var(--border)';
+    el.style.background  = i === stage ? '#EBF5FB' : '';
+  });
+}
+
+function saveEOSS() {
+  if (selectedEOSS === null) { showToast('Selecciona un estadio EOSS', 'warn'); return; }
+  obesData.eoss = selectedEOSS;
+  obesData.eossNotes = $('eoss-notes').value;
+  saveOBESData();
+  renderMedicoView();
+  renderPatientHeader();
+  renderDashboard();
+  closeModal('modal-eoss');
+  showToast('EOSS ' + selectedEOSS + ' guardado');
+  selectedEOSS = null;
+}
+
+// ─── MED INFO ─────────────────────────────────────────────────────
+function updateMedInfo() {
+  const key = $('med-nombre').value;
+  const info = MED_INFO[key];
+  const box = $('med-info-box');
+  if (info) {
+    box.innerHTML = `<b>${info.clase}</b> · %TWL esperado: <b>${info.twl}</b> · Vía: ${info.via} · Monitoreo: ${info.monitoreo}`;
+    box.style.display = 'block';
+  } else { box.style.display = 'none'; }
+}
+
+function saveMedication() {
+  if (!currentPatient) return;
+  const key    = $('med-nombre').value;
+  const nombre = $('med-nombre').selectedOptions[0]?.text || '';
+  if (!key) { showToast('Selecciona un medicamento', 'warn'); return; }
+  const entry = {
+    medKey:     key,
+    nombre:     nombre.split(' — ')[0].trim(),
+    dosis:      $('med-dosis').value,
+    inicio:     $('med-inicio').value || new Date().toISOString().split('T')[0],
+    indicacion: $('med-indicacion').value,
+    notas:      $('med-notas').value,
+    id:         Date.now(),
+  };
+  obesData.medications.push(entry);
+  saveOBESData();
+  renderMedicoView();
+  closeModal('modal-medication');
+  showToast('Medicamento registrado');
+}
+
+// ─── INITIAL VIEW ─────────────────────────────────────────────────
+switchView('dashboard');
+</script>
+</body>
+</html>
