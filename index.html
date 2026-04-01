@@ -1590,6 +1590,12 @@ function openModal(id) {
   const todayVal = new Date().toISOString().split('T')[0];
   const el = $(id);
   el.querySelectorAll('input[type="date"]:not([value])').forEach(inp => { if (!inp.value) inp.value = todayVal; });
+  // Load recent patients when search modal opens
+  if (id === 'modal-search') {
+    const searchInput = $('search-input');
+    if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+    loadRecentPatients();
+  }
 }
 function closeModal(id) { $(id).classList.remove('open'); }
 
@@ -1672,15 +1678,46 @@ function logout() {
 }
 
 // ─── PATIENT SEARCH ───────────────────────────────────────────────
+function renderPatientList(patients) {
+  if (!patients.length) return '<div class="text-muted text-sm text-center" style="padding:20px">Sin resultados</div>';
+  return patients.map(p => {
+    const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
+    const initials = name.split(' ').map(w => w[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
+    const dob = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
+    const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : p.edad;
+    return `<div class="patient-result-item" onclick="selectPatient('${p.id}')">
+      <div class="pt-avatar">${initials}</div>
+      <div>
+        <div class="pt-result-name">${name}</div>
+        <div class="pt-result-meta">${age ? age + ' años · ' : ''}${p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : ''} ${p.expediente ? '· Exp. ' + p.expediente : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadRecentPatients() {
+  try {
+    $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Cargando pacientes…</div>';
+    const res = await apiFetch('/api/patients?limit=20');
+    const patients = Array.isArray(res) ? res : (res?.patients || []);
+    $('search-results').innerHTML = patients.length
+      ? '<div class="text-muted text-sm" style="padding:4px 12px 8px;font-weight:600">Pacientes recientes</div>' + renderPatientList(patients)
+      : '<div class="text-muted text-sm text-center" style="padding:20px">No hay pacientes. Crea el primero con + Nuevo paciente.</div>';
+  } catch(e) {
+    $('search-results').innerHTML = `<div class="text-muted text-sm text-center" style="padding:20px">Error al cargar: ${e.message}</div>`;
+  }
+}
+
 let searchTimeout = null;
 function searchPatients(q) {
   clearTimeout(searchTimeout);
-  if (q.length < 2) { $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Escribe para buscar…</div>'; return; }
+  if (q.length < 2) { loadRecentPatients(); return; }
   searchTimeout = setTimeout(async () => {
     $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Buscando…</div>';
     try {
-      const patients = await apiFetch(`/api/patients?search=${encodeURIComponent(q)}&limit=20`);
-      if (!patients || patients.length === 0) { $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Sin resultados</div>'; return; }
+      const res = await apiFetch(`/api/patients?search=${encodeURIComponent(q)}&limit=20`);
+      const patients = Array.isArray(res) ? res : (res?.patients || []);
+      if (!patients.length) { $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Sin resultados</div>'; return; }
       $('search-results').innerHTML = patients.map(p => {
         const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
         const initials = name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
