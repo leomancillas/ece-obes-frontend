@@ -1150,7 +1150,10 @@
   <div class="modal">
     <div class="modal-header">
       <h3>🔍 Buscar paciente</h3>
-      <button class="modal-close" onclick="closeModal('modal-search')">×</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-add" onclick="closeModal('modal-search');openModal('modal-new-patient')">+ Nuevo paciente</button>
+        <button class="modal-close" onclick="closeModal('modal-search')">×</button>
+      </div>
     </div>
     <div class="modal-body">
       <div class="search-input-wrap">
@@ -1160,6 +1163,78 @@
       <div id="search-results">
         <div class="text-muted text-sm text-center" style="padding:20px">Escribe para buscar…</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Patient Modal -->
+<div class="modal-overlay" id="modal-new-patient">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h3>👤 Nuevo paciente</h3>
+      <button class="modal-close" onclick="closeModal('modal-new-patient')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label>Nombre(s) *</label>
+          <input type="text" id="np-nombre" placeholder="ej. María Elena" />
+        </div>
+        <div class="form-group">
+          <label>Apellido paterno *</label>
+          <input type="text" id="np-ap-paterno" placeholder="ej. García" />
+        </div>
+        <div class="form-group">
+          <label>Apellido materno</label>
+          <input type="text" id="np-ap-materno" placeholder="ej. López" />
+        </div>
+      </div>
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label>Fecha de nacimiento</label>
+          <input type="date" id="np-dob" />
+        </div>
+        <div class="form-group">
+          <label>Sexo</label>
+          <select id="np-sexo">
+            <option value="">— Seleccionar —</option>
+            <option value="F">Femenino</option>
+            <option value="M">Masculino</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="tel" id="np-tel" placeholder="ej. 55 1234 5678" />
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" id="np-email" placeholder="paciente@correo.com" />
+        </div>
+        <div class="form-group">
+          <label>No. de expediente</label>
+          <input type="text" id="np-expediente" placeholder="Asignado por sistema o manual" />
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Talla (cm)</label>
+          <input type="number" id="np-talla" step="0.1" placeholder="ej. 165" />
+        </div>
+        <div class="form-group">
+          <label>Peso inicial (kg)</label>
+          <input type="number" id="np-peso-inicial" step="0.1" placeholder="ej. 102.5" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Motivo de consulta / Notas iniciales</label>
+        <textarea id="np-motivo" rows="2" placeholder="Descripción breve del motivo de referencia a la clínica de obesidad…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-new-patient');openModal('modal-search')">← Regresar</button>
+      <button class="btn-save" id="btn-save-new-patient" onclick="saveNewPatient()">💾 Crear paciente</button>
     </div>
   </div>
 </div>
@@ -1621,6 +1696,83 @@ function searchPatients(q) {
       $('search-results').innerHTML = `<div class="text-muted text-sm text-center" style="padding:20px">Error: ${e.message}</div>`;
     }
   }, 350);
+}
+
+async function saveNewPatient() {
+  const nombre = $('np-nombre').value.trim();
+  const ap_paterno = $('np-ap-paterno').value.trim();
+  if (!nombre || !ap_paterno) { showToast('Nombre y apellido paterno son obligatorios', 'error'); return; }
+
+  const btn = $('btn-save-new-patient');
+  btn.disabled = true;
+  btn.textContent = 'Creando…';
+
+  try {
+    const dob = $('np-dob').value;
+    let edad = null;
+    if (dob) {
+      const today = new Date();
+      const birth = new Date(dob);
+      edad = today.getFullYear() - birth.getFullYear() -
+        (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0);
+    }
+
+    const body = {
+      nombre,
+      apellido_paterno: ap_paterno,
+      apellido_materno: $('np-ap-materno').value.trim() || undefined,
+      sexo: $('np-sexo').value || undefined,
+      edad: edad || undefined,
+      fecha_nacimiento: dob || undefined,
+      telefono: $('np-tel').value.trim() || undefined,
+      email: $('np-email').value.trim() || undefined,
+      expediente: $('np-expediente').value.trim() || undefined,
+      talla_cm: parseFloat($('np-talla').value) || undefined,
+      motivo_consulta: $('np-motivo').value.trim() || undefined,
+    };
+    // Remove undefined keys
+    Object.keys(body).forEach(k => body[k] === undefined && delete body[k]);
+
+    const patient = await apiFetch('/api/patients', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+
+    if (!patient || !patient.id) throw new Error('No se recibió ID del paciente creado');
+
+    closeModal('modal-new-patient');
+    showToast(`Paciente ${nombre} ${ap_paterno} creado correctamente`, 'success');
+
+    // Clear form
+    ['np-nombre','np-ap-paterno','np-ap-materno','np-dob','np-tel','np-email','np-expediente','np-talla','np-peso-inicial','np-motivo'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+    $('np-sexo').value = '';
+
+    // If initial weight was provided, add it as first measurement
+    const pesoInicial = parseFloat($('np-peso-inicial')?.value) || null;
+    if (pesoInicial && patient.id) {
+      await selectPatient(patient.id);
+      const talla = parseFloat($('np-talla')?.value) || null;
+      const bmi = pesoInicial && talla ? (pesoInicial / Math.pow(talla / 100, 2)).toFixed(1) : null;
+      const entry = {
+        fecha: new Date().toISOString().split('T')[0],
+        peso: pesoInicial, talla, cintura: null, cadera: null,
+        cuello: null, grasa: null, bmi, icc: null, ict: null,
+        notas: 'Peso inicial al momento del ingreso', id: Date.now(),
+      };
+      obesData.measurements.push(entry);
+      saveOBESData();
+      renderMedicoView();
+      renderDashboard();
+    } else {
+      selectPatient(patient.id);
+    }
+
+  } catch (err) {
+    showToast('Error al crear paciente: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Crear paciente';
+  }
 }
 
 async function selectPatient(id) {
