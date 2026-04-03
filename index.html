@@ -1968,6 +1968,31 @@
         </div>
       </div>
 
+      <!-- Signos vitales (capturados en la misma visita) -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin:14px 0 8px">Signos vitales de la visita</div>
+      <div class="form-row cols-4">
+        <div class="form-group">
+          <label>PAS (mmHg)</label>
+          <input type="number" id="m-pas" placeholder="ej. 130" oninput="calcPP()" />
+        </div>
+        <div class="form-group">
+          <label>PAD (mmHg)</label>
+          <input type="number" id="m-pad" placeholder="ej. 85" oninput="calcPP()" />
+        </div>
+        <div class="form-group">
+          <label>FC (lpm)</label>
+          <input type="number" id="m-fc" placeholder="ej. 78" />
+        </div>
+        <div class="form-group">
+          <label>SpO₂ (%)</label>
+          <input type="number" id="m-spo2" placeholder="ej. 97" />
+        </div>
+      </div>
+      <div class="calc-result" id="m-pp-row" style="display:none;margin-bottom:4px">
+        <span class="calc-label">Presión de pulso (PAS − PAD)</span>
+        <span class="calc-value" id="m-pp-val">—</span>
+      </div>
+
       <!-- Calculated results -->
       <div id="m-calcs" style="display:none">
         <hr />
@@ -3525,19 +3550,32 @@ function renderDashboard() {
 
 function loadVitals() {
   if (!currentPatient) return;
+  // Primero intentar desde mediciones guardadas localmente (obesData)
+  const localVital = obesData.measurements
+    .filter(m => m.pas && m.pas > 0)
+    .sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
+  if (localVital) renderVitalsBadge({ pa_sist: localVital.pas, pa_diast: localVital.pad, fc: localVital.fc, spo2: localVital.spo2, fecha: localVital.fecha });
+  // Luego intentar desde API (puede sobreescribir si hay datos más recientes)
   apiFetch(`/api/patients/${currentPatient.id}/vitals`).then(vitals => {
     if (!vitals || vitals.length === 0) return;
     const v = vitals[0];
-    const pp = v.pa_sist && v.pa_diast ? v.pa_sist - v.pa_diast : null;
-    const ppClass = pp ? (pp < 25 ? 'warn' : pp > 60 ? 'danger' : 'ok') : '';
-    $('dash-vitals').innerHTML = `
-      <div class="biometric-row"><span class="bio-label">Presión arterial</span><span class="bio-value ${v.pa_sist >= 140 || v.pa_diast >= 90 ? 'danger' : v.pa_sist >= 130 ? 'warn' : 'ok'}">${v.pa_sist}/${v.pa_diast} mmHg</span></div>
-      ${pp !== null ? `<div class="biometric-row"><span class="bio-label">Presión de pulso (PP)</span><span class="bio-value ${ppClass}">${pp} mmHg</span></div>` : ''}
-      <div class="biometric-row"><span class="bio-label">Frecuencia cardíaca</span><span class="bio-value">${v.fc} lpm</span></div>
-      ${v.spo2 ? `<div class="biometric-row"><span class="bio-label">SpO₂</span><span class="bio-value ${v.spo2 < 90 ? 'danger' : ''}">${v.spo2}%</span></div>` : ''}
-      <div class="biometric-row text-sm text-muted"><span>Registrado</span><span>${new Date(v.fecha).toLocaleDateString('es-MX')}</span></div>
-    `;
+    renderVitalsBadge({ pa_sist: v.pa_sist, pa_diast: v.pa_diast, fc: v.fc, spo2: v.spo2, fecha: v.fecha });
   }).catch(() => {});
+}
+
+function renderVitalsBadge(v) {
+  const el = $('dash-vitals');
+  if (!el || !v) return;
+  const pp = v.pa_sist && v.pa_diast ? v.pa_sist - v.pa_diast : null;
+  const ppClass = pp ? (pp < 25 ? 'warn' : pp > 60 ? 'danger' : 'ok') : '';
+  const paClass = v.pa_sist >= 140 || v.pa_diast >= 90 ? 'danger' : v.pa_sist >= 130 ? 'warn' : 'ok';
+  el.innerHTML = `
+    ${v.pa_sist ? `<div class="biometric-row"><span class="bio-label">Presión arterial</span><span class="bio-value ${paClass}">${v.pa_sist}${v.pa_diast ? '/'+v.pa_diast : ''} mmHg</span></div>` : ''}
+    ${pp !== null ? `<div class="biometric-row"><span class="bio-label">Presión de pulso</span><span class="bio-value ${ppClass}">${pp} mmHg</span></div>` : ''}
+    ${v.fc ? `<div class="biometric-row"><span class="bio-label">Frecuencia cardíaca</span><span class="bio-value">${v.fc} lpm</span></div>` : ''}
+    ${v.spo2 ? `<div class="biometric-row"><span class="bio-label">SpO₂</span><span class="bio-value ${v.spo2 < 90 ? 'danger' : ''}">${v.spo2}%</span></div>` : ''}
+    <div class="biometric-row text-sm text-muted"><span>Registrado</span><span>${new Date(v.fecha).toLocaleDateString('es-MX')}</span></div>
+  `;
 }
 
 function renderDashboardComorbidities() {
@@ -3805,9 +3843,14 @@ function prefillASCVD() {
     sexEl.value = (sex === 'M' || sex.toLowerCase() === 'masculino') ? 'M' : 'F';
   }
 
-  // IMC desde última medición (para versión no-lab de GLOBORISK)
+  // IMC y PAS desde última medición que tenga esos datos
   const latestM = obesData.measurements.slice().sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
-  if (latestM?.bmi) setIfEmpty('ascvd-bmi', latestM.bmi);
+  if (latestM?.bmi)  setIfEmpty('ascvd-bmi', latestM.bmi);
+  // PAS: buscar la medición más reciente que tenga PAS registrada
+  const latestWithPAS = obesData.measurements
+    .filter(m => m.pas && m.pas > 0)
+    .sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
+  if (latestWithPAS?.pas) setIfEmpty('ascvd-pas', latestWithPAS.pas);
 
   // Laboratorios: colesterol total, HDL
   if (latestL) {
@@ -3843,6 +3886,19 @@ function setCalc(id, val, cls = '') {
 }
 
 // ─── CALCULATIONS ─────────────────────────────────────────────────
+function calcPP() {
+  const pas = parseFloat($('m-pas').value);
+  const pad = parseFloat($('m-pad').value);
+  const row = $('m-pp-row');
+  if (!row) return;
+  if (pas > 0 && pad > 0) {
+    const pp = pas - pad;
+    $('m-pp-val').textContent = pp + ' mmHg';
+    $('m-pp-val').className = 'calc-value ' + (pp < 25 ? 'warn' : pp > 60 ? 'danger' : 'ok');
+    row.style.display = 'flex';
+  } else { row.style.display = 'none'; }
+}
+
 function calcMeasurements() {
   const peso    = parseFloat($('m-peso').value);
   const talla   = parseFloat($('m-talla').value);
@@ -4014,12 +4070,19 @@ function saveMeasurement() {
   const icc     = cintura && cadera ? (cintura / cadera).toFixed(2) : null;
   const ict     = cintura && talla ? (cintura / talla).toFixed(2) : null;
 
+  const pas = parseFloat($('m-pas').value) || null;
+  const pad = parseFloat($('m-pad').value) || null;
+
   const entry = {
     fecha:   $('m-fecha').value || new Date().toISOString().split('T')[0],
     peso, talla, cintura, cadera,
     cuello:  parseFloat($('m-cuello').value) || null,
     grasa:   parseFloat($('m-grasa').value) || null,
     bmi, icc, ict,
+    pas, pad,
+    fc:      parseFloat($('m-fc').value) || null,
+    spo2:    parseFloat($('m-spo2').value) || null,
+    pp:      pas && pad ? pas - pad : null,
     notas:   $('m-notas').value,
     id:      Date.now(),
   };
@@ -4031,8 +4094,9 @@ function saveMeasurement() {
   showToast('Medición guardada correctamente');
 
   // Reset form
-  ['m-peso','m-talla','m-cintura','m-cadera','m-cuello','m-grasa','m-notas'].forEach(id => { $(id).value = ''; });
+  ['m-peso','m-talla','m-cintura','m-cadera','m-cuello','m-grasa','m-pas','m-pad','m-fc','m-spo2','m-notas'].forEach(id => { $(id).value = ''; });
   $('m-calcs').style.display = 'none';
+  $('m-pp-row').style.display = 'none';
 }
 
 // ─── SAVE LABS ────────────────────────────────────────────────────
