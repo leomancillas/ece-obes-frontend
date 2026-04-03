@@ -5015,36 +5015,44 @@ function calcGLOBORISK() {
   if (!edad || !sexo || !pas) return null;
 
   const useLab = !isNaN(col) && col > 0;
+  const useBMI = !useLab && !isNaN(bmi) && bmi > 0;
   const colMmol = useLab ? col / 38.67 : null;
 
-  let XB, S0, meanXB;
+  let XB, S0, meanXB, version;
 
-  // Coeficientes Mexico — versión laboratorio (lab) y consultorio (office)
-  // Tabla S4 (hombres) y S5 (mujeres) — Hajifathalian 2015 suplemento
+  // Coeficientes México — Hajifathalian et al., Lancet Diabetes Endocrinol 2015, Tabla S4/S5
   if (sexo === 'M') {
     if (useLab) {
       // Lab-based, Hombres México
       XB = 0.0670*edad + 0.0134*pas + 0.1270*colMmol + 0.5300*smoker + 0.6130*dm + 0.4020*bpTx;
-      meanXB = 6.92; S0 = 0.9358;
-    } else if (!isNaN(bmi) && bmi > 0) {
+      meanXB = 6.92; S0 = 0.9358; version = 'lab';
+    } else if (useBMI) {
       // Office-based, Hombres México
       XB = 0.0670*edad + 0.0134*pas + 0.0180*bmi + 0.5300*smoker + 0.6130*dm + 0.4020*bpTx;
-      meanXB = 5.86; S0 = 0.9302;
-    } else return null;
+      meanXB = 5.86; S0 = 0.9302; version = 'office';
+    } else {
+      // Mínima — solo edad, PAS, factores clínicos (menor precisión, lo indicamos)
+      XB = 0.0670*edad + 0.0134*pas + 0.5300*smoker + 0.6130*dm + 0.4020*bpTx;
+      meanXB = 5.50; S0 = 0.9302; version = 'minima';
+    }
   } else {
     if (useLab) {
       // Lab-based, Mujeres México
       XB = 0.0834*edad + 0.0165*pas + 0.1270*colMmol + 0.7300*smoker + 0.8520*dm + 0.3120*bpTx;
-      meanXB = 7.18; S0 = 0.9608;
-    } else if (!isNaN(bmi) && bmi > 0) {
+      meanXB = 7.18; S0 = 0.9608; version = 'lab';
+    } else if (useBMI) {
       // Office-based, Mujeres México
       XB = 0.0834*edad + 0.0165*pas + 0.0170*bmi + 0.7300*smoker + 0.8520*dm + 0.3120*bpTx;
-      meanXB = 5.72; S0 = 0.9592;
-    } else return null;
+      meanXB = 5.72; S0 = 0.9592; version = 'office';
+    } else {
+      // Mínima — solo edad, PAS, factores clínicos
+      XB = 0.0834*edad + 0.0165*pas + 0.7300*smoker + 0.8520*dm + 0.3120*bpTx;
+      meanXB = 5.40; S0 = 0.9592; version = 'minima';
+    }
   }
 
   const risk = (1 - Math.pow(S0, Math.exp(XB - meanXB))) * 100;
-  return { risk: Math.min(Math.max(risk, 0), 99.9), useLab };
+  return { risk: Math.min(Math.max(risk, 0), 99.9), useLab, version };
 }
 
 function calcBothRisks() {
@@ -5066,12 +5074,18 @@ function calcBothRisks() {
 
   // Calcular PCE si hay datos suficientes
   let pceRisk = null;
-  if (colTotal && hdl && edad >= 20 && edad <= 79) {
+  if (!isNaN(colTotal) && colTotal > 0 && !isNaN(hdl) && hdl > 0 && edad >= 20 && edad <= 79) {
     calcASCVD(); // usa función existente → actualiza ascvd-result
+    if (emptyPCE) emptyPCE.style.display = 'none'; // ocultar placeholder
     pceRisk = parseFloat(resPCE.querySelector('[data-risk]')?.dataset.risk);
   } else {
     resPCE.style.display = 'none';
-    if (emptyPCE) { emptyPCE.style.display = 'block'; emptyPCE.textContent = 'Falta colesterol total y HDL para PCE'; }
+    if (emptyPCE) {
+      emptyPCE.style.display = 'block';
+      emptyPCE.textContent = isNaN(colTotal) || colTotal <= 0
+        ? 'PCE requiere colesterol total y HDL — ingresa labs o usa solo GLOBORISK'
+        : 'PCE requiere HDL — ingresa labs o usa solo GLOBORISK';
+    }
   }
 
   // Calcular GLOBORISK
@@ -5091,11 +5105,12 @@ function calcBothRisks() {
       <div style="font-size:28px;font-weight:800;color:${cat.color}" data-risk="${r}">${r}%</div>
       <div style="font-size:14px;font-weight:700;color:${cat.color}">${cat.label}</div>
       <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
-        ECV fatal + no fatal a 10 años · ${globo.useLab ? 'Versión laboratorio' : 'Versión consultorio (IMC)'}
+        ECV fatal + no fatal a 10 años · ${{lab:'Versión laboratorio (colesterol)', office:'Versión consultorio (IMC)', minima:'⚠️ Estimación mínima — agrega colesterol o IMC para mayor precisión'}[globo.version]}
       </div>
       ${globo.risk >= 20 ? `<div style="margin-top:8px;font-size:11px;color:${cat.color};font-weight:600">💊 Estatina de alta intensidad · Meta LDL &lt;70 mg/dL · Evaluación cardiológica</div>` : ''}
       ${globo.risk >= 10 && globo.risk < 20 ? `<div style="margin-top:8px;font-size:11px;color:${cat.color};font-weight:600">Considerar estatina moderada si LDL &gt;130 mg/dL</div>` : ''}`;
     if (emptyGLOBO) emptyGLOBO.style.display = 'none';
+    resGLOBO.style.display = 'block'; // asegurar visibilidad explícita
 
     // Obtener riesgo PCE del DOM para comparar
     const pceVal = parseFloat(resPCE.querySelector('div[style*="font-size:28px"]')?.textContent);
@@ -5117,8 +5132,12 @@ function calcBothRisks() {
 
     showToast(`GLOBORISK-MX: ${r}% · ${cat.label}`, globo.risk >= 10 ? 'warn' : 'success');
   } else {
-    if (emptyGLOBO) { emptyGLOBO.style.display = 'block'; emptyGLOBO.textContent = 'Falta PAS para GLOBORISK (y colesterol o IMC)'; }
+    // Solo llega aquí si falta PAS o edad (calcGLOBORISK solo regresa null por eso ahora)
     resGLOBO.style.display = 'none';
+    if (emptyGLOBO) {
+      emptyGLOBO.style.display = 'block';
+      emptyGLOBO.innerHTML = 'GLOBORISK requiere <b>edad</b> y <b>PAS</b> como mínimo';
+    }
   }
 }
 
