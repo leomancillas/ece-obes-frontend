@@ -5208,7 +5208,7 @@ function calcBothRisks() {
 function calcASCVD() {
   const edad    = parseFloat($('ascvd-edad').value);
   const sexo    = $('ascvd-sexo').value;
-  const raza    = $('ascvd-raza').value;
+  const raza    = 'blanco'; // PCE: para población latina se usa la ecuación "blanco"
   const colTotal = parseFloat($('ascvd-col-total').value);
   const hdl     = parseFloat($('ascvd-hdl').value);
   const pas     = parseFloat($('ascvd-pas').value);
