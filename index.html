@@ -4,23 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ECE OBES — Expediente Clínico de Obesidad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     /* ─── VARIABLES ──────────────────────────────────────────── */
     :root {
       --primary:     #1A5276;
       --primary-lt:  #2471A3;
+      --primary-dark:#134367;
       --secondary:   #117A65;
-      --border:      #D5D8DC;
-      --bg:          #F4F6F7;
+      --border:      #E2E8F1;
+      --bg:          #F0F4F9;
       --surface:     #FFFFFF;
-      --text:        #1C2833;
-      --text-muted:  #717D7E;
+      --text:        #1A2535;
+      --text-muted:  #64748B;
       --danger:      #C0392B;
-      --warning:     #D4AC0D;
+      --warning:     #C96B10;
       --success:     #1D8348;
-      --radius:      8px;
-      --shadow:      0 2px 8px rgba(0,0,0,.10);
+      --radius:      12px;
+      --shadow:      0 1px 3px rgba(15,23,42,.05),0 4px 14px rgba(15,23,42,.07);
+      --shadow-lg:   0 8px 24px rgba(15,23,42,.10),0 32px 64px rgba(15,23,42,.12);
 
       /* Module colors */
       --mod-medico:  #1A5276;
@@ -31,6 +36,13 @@
       --mod-sueno:   #154360;
       --mod-adhoc:   #7D6608;
 
+      /* Dark sidebar */
+      --sb-bg:       #16202E;
+      --sb-text:     rgba(255,255,255,.82);
+      --sb-muted:    rgba(255,255,255,.36);
+      --sb-hover:    rgba(255,255,255,.06);
+      --sb-border:   rgba(255,255,255,.07);
+
       /* Traffic light */
       --tl-green:    #1D8348;
       --tl-yellow:   #D4AC0D;
@@ -39,8 +51,9 @@
 
     /* ─── RESET & BASE ───────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-           background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; overflow: hidden; }
+    body { font-family: 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+           background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; overflow: hidden;
+           -webkit-font-smoothing:antialiased; }
     input, select, textarea, button { font-family: inherit; font-size: 13px; }
     a { color: var(--primary); text-decoration: none; }
     hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
@@ -50,60 +63,75 @@
     #app.visible { display: flex; }
 
     .app-header {
-      background: var(--primary);
+      background: linear-gradient(90deg,#16202E 0%,#1B3A5C 50%,#1A5276 100%);
       color: #fff;
       padding: 0 20px;
-      height: 52px;
+      height: 56px;
       display: flex;
       align-items: center;
       gap: 16px;
       flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+      box-shadow: 0 2px 12px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.3);
+      border-bottom: 1px solid rgba(255,255,255,.08);
       z-index: 100;
     }
-    .app-header .logo { font-weight: 700; font-size: 17px; letter-spacing: -.3px; }
-    .app-header .logo span { opacity: .65; font-weight: 400; font-size: 13px; margin-left: 6px; }
+    .app-header .logo {
+      font-weight: 800; font-size: 15px; letter-spacing: -.2px;
+      display:flex;align-items:center;gap:10px;flex-shrink:0;
+    }
+    .app-header .logo-icon {
+      width:30px;height:30px;background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.10));
+      border:1px solid rgba(255,255,255,.2);border-radius:8px;
+      display:flex;align-items:center;justify-content:center;font-size:14px;
+    }
+    .app-header .logo-texts .logo-name { display:block;font-size:14px;font-weight:800;color:#fff;letter-spacing:-.2px;line-height:1.2; }
+    .app-header .logo-texts .logo-sub { display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,.55);letter-spacing:.2px;margin-top:1px; }
     .header-patient {
       flex: 1;
       display: flex;
       align-items: center;
       gap: 10px;
       cursor: pointer;
-      padding: 6px 10px;
-      border-radius: 6px;
+      padding: 6px 14px;
+      border-radius: 9px;
       transition: background .15s;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.15);
+      min-width: 180px;
     }
-    .header-patient:hover { background: rgba(255,255,255,.12); }
-    .header-patient .pt-name { font-weight: 600; font-size: 15px; }
-    .header-patient .pt-meta { opacity: .75; font-size: 12px; }
+    .header-patient:hover { background: rgba(255,255,255,.18); border-color:rgba(255,255,255,.25); }
+    .header-patient .pt-name { font-weight: 600; font-size: 13.5px; color:#fff; }
+    .header-patient .pt-meta { opacity: .65; font-size: 11.5px; color:#fff; }
     .eoss-badge {
       background: rgba(255,255,255,.2);
       border: 1px solid rgba(255,255,255,.35);
       border-radius: 20px;
       padding: 2px 10px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
     }
-    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; margin-left:auto; }
     .header-actions button {
-      background: rgba(255,255,255,.15);
-      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.22);
       color: #fff;
-      padding: 5px 12px;
-      border-radius: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 12px;
+      font-family: inherit;
+      font-weight: 500;
       transition: background .15s;
     }
-    .header-actions button:hover { background: rgba(255,255,255,.28); }
+    .header-actions button:hover { background: rgba(255,255,255,.22); }
     .user-chip {
       display: flex; align-items: center; gap: 6px;
-      opacity: .85; font-size: 12px;
+      color:rgba(255,255,255,.75); font-size: 12px;
     }
     .user-avatar {
       width: 28px; height: 28px;
       border-radius: 50%;
-      background: rgba(255,255,255,.3);
+      background: rgba(255,255,255,.25);
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 11px;
     }
@@ -113,42 +141,60 @@
     /* Sidebar */
     .sidebar {
       width: 220px;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
+      background: var(--sb-bg);
+      border-right: 1px solid rgba(0,0,0,.15);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
       overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,.15);
     }
-    .sidebar-section { padding: 10px 0; }
+    .sidebar-section { padding: 8px 0; }
     .sidebar-label {
-      padding: 6px 16px 4px;
+      padding: 14px 16px 5px;
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: .8px;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--sb-muted);
     }
     .sidebar-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 9px 16px;
+      padding: 9px 12px;
+      margin: 1px 8px;
+      border-radius: 8px;
       cursor: pointer;
-      color: var(--text);
-      border-left: 3px solid transparent;
-      transition: background .12s, border-color .12s;
+      color: var(--sb-text);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all .15s;
+      position: relative;
     }
-    .sidebar-item:hover { background: var(--bg); }
-    .sidebar-item.active { background: #EBF5FB; border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .sidebar-item:hover { background: var(--sb-hover); color: #fff; }
+    .sidebar-item.active {
+      background: rgba(26,82,118,.25);
+      color: #7EC8F0;
+      font-weight: 600;
+    }
+    .sidebar-item.active::before {
+      content:''; position:absolute; left:-8px; top:6px; bottom:6px;
+      width:3px; background:#7EC8F0; border-radius:0 3px 3px 0;
+    }
     .sidebar-item .mod-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
+      box-shadow: 0 0 4px currentColor;
     }
 
     /* Main content */
-    .main-content { flex: 1; overflow-y: auto; padding: 20px; }
+    .main-content { flex: 1; overflow-y: auto; padding: 22px 24px;
+      background: var(--bg);
+      background-image: radial-gradient(circle,rgba(26,82,118,.07) 1px,transparent 1px);
+      background-size: 22px 22px;
+    }
 
     /* ─── AUTH SCREEN ────────────────────────────────────────── */
     #auth-screen {
@@ -156,17 +202,25 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      background: linear-gradient(135deg, #1A3A4A 0%, #1A5276 60%, #117A65 100%);
+      background: linear-gradient(135deg, #0D2744 0%, #1A3A5C 35%, #1A5276 65%, #117A65 100%);
+      position: relative; overflow: hidden;
     }
+    #auth-screen::before {
+      content:''; position:absolute; inset:0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    #auth-screen::after { content:'⚕'; position:absolute; right:-40px; bottom:-40px; font-size:300px; opacity:.04; line-height:1; }
     .auth-card {
       background: var(--surface);
-      border-radius: 12px;
-      padding: 40px 36px;
-      width: 380px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      border-radius: 20px;
+      padding: 44px 48px;
+      width: 400px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.30),0 4px 16px rgba(0,0,0,.15);
+      position: relative; z-index: 1;
     }
-    .auth-logo { text-align: center; margin-bottom: 28px; }
-    .auth-logo .logo-main { font-size: 26px; font-weight: 800; color: var(--primary); }
+    .auth-logo { text-align: center; margin-bottom: 32px; }
+    .auth-logo-icon { width:52px;height:52px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 4px 14px rgba(26,82,118,.4);margin:0 auto 14px; }
+    .auth-logo .logo-main { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing:-.4px; }
     .auth-logo .logo-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
     .auth-logo .logo-parent { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .form-group { margin-bottom: 16px; }
@@ -208,25 +262,35 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      gap: 12px;
+      min-height: 65vh;
+      gap: 14px;
       color: var(--text-muted);
+      text-align: center;
     }
-    #no-patient .np-icon { font-size: 52px; }
-    #no-patient h3 { font-size: 18px; color: var(--text); }
-    #no-patient p { font-size: 13px; }
+    #no-patient .np-icon {
+      font-size: 52px;
+      width:110px;height:110px;
+      background:linear-gradient(135deg,rgba(26,82,118,.08),rgba(26,82,118,.04));
+      border-radius:50%;display:flex;align-items:center;justify-content:center;
+      border:2px solid rgba(26,82,118,.12);
+    }
+    #no-patient h3 { font-size: 20px; font-weight:800; color: var(--text); margin-top:8px; letter-spacing:-.3px; }
+    #no-patient p { font-size: 13.5px; max-width:380px; line-height:1.7; }
     #no-patient .btn-search {
-      margin-top: 8px;
-      background: var(--primary);
+      margin-top: 4px;
+      background: linear-gradient(135deg,var(--primary),var(--primary-dark));
       color: #fff;
       border: none;
-      border-radius: 7px;
-      padding: 10px 24px;
+      border-radius: 12px;
+      padding: 13px 32px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
+      box-shadow: 0 4px 20px rgba(26,82,118,.4);
+      transition: all .2s;
     }
-    #no-patient .btn-search:hover { background: var(--primary-lt); }
+    #no-patient .btn-search:hover { box-shadow:0 6px 28px rgba(26,82,118,.5); transform:translateY(-2px); }
 
     /* ─── DASHBOARD ──────────────────────────────────────────── */
     #view-dashboard { display: none; }
@@ -234,14 +298,16 @@
 
     /* Identity strip */
     .identity-strip {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 14px 20px;
+      background: linear-gradient(135deg,var(--surface) 0%,#F0F7FF 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 22px;
       display: flex;
       align-items: center;
       gap: 20px;
       box-shadow: var(--shadow);
-      margin-bottom: 16px;
+      margin-bottom: 18px;
+      border-left: 4px solid var(--primary);
     }
     .pt-id-info .pt-full-name { font-size: 19px; font-weight: 700; }
     .pt-id-info .pt-details { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -281,16 +347,20 @@
     /* Panel card */
     .panel {
       background: var(--surface);
-      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      border-radius: 14px;
       box-shadow: var(--shadow);
       overflow: hidden;
+      transition: box-shadow .2s,transform .15s;
     }
+    .panel:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); transform:translateY(-1px); }
     .panel-header {
       padding: 12px 16px 10px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: linear-gradient(135deg,#F5F9FF 0%,#EEF3FA 100%);
     }
     .panel-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
     .panel-body { padding: 14px 16px; }
@@ -350,7 +420,7 @@
     .tl-date { font-size: 11px; color: var(--text-muted); }
     .tl-text { font-size: 13px; color: var(--text); line-height: 1.4; }
     .tl-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .tl-empty { text-align: center; color: var(--text-muted); padding: 20px; font-size: 13px; }
+    .tl-empty { text-align: center; color: var(--text-muted); padding: 24px; font-size: 13px; line-height:1.8; }
 
     /* Right sidebar modules */
     .mod-btn {
@@ -381,18 +451,25 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
+      padding: 18px 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--mod-color, var(--primary));
     }
     .module-icon-lg {
-      width: 44px; height: 44px;
-      border-radius: 10px;
+      width: 48px; height: 48px;
+      border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
       font-size: 22px;
       color: #fff;
       flex-shrink: 0;
+      box-shadow: 0 6px 20px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.15);
     }
-    .module-header h2 { font-size: 20px; font-weight: 700; }
-    .module-header .module-sub { font-size: 13px; color: var(--text-muted); }
+    .module-header h2 { font-size: 19px; font-weight: 800; letter-spacing:-.4px; }
+    .module-header .module-sub { font-size: 12px; color: var(--text-muted); margin-top:3px; }
 
     .module-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .module-grid.three { grid-template-columns: 1fr 1fr 1fr; }
@@ -401,44 +478,67 @@
     /* Section card */
     .section-card {
       background: var(--surface);
-      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      border-radius: 14px;
       box-shadow: var(--shadow);
       overflow: hidden;
+      transition: box-shadow .2s, transform .15s;
     }
+    .section-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); transform: translateY(-1px); }
     .section-card-header {
-      padding: 12px 16px;
+      padding: 13px 18px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: linear-gradient(135deg,#F5F9FF 0%,#EEF3FA 100%);
+      position: sticky; top: 0; z-index: 1;
     }
-    .section-card-title { font-size: 13px; font-weight: 700; }
-    .section-card-body { padding: 16px; }
+    .section-card-title { font-size: 13px; font-weight: 700; letter-spacing:-.1px; }
+    .section-card-body { padding: 16px 18px; }
     .btn-add {
-      background: var(--primary);
+      background: linear-gradient(135deg,var(--primary),var(--primary-dark));
       color: #fff;
       border: none;
-      border-radius: 5px;
-      padding: 5px 12px;
+      border-radius: 8px;
+      padding: 7px 14px;
       font-size: 12px;
       font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
-      transition: background .15s;
+      transition: all .15s;
+      box-shadow: 0 2px 8px rgba(26,82,118,.3);
+      letter-spacing:.1px;
     }
-    .btn-add:hover { background: var(--primary-lt); }
+    .btn-add:hover { box-shadow: 0 4px 16px rgba(26,82,118,.4); transform:translateY(-1px); }
 
     /* Stats row */
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
     .stat-card {
       background: var(--surface);
-      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      border-radius: 14px;
       box-shadow: var(--shadow);
-      padding: 14px 16px;
-      text-align: center;
+      padding: 18px 20px;
+      position: relative; overflow: hidden;
+      transition: box-shadow .2s, transform .2s;
     }
-    .stat-value { font-size: 22px; font-weight: 800; color: var(--primary); }
-    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-    .stat-delta { font-size: 11px; margin-top: 4px; }
+    .stat-card::after {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      border-radius:14px 14px 0 0;
+    }
+    .stat-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.10); transform:translateY(-1px); }
+    .stats-row .stat-card:nth-child(1)::after { background:linear-gradient(90deg,var(--mod-medico),#2471A3); }
+    .stats-row .stat-card:nth-child(2)::after { background:linear-gradient(90deg,#C96B10,#E67E22); }
+    .stats-row .stat-card:nth-child(3)::after { background:linear-gradient(90deg,var(--mod-rehab),#E74C3C); }
+    .stats-row .stat-card:nth-child(4)::after { background:linear-gradient(90deg,var(--success),#27AE60); }
+    .stat-value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing:-.5px; line-height:1.1; margin-top:4px; }
+    .stats-row .stat-card:nth-child(1) .stat-value { color: var(--mod-medico); }
+    .stats-row .stat-card:nth-child(2) .stat-value { color: #C96B10; }
+    .stats-row .stat-card:nth-child(3) .stat-value { color: var(--mod-rehab); }
+    .stats-row .stat-card:nth-child(4) .stat-value { color: var(--success); }
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 5px; font-weight:500; letter-spacing:.1px; }
+    .stat-delta { font-size: 11px; margin-top: 5px; color: var(--text-muted); font-weight:500; }
     .stat-delta.pos { color: var(--success); }
     .stat-delta.neg { color: var(--danger); }
 
@@ -482,12 +582,12 @@
     }
     .data-table tr:last-child td { border-bottom: none; }
     .data-table tr:hover td { background: #F8F9FA; }
-    .table-empty { text-align: center; color: var(--text-muted); padding: 24px; font-style: italic; }
+    .table-empty { text-align: center; color: var(--text-muted); padding: 32px 24px; font-size:13px; line-height:1.8; }
 
     /* ─── MODALS ─────────────────────────────────────────────── */
     .modal-overlay {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,.45);
+      background: rgba(10,20,40,.5);
       z-index: 500;
       display: flex;
       align-items: center;
@@ -495,19 +595,20 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity .2s;
+      backdrop-filter: blur(4px);
     }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
     .modal {
       background: var(--surface);
-      border-radius: 12px;
-      box-shadow: 0 24px 80px rgba(0,0,0,.3);
+      border-radius: 16px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.25),0 4px 16px rgba(0,0,0,.15);
       width: 520px;
       max-width: 95vw;
       max-height: 88vh;
       display: flex;
       flex-direction: column;
       transform: translateY(16px) scale(.98);
-      transition: transform .2s;
+      transition: transform .2s cubic-bezier(.4,0,.2,1);
     }
     .modal-overlay.open .modal { transform: translateY(0) scale(1); }
     .modal.wide { width: 700px; }
@@ -701,6 +802,78 @@
       .sidebar-item span:not(.mod-dot) { display: none; }
       .sidebar-label { display: none; }
     }
+
+    /* ── VISUAL ENHANCEMENTS ── */
+
+    /* Module view fade animation */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .module-view.visible { animation: fadeUp .18s cubic-bezier(.4,0,.2,1); }
+
+    /* Module header color variants */
+    #view-medico .module-header      { --mod-color: var(--mod-medico); }
+    #view-nutricion .module-header   { --mod-color: var(--mod-nutri); }
+    #view-psicologia .module-header  { --mod-color: var(--mod-psico); }
+    #view-rehabilitacion .module-header { --mod-color: var(--mod-rehab); }
+    #view-dental .module-header      { --mod-color: var(--mod-dental); }
+    #view-sueno .module-header       { --mod-color: var(--mod-sueno); }
+
+    /* Module icon gradient variants */
+    #view-medico .module-icon-lg      { background: linear-gradient(135deg,var(--mod-medico),#2471A3); }
+    #view-nutricion .module-icon-lg   { background: linear-gradient(135deg,var(--mod-nutri),#229954); }
+    #view-psicologia .module-icon-lg  { background: linear-gradient(135deg,var(--mod-psico),#7D3C98); }
+    #view-rehabilitacion .module-icon-lg { background: linear-gradient(135deg,var(--mod-rehab),#E74C3C); }
+    #view-dental .module-icon-lg      { background: linear-gradient(135deg,var(--mod-dental),#148F77); }
+    #view-sueno .module-icon-lg       { background: linear-gradient(135deg,var(--mod-sueno),#1A5276); }
+
+    /* Mod buttons on dashboard - colorized per module */
+    .mod-btn { transition: all .18s; }
+    .mod-btn:hover { transform: translateX(3px); box-shadow: 0 3px 14px rgba(0,0,0,.10); }
+
+    /* Better modal header */
+    .modal-header { border-radius: 16px 16px 0 0; }
+    .modal-footer { background: linear-gradient(to bottom,var(--bg),#E8EDF3); border-radius: 0 0 16px 16px; }
+    .modal-header h3 { font-size:16px; font-weight:800; letter-spacing:-.2px; }
+    .modal-close { background:var(--bg); border:none; font-size:18px; cursor:pointer; color:var(--text-muted); width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all .15s; line-height:1; }
+    .modal-close:hover { background:var(--border); color:var(--text); }
+
+    /* Enhanced pill styles */
+    .pill.purple { background:#EEE2F8; color:#5E2A78; }
+    .pill.gray   { background:#EDEEF0; color:#525D6A; }
+
+    /* Traffic light items - stronger */
+    .tl-item { border: 1px solid var(--border); transition:all .15s; }
+    .tl-item:hover { box-shadow: var(--shadow); transform:translateX(2px); }
+
+    /* Chart empty state */
+    .chart-empty { display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);gap:8px; }
+    .chart-empty-icon { font-size:32px;opacity:.4; }
+    .chart-empty-text { font-size:12px;font-weight:500;opacity:.75; }
+
+    /* Auth card improved inputs */
+    .form-group input:not([type="checkbox"]), .form-group select, .form-group textarea {
+      border-radius: 9px;
+      background: #FAFBFD;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      background: #fff;
+    }
+
+    /* Better toast */
+    .toast { border-radius:12px; min-width:260px; font-family:inherit; }
+    .toast.success { border-left:4px solid #27AE60; background:#1C3A28; }
+    .toast.error   { border-left:4px solid var(--danger); background:#3A1A1A; }
+    .toast.warn    { border-left:4px solid #E67E22; background:#3A2A10; }
+
+    /* Spinner */
+    .spinner { box-shadow:0 4px 16px rgba(26,82,118,.2); }
+
+    /* Sidebar footer level widget */
+    .sidebar-footer { margin-top:auto; padding:14px 10px; border-top:1px solid var(--sb-border); }
+    .sidebar-level { background:linear-gradient(135deg,rgba(26,82,118,.2),rgba(26,82,118,.1)); border:1px solid rgba(26,82,118,.25); border-radius:10px; padding:12px 14px; }
+    .sidebar-level-label { font-size:10px;color:var(--sb-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px; }
+    .sidebar-level-name  { font-size:12px;font-weight:700;color:#7EC8F0;margin-bottom:8px; }
+    .progress-bar-wrap  { background:rgba(255,255,255,.10);border-radius:10px;height:5px; }
+    .progress-bar-fill  { background:linear-gradient(90deg,#3B9EE8,#7EC8F0);border-radius:10px;height:5px;transition:width .5s cubic-bezier(.4,0,.2,1); }
   </style>
 </head>
 <body>
@@ -709,6 +882,7 @@
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
+      <div class="auth-logo-icon">🩺</div>
       <div class="logo-main">ECE OBES</div>
       <div class="logo-sub">Expediente Clínico de Obesidad</div>
       <div class="logo-parent">Sistema multidisciplinario · ECE META CORE</div>
@@ -732,7 +906,13 @@
 
   <!-- Header -->
   <header class="app-header">
-    <div class="logo">ECE <span style="opacity:1;font-weight:700;color:#A9CCE3">OBES</span></div>
+    <div class="logo">
+      <div class="logo-icon">🩺</div>
+      <div class="logo-texts">
+        <span class="logo-name">ECE OBES</span>
+        <span class="logo-sub">Obesidad · Multidisciplinario</span>
+      </div>
+    </div>
 
     <div class="header-patient" id="header-patient-btn" onclick="openModal('modal-search')" title="Cambiar paciente">
       <div id="header-patient-info">
@@ -873,7 +1053,7 @@
             </div>
             <div class="panel-body">
               <div class="timeline" id="dash-timeline">
-                <div class="tl-empty">Sin entradas aún</div>
+                <div class="tl-empty">📅<br>Sin entradas registradas aún</div>
               </div>
             </div>
           </div>
@@ -997,7 +1177,7 @@
                   </tr>
                 </thead>
                 <tbody id="tbody-measurements">
-                  <tr><td colspan="6" class="table-empty">Sin mediciones registradas</td></tr>
+                  <tr><td colspan="6" class="table-empty">⚖️<br>Sin mediciones registradas</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1061,7 +1241,7 @@
                 </tr>
               </thead>
               <tbody id="tbody-labs">
-                <tr><td colspan="9" class="table-empty">Sin laboratorios registrados</td></tr>
+                <tr><td colspan="9" class="table-empty">🧪<br>Sin laboratorios registrados</td></tr>
               </tbody>
             </table>
           </div>
@@ -1079,7 +1259,7 @@
                 <tr><th>Medicamento</th><th>Clase</th><th>Dosis actual</th><th>Inicio</th><th>%TWL esperado</th><th>Estado</th></tr>
               </thead>
               <tbody id="tbody-medications">
-                <tr><td colspan="6" class="table-empty">Sin medicamentos registrados</td></tr>
+                <tr><td colspan="6" class="table-empty">💊<br>Sin medicamentos registrados</td></tr>
               </tbody>
             </table>
           </div>
@@ -1120,7 +1300,7 @@
             <div class="section-card-header"><span class="section-card-title">📊 Historial de adherencia</span></div>
             <div class="section-card-body" style="padding:0">
               <table class="data-table"><thead><tr><th>Fecha</th><th>Adherencia %</th><th>Notas</th></tr></thead>
-              <tbody id="tbody-adherencia"><tr><td colspan="3" class="table-empty">Sin registros</td></tr></tbody></table>
+              <tbody id="tbody-adherencia"><tr><td colspan="3" class="table-empty">📊<br>Sin registros de adherencia</td></tr></tbody></table>
             </div>
           </div>
           <div class="section-card">
@@ -1156,7 +1336,7 @@
             <div class="section-card-header"><span class="section-card-title">📋 Historial de instrumentos</span></div>
             <div class="section-card-body" style="padding:0">
               <table class="data-table"><thead><tr><th>Fecha</th><th>Instrumento</th><th>Puntaje</th><th>Severidad</th><th>Interpretación</th></tr></thead>
-              <tbody id="tbody-assessments"><tr><td colspan="5" class="table-empty">Sin evaluaciones</td></tr></tbody></table>
+              <tbody id="tbody-assessments"><tr><td colspan="5" class="table-empty">🧠<br>Sin evaluaciones registradas</td></tr></tbody></table>
             </div>
           </div>
           <div class="section-card">
@@ -1202,7 +1382,7 @@
           <div class="section-card-header"><span class="section-card-title">📋 Historial de evaluaciones</span></div>
           <div class="section-card-body" style="padding:0">
             <table class="data-table"><thead><tr><th>Fecha</th><th>6MWT (m)</th><th>% Pred.</th><th>MET-min/sem</th><th>IPAQ</th><th>PAR-Q</th><th>Notas</th></tr></thead>
-            <tbody id="tbody-rehab"><tr><td colspan="7" class="table-empty">Sin evaluaciones</td></tr></tbody></table>
+            <tbody id="tbody-rehab"><tr><td colspan="7" class="table-empty">🏃<br>Sin evaluaciones registradas</td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -1242,7 +1422,7 @@
           <div class="section-card-header"><span class="section-card-title">📈 Seguimiento BOP / OHIP-14</span></div>
           <div class="section-card-body" style="padding:0">
             <table class="data-table"><thead><tr><th>Fecha</th><th>BOP %</th><th>OHIP-14</th><th>Notas</th></tr></thead>
-            <tbody id="tbody-dental"><tr><td colspan="4" class="table-empty">Sin seguimiento</td></tr></tbody></table>
+            <tbody id="tbody-dental"><tr><td colspan="4" class="table-empty">🦷<br>Sin seguimiento dental registrado</td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -1275,7 +1455,7 @@
             <div class="section-card-header"><span class="section-card-title">🎯 Seguimiento CPAP</span></div>
             <div class="section-card-body" style="padding:0">
               <table class="data-table"><thead><tr><th>Fecha</th><th>Adherencia %</th><th>Horas/noche</th><th>AHI residual</th><th>Notas</th></tr></thead>
-              <tbody id="tbody-cpap"><tr><td colspan="5" class="table-empty">Sin registros CPAP</td></tr></tbody></table>
+              <tbody id="tbody-cpap"><tr><td colspan="5" class="table-empty">😴<br>Sin registros CPAP</td></tr></tbody></table>
             </div>
           </div>
         </div>
@@ -1283,7 +1463,7 @@
           <div class="section-card-header"><span class="section-card-title">📋 Historial de cuestionarios</span></div>
           <div class="section-card-body" style="padding:0">
             <table class="data-table"><thead><tr><th>Fecha</th><th>Instrumento</th><th>Puntaje</th><th>Riesgo / Interpretación</th></tr></thead>
-            <tbody id="tbody-sleep-q"><tr><td colspan="4" class="table-empty">Sin cuestionarios</td></tr></tbody></table>
+            <tbody id="tbody-sleep-q"><tr><td colspan="4" class="table-empty">📋<br>Sin cuestionarios registrados</td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -2529,7 +2709,7 @@ function renderTimeline() {
     title: `PSG: AHI ${obesData.sleep.psg.ahi}/h · SpO₂ min ${obesData.sleep.psg.spo2Min}%`, sub: obesData.sleep.psg.interpretacion?.slice(0,60) });
   entries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  if (!entries.length) { $('dash-timeline').innerHTML = '<div class="tl-empty">Sin entradas aún — agrega mediciones o laboratorios en el módulo Médico</div>'; return; }
+  if (!entries.length) { $('dash-timeline').innerHTML = '<div class="tl-empty">📅<br>Sin entradas aún — agrega mediciones o laboratorios en el módulo Médico</div>'; return; }
 
   $('dash-timeline').innerHTML = entries.slice(0, 20).map(e => `
     <div class="tl-entry">
@@ -2602,7 +2782,7 @@ function renderMedicoView() {
         <td>${m.icc || '—'}</td>
         <td>${m.ict || '—'}</td>
       </tr>`).join('')
-    : '<tr><td colspan="6" class="table-empty">Sin mediciones registradas</td></tr>';
+    : '<tr><td colspan="6" class="table-empty">⚖️<br>Sin mediciones registradas</td></tr>';
 
   // Current indices
   if (mList[0]) {
@@ -2645,7 +2825,7 @@ function renderMedicoView() {
         <td>${l.tg || '—'}</td>
         <td>${l.tsh || '—'}</td>
       </tr>`).join('')
-    : '<tr><td colspan="9" class="table-empty">Sin laboratorios registrados</td></tr>';
+    : '<tr><td colspan="9" class="table-empty">🧪<br>Sin laboratorios registrados</td></tr>';
 
   // Medications table
   $('tbody-medications').innerHTML = obesData.medications.length
@@ -2660,7 +2840,7 @@ function renderMedicoView() {
           <td><span class="pill green">Activo</span></td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="6" class="table-empty">Sin medicamentos registrados</td></tr>';
+    : '<tr><td colspan="6" class="table-empty">💊<br>Sin medicamentos registrados</td></tr>';
 }
 
 function setCalc(id, val, cls = '') {
@@ -2896,7 +3076,7 @@ function renderNutritionView() {
         <td><span class="pill ${a.porcentaje >= 80 ? 'green' : a.porcentaje >= 60 ? 'yellow' : 'red'}">${a.porcentaje}%</span></td>
         <td>${a.notas || '—'}</td>
       </tr>`).join('')
-    : '<tr><td colspan="3" class="table-empty">Sin registros de adherencia</td></tr>';
+    : '<tr><td colspan="3" class="table-empty">📊<br>Sin registros de adherencia</td></tr>';
 
   // Alerts
   const alertEl = $('nutri-alert');
@@ -3032,7 +3212,7 @@ function renderPsychologyView() {
         <td><span class="pill ${a.tipo==='PROCHASKA' ? 'blue' : 'yellow'}">${a.severidad || '—'}</span></td>
         <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(a.interpretacion||'').slice(0,80)}</td>
       </tr>`).join('')
-    : '<tr><td colspan="5" class="table-empty">Sin evaluaciones registradas</td></tr>';
+    : '<tr><td colspan="5" class="table-empty">🧠<br>Sin evaluaciones registradas</td></tr>';
 
   // SOAP notes
   const soapEl = $('psych-soap-body');
@@ -3181,7 +3361,7 @@ function renderRehabView() {
         <td><span class="pill ${s.parq === 'Seguro' ? 'green' : 'yellow'}">${s.parq || '—'}</span></td>
         <td style="font-size:12px">${(s.notas||'').slice(0,50)}</td>
       </tr>`).join('')
-    : '<tr><td colspan="7" class="table-empty">Sin evaluaciones registradas</td></tr>';
+    : '<tr><td colspan="7" class="table-empty">🏃<br>Sin evaluaciones registradas</td></tr>';
 
   // Rehab progress chart
   const chartData = allEvals.slice().reverse();
@@ -3386,7 +3566,7 @@ function renderDentalView() {
         <td>${s.ohip14 !== null && s.ohip14 !== undefined ? s.ohip14 : '—'}</td>
         <td style="font-size:12px">${(s.notas||'').slice(0,60)}</td>
       </tr>`).join('')
-    : '<tr><td colspan="4" class="table-empty">Sin seguimiento dental</td></tr>';
+    : '<tr><td colspan="4" class="table-empty">🦷<br>Sin seguimiento dental registrado</td></tr>';
 }
 
 function calcDMFT() {
@@ -3502,7 +3682,7 @@ function renderSleepView() {
         <td>${s.ahiResidual !== null && s.ahiResidual !== undefined ? s.ahiResidual : '—'}</td>
         <td style="font-size:12px">${(s.notas||'').slice(0,50)}</td>
       </tr>`).join('')
-    : '<tr><td colspan="5" class="table-empty">Sin registros CPAP</td></tr>';
+    : '<tr><td colspan="5" class="table-empty">😴<br>Sin registros CPAP</td></tr>';
 
   // Cuestionarios table
   $('tbody-sleep-q').innerHTML = cuestionarios.length
@@ -3512,7 +3692,7 @@ function renderSleepView() {
         <td>${q.puntaje !== null && q.puntaje !== undefined ? q.puntaje : '—'}</td>
         <td><span class="pill ${q.riesgo === 'Alto' || q.tipo === 'STOP-BANG' && q.puntaje >= 5 ? 'red' : 'yellow'}">${q.riesgo || q.interpretacion || '—'}</span></td>
       </tr>`).join('')
-    : '<tr><td colspan="4" class="table-empty">Sin cuestionarios registrados</td></tr>';
+    : '<tr><td colspan="4" class="table-empty">📋<br>Sin cuestionarios registrados</td></tr>';
 }
 
 function updateSleepForm() {
