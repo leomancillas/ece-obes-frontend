@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     /* ─── VARIABLES ──────────────────────────────────────────── */
     :root {
@@ -874,6 +876,52 @@
     .sidebar-level-name  { font-size:12px;font-weight:700;color:#7EC8F0;margin-bottom:8px; }
     .progress-bar-wrap  { background:rgba(255,255,255,.10);border-radius:10px;height:5px; }
     .progress-bar-fill  { background:linear-gradient(90deg,#3B9EE8,#7EC8F0);border-radius:10px;height:5px;transition:width .5s cubic-bezier(.4,0,.2,1); }
+
+    /* ─── DARK MODE ─────────────────────────────────────────────── */
+    body.dark {
+      --primary: #3B9EE8;
+      --primary-dark: #2176AE;
+      --secondary: #2E8B57;
+      --bg: #0F1923;
+      --surface: #16202E;
+      --border: rgba(255,255,255,.1);
+      --text: rgba(255,255,255,.92);
+      --text-muted: rgba(255,255,255,.5);
+      --shadow: 0 2px 8px rgba(0,0,0,.4);
+      --sb-bg: #0B111A;
+      --sb-text: rgba(255,255,255,.82);
+    }
+    body.dark .app-header { background: linear-gradient(90deg,#0B111A 0%,#0F1923 50%,#122840 100%); }
+    body.dark .auth-card { background: #16202E; border: 1px solid rgba(255,255,255,.08); }
+    body.dark .modal { background: #16202E; border: 1px solid rgba(255,255,255,.1); }
+    body.dark .section-card { background: #16202E; border-color: rgba(255,255,255,.08); }
+    body.dark .stat-card { background: #1A2636; border-color: rgba(255,255,255,.08); }
+    body.dark .data-table th { background: #0F1923; color: rgba(255,255,255,.6); }
+    body.dark .data-table td { border-color: rgba(255,255,255,.06); color: rgba(255,255,255,.82); }
+    body.dark .data-table tr:hover { background: rgba(255,255,255,.03); }
+    body.dark input, body.dark select, body.dark textarea {
+      background: #0F1923; border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.9);
+    }
+    body.dark .eoss-option { border-color: rgba(255,255,255,.12) !important; }
+    body.dark .eoss-option:hover { background: rgba(255,255,255,.04); }
+    body.dark .section-card-header { background: linear-gradient(90deg,rgba(255,255,255,.03),transparent); }
+    body.dark .sidebar { background: var(--sb-bg); }
+    body.dark .sidebar-item:hover { background: rgba(255,255,255,.06); }
+    body.dark .next-step-card { background: #1A2636; border-color: rgba(255,255,255,.08); }
+    body.dark .pill.green { background: #1A3A2E; color: #5EBD8C; }
+    body.dark .pill.red   { background: #3A1A1A; color: #E87070; }
+    body.dark .pill.yellow { background: #3A2E10; color: #D4AC0D; }
+    body.dark .pill.blue  { background: #1A2A3A; color: #7FBFEF; }
+    body.dark .module-header { background: #1A2636; }
+
+    /* Dark mode toggle button */
+    .dark-toggle {
+      background: none; border: 1px solid rgba(255,255,255,.25); border-radius: 20px;
+      color: rgba(255,255,255,.85); padding: 5px 12px; cursor: pointer;
+      font-size: 13px; display: flex; align-items: center; gap: 6px;
+      transition: all .2s; margin-left: 8px; white-space: nowrap;
+    }
+    .dark-toggle:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.4); }
   </style>
 </head>
 <body>
@@ -921,6 +969,7 @@
     </div>
 
     <div class="header-actions">
+      <button class="dark-toggle" id="btn-dark-toggle" onclick="toggleDarkMode()" title="Modo oscuro">🌙 Oscuro</button>
       <button onclick="openModal('modal-search')">🔍 Paciente</button>
       <a href="https://leomancillas.github.io/ece-metacore-frontend" target="_blank">
         <button>↩ META CORE</button>
@@ -970,6 +1019,10 @@
         <div class="sidebar-item" data-view="sueno" onclick="switchView('sueno')">
           <span class="mod-dot" style="background:var(--mod-sueno)"></span>
           <span>Medicina del Sueño</span>
+        </div>
+        <div class="sidebar-item" data-view="cme" onclick="switchView('cme')">
+          <span class="mod-dot" style="background:#7D6608"></span>
+          <span>CME / Educación</span>
         </div>
       </div>
       <div class="sidebar-footer">
@@ -1275,6 +1328,80 @@
             </table>
           </div>
         </div>
+
+        <!-- ASCVD Risk Calculator -->
+        <div class="section-card mt-16" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">❤️ Riesgo cardiovascular ASCVD 10 años (PCE)</span>
+            <button class="btn-add" style="background:#C0392B" onclick="calcASCVD()">Calcular</button>
+          </div>
+          <div class="section-card-body">
+            <div class="form-row cols-3" style="margin-bottom:12px">
+              <div class="form-group">
+                <label style="font-size:11px">Edad (años)</label>
+                <input type="number" id="ascvd-edad" placeholder="45" min="20" max="79" />
+              </div>
+              <div class="form-group">
+                <label style="font-size:11px">Sexo</label>
+                <select id="ascvd-sexo">
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-size:11px">Raza</label>
+                <select id="ascvd-raza">
+                  <option value="blanco">Blanco / Latino</option>
+                  <option value="afro">Afroamericano</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row cols-3" style="margin-bottom:12px">
+              <div class="form-group">
+                <label style="font-size:11px">Colesterol total (mg/dL)</label>
+                <input type="number" id="ascvd-col-total" placeholder="180" />
+              </div>
+              <div class="form-group">
+                <label style="font-size:11px">HDL (mg/dL)</label>
+                <input type="number" id="ascvd-hdl" placeholder="50" />
+              </div>
+              <div class="form-group">
+                <label style="font-size:11px">PAS (mmHg)</label>
+                <input type="number" id="ascvd-pas" placeholder="130" />
+              </div>
+            </div>
+            <div style="display:flex;gap:20px;margin-bottom:16px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input type="checkbox" id="ascvd-hta-tx" style="accent-color:var(--primary)" /> En tratamiento antihipertensivo
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input type="checkbox" id="ascvd-dm" style="accent-color:var(--primary)" /> Diabetes mellitus
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input type="checkbox" id="ascvd-tabaco" style="accent-color:var(--primary)" /> Tabaquismo activo
+              </label>
+            </div>
+            <div id="ascvd-result" style="display:none;padding:14px;border-radius:8px;text-align:center"></div>
+          </div>
+        </div>
+
+        <!-- Bariatric Procedures -->
+        <div class="section-card mt-16" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">🔪 Procedimientos bariátricos / metabólicos</span>
+            <button class="btn-add" style="background:#6E2F1A" onclick="openModal('modal-procedure')">+ Procedimiento</button>
+          </div>
+          <div class="section-card-body" style="padding:0">
+            <table class="data-table">
+              <thead>
+                <tr><th>Fecha</th><th>Procedimiento</th><th>Técnica</th><th>Peso preop (kg)</th><th>IMC preop</th><th>Cirujano</th><th>Estado</th></tr>
+              </thead>
+              <tbody id="tbody-procedures">
+                <tr><td colspan="7" class="table-empty">🔪<br>Sin procedimientos registrados</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- Stub views for other modules -->
@@ -1481,7 +1608,128 @@
 
     </main>
   </div>
-</div>
+      </div>
+
+      <!-- ─── MÓDULO CME: EDUCACIÓN MÉDICA CONTINUA ────────────── -->
+      <div id="view-cme" class="module-view">
+        <div class="module-header" style="--mod-color:#7D6608">
+          <div class="module-icon-lg" style="background:linear-gradient(135deg,#7D6608,#B7950B)">🎓</div>
+          <div>
+            <h2>Educación Médica Continua</h2>
+            <div class="module-sub">Módulos · Casos clínicos · Quiz · Créditos CME</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn-add" style="background:#7D6608" onclick="openModal('modal-cme-quiz')">▶ Iniciar Quiz</button>
+          </div>
+        </div>
+
+        <!-- Progreso general -->
+        <div class="stats-row" style="margin-bottom:16px">
+          <div class="stat-card">
+            <div class="stat-value" id="cme-creditos-val">0</div>
+            <div class="stat-label">Créditos CME</div>
+            <div class="stat-delta" id="cme-creditos-sub">de 20 anuales</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="cme-modulos-val">0/6</div>
+            <div class="stat-label">Módulos completados</div>
+            <div class="stat-delta" id="cme-modulos-sub"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="cme-casos-val">0</div>
+            <div class="stat-label">Casos clínicos</div>
+            <div class="stat-delta" id="cme-casos-sub">resueltos</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="cme-quiz-avg-val">—</div>
+            <div class="stat-label">Promedio quiz</div>
+            <div class="stat-delta" id="cme-quiz-avg-sub">% correcto</div>
+          </div>
+        </div>
+
+        <!-- Barra de progreso anual -->
+        <div class="section-card" style="margin-bottom:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">📊 Progreso anual CME 2026</span>
+          </div>
+          <div class="section-card-body">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <div style="flex:1;background:var(--border);border-radius:8px;height:12px;overflow:hidden">
+                <div id="cme-progress-bar" style="height:100%;background:linear-gradient(90deg,#7D6608,#D4AC0D);border-radius:8px;width:0%;transition:width .5s"></div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap" id="cme-progress-txt">0 / 20 créditos</div>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted)">La AMOMAC recomienda 20 créditos anuales para médicos en obesidad. Cada módulo completado otorga entre 1-3 créditos.</div>
+          </div>
+        </div>
+
+        <!-- Módulos de aprendizaje -->
+        <div class="section-card" style="margin-bottom:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">📚 Módulos de aprendizaje</span>
+          </div>
+          <div class="section-card-body" id="cme-modules-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Casos clínicos -->
+        <div class="module-grid" style="margin-bottom:16px">
+          <div class="section-card">
+            <div class="section-card-header">
+              <span class="section-card-title">🩺 Casos clínicos interactivos</span>
+              <button class="btn-add" style="background:#7D6608" onclick="loadNextCase()">→ Siguiente caso</button>
+            </div>
+            <div class="section-card-body" id="cme-case-body">
+              <div class="text-muted text-sm text-center" style="padding:24px">
+                <div style="font-size:32px;margin-bottom:8px">🩺</div>
+                <div>Haz clic en "Siguiente caso" para comenzar un caso clínico.</div>
+              </div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-card-header">
+              <span class="section-card-title">📋 Historial de actividad</span>
+            </div>
+            <div class="section-card-body" style="padding:0">
+              <table class="data-table">
+                <thead><tr><th>Fecha</th><th>Actividad</th><th>Tipo</th><th>Créditos</th><th>Resultado</th></tr></thead>
+                <tbody id="tbody-cme-history">
+                  <tr><td colspan="5" class="table-empty">🎓<br>Sin actividad CME registrada</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recursos y referencias -->
+        <div class="section-card">
+          <div class="section-card-header">
+            <span class="section-card-title">📖 Recursos y guías clínicas</span>
+          </div>
+          <div class="section-card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+            <a href="https://www.obesitycanada.ca/guidelines/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+              <span style="font-size:20px">🍁</span><div><div style="font-size:12px;font-weight:700">Guías Canadienses de Obesidad 2020</div><div style="font-size:11px;color:var(--text-muted)">Obesity Canada — evidencia sólida</div></div>
+            </a>
+            <a href="https://www.endocrine.org/clinical-practice-guidelines/obesity" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+              <span style="font-size:20px">🔬</span><div><div style="font-size:12px;font-weight:700">Endocrine Society — Obesity CPG</div><div style="font-size:11px;color:var(--text-muted)">Guía práctica endocrinológica</div></div>
+            </a>
+            <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8329366/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+              <span style="font-size:20px">📊</span><div><div style="font-size:12px;font-weight:700">EOSS — Edmonton Staging System</div><div style="font-size:11px;color:var(--text-muted)">Artículo original — Sharma & Kushner</div></div>
+            </a>
+            <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2206038" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+              <span style="font-size:20px">💉</span><div><div style="font-size:12px;font-weight:700">Tirzepatide SURMOUNT-1 (NEJM)</div><div style="font-size:11px;color:var(--text-muted)">%TWL hasta 20.9% — ensayo pivotal</div></div>
+            </a>
+            <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2032183" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+              <span style="font-size:20px">💊</span><div><div style="font-size:12px;font-weight:700">Semaglutide STEP-1 (NEJM)</div><div style="font-size:11px;color:var(--text-muted)">%TWL 14.9% — semaglutide 2.4mg</div></div>
+            </a>
+            <a href="https://doi.org/10.1001/jama.2023.4803" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+              <span style="font-size:20px">❤️</span><div><div style="font-size:12px;font-weight:700">SELECT Trial — Sema Cardiovascular</div><div style="font-size:11px;color:var(--text-muted)">Reducción 20% eventos CV mayores</div></div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
 
 <!-- ─── MODALS ─────────────────────────────────────────────────── -->
 
@@ -2221,6 +2469,95 @@
   <div class="spinner"></div>
 </div>
 
+<!-- Bariatric Procedure Modal -->
+<div class="modal-overlay" id="modal-procedure">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h3>🔪 Procedimiento bariátrico / metabólico</h3>
+      <button class="modal-close" onclick="closeModal('modal-procedure')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Tipo de procedimiento</label>
+          <select id="proc-tipo">
+            <option value="">— Seleccionar —</option>
+            <option value="manga_gastrica">Manga gástrica (Sleeve gastrectomy)</option>
+            <option value="bypass_gastrico">Bypass gástrico en Y de Roux (RYGB)</option>
+            <option value="banda_gastrica">Banda gástrica ajustable</option>
+            <option value="bypass_una_anastomosis">Bypass de una anastomosis (OAGB/MGB)</option>
+            <option value="balon_intragastrico">Balón intragástrico</option>
+            <option value="revision">Procedimiento de revisión</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Abordaje</label>
+          <select id="proc-abordaje">
+            <option value="laparoscopico">Laparoscópico</option>
+            <option value="robotico">Robótico</option>
+            <option value="abierto">Abierto</option>
+            <option value="endoscopico">Endoscópico</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Fecha del procedimiento</label>
+          <input type="date" id="proc-fecha" />
+        </div>
+        <div class="form-group">
+          <label>Cirujano / institución</label>
+          <input type="text" id="proc-cirujano" placeholder="Dr. Nombre Apellido — Hospital" />
+        </div>
+      </div>
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label>Peso preoperatorio (kg)</label>
+          <input type="number" id="proc-peso-pre" step="0.1" placeholder="ej. 120" />
+        </div>
+        <div class="form-group">
+          <label>IMC preoperatorio</label>
+          <input type="number" id="proc-bmi-pre" step="0.1" placeholder="ej. 45.2" />
+        </div>
+        <div class="form-group">
+          <label>Peso ideal (kg)</label>
+          <input type="number" id="proc-peso-ideal" step="0.1" placeholder="ej. 65" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Complicaciones postoperatorias</label>
+        <textarea id="proc-complicaciones" rows="2" placeholder="Ninguna / Describir complicaciones…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Notas clínicas</label>
+        <textarea id="proc-notas" rows="2" placeholder="Indicaciones, hallazgos quirúrgicos, plan de seguimiento…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-procedure')">Cancelar</button>
+      <button class="btn-save" onclick="saveProcedure()">💾 Guardar procedimiento</button>
+    </div>
+  </div>
+</div>
+
+<!-- CME Quiz Modal -->
+<div class="modal-overlay" id="modal-cme-quiz">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h3 id="quiz-modal-title">🎓 Quiz CME</h3>
+      <button class="modal-close" onclick="closeModal('modal-cme-quiz')">×</button>
+    </div>
+    <div class="modal-body" id="quiz-modal-body">
+      <!-- rendered by JS -->
+    </div>
+    <div class="modal-footer" id="quiz-modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-cme-quiz')">Cancelar</button>
+      <button class="btn-save" id="quiz-submit-btn" onclick="submitQuizAnswer()">Responder →</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toasts -->
 <div id="toast-container"></div>
 
@@ -2229,6 +2566,13 @@
 'use strict';
 
 // ─── CONFIG ───────────────────────────────────────────────────────
+// ─── SUPABASE CONFIG ─────────────────────────────────────────────
+// ⚠️ REEMPLAZA con tus credenciales reales de Supabase (proyecto ECE META CORE)
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Legacy API fallback (mantener para compatibilidad con endpoints META CORE)
 const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : 'https://ece-metacore-api-production.up.railway.app';
@@ -2334,23 +2678,36 @@ window.addEventListener('DOMContentLoaded', () => {
 $('btn-login').addEventListener('click', async () => {
   const email = $('auth-email').value.trim();
   const pwd   = $('auth-password').value;
-  if (!email || !pwd) { showAuthError('Ingresa correo y contraseña'); return; }
+  if (!email || !pwd) { showAuthError('Ingresa email y contraseña'); return; }
+
   $('btn-login').disabled = true;
   $('btn-login').textContent = 'Iniciando…';
   $('auth-error').style.display = 'none';
+
   try {
-    const data = await fetch(API + '/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pwd }),
-    }).then(r => r.json());
-    if (!data.token) throw new Error(data.error || data.message || 'Credenciales inválidas');
-    localStorage.setItem('ece_token', data.token);
-    localStorage.setItem('ece_user', JSON.stringify(data.user));
-    currentUser = data.user;
-    showApp();
+    // Try Supabase auth first
+    if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co') {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+      if (error) throw error;
+      currentUser = { email: data.user.email, id: data.user.id, nombre: data.user.user_metadata?.nombre || email.split('@')[0] };
+      localStorage.setItem('ece_token', data.session.access_token);
+      showApp();
+      await loadRecentPatients();
+    } else {
+      // Fallback to legacy API when Supabase not yet configured
+      const res = await fetch(API + '/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pwd }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Error de autenticación');
+      currentUser = data.user;
+      localStorage.setItem('ece_token', data.token);
+      showApp();
+      await loadRecentPatients();
+    }
   } catch (err) {
-    showAuthError(err.message);
+    showAuthError(err.message || 'Error al iniciar sesión');
   } finally {
     $('btn-login').disabled = false;
     $('btn-login').textContent = 'Iniciar sesión';
@@ -2543,8 +2900,7 @@ function renderPatientHeader() {
 // ─── OBES DATA (localStorage per patient until new API endpoints) ─
 const STORE_KEY = pid => `ece_obes_${pid}`;
 
-function loadOBESData(p) {
-  const raw = localStorage.getItem(STORE_KEY(p.id));
+async function loadOBESData(p) {
   const def = {
     measurements: [], labs: [], medications: [], eoss: null, eossNotes: '',
     psychology: { assessments: [], notas: [] },
@@ -2554,7 +2910,28 @@ function loadOBESData(p) {
     sleep: { cuestionarios: [], psg: null, cpap: { fechaInicio: null, seguimiento: [] } },
     comorbidities: [], goals: [],
   };
-  obesData = raw ? Object.assign({}, def, JSON.parse(raw)) : def;
+
+  // Try Supabase first, fallback to localStorage
+  let loaded = false;
+  if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' && currentUser) {
+    try {
+      const { data, error } = await supabase
+        .from('obes_patient_data')
+        .select('data')
+        .eq('patient_id', p.id)
+        .single();
+      if (data && data.data) {
+        obesData = Object.assign({}, def, data.data);
+        loaded = true;
+      }
+    } catch (e) { console.warn('Supabase load failed, using localStorage'); }
+  }
+
+  if (!loaded) {
+    const raw = localStorage.getItem(STORE_KEY(p.id));
+    obesData = raw ? Object.assign({}, def, JSON.parse(raw)) : def;
+  }
+
   renderDashboard();
   renderMedicoView();
   renderNutritionView();
@@ -2564,9 +2941,25 @@ function loadOBESData(p) {
   renderSleepView();
 }
 
-function saveOBESData() {
+async function saveOBESData() {
   if (!currentPatient) return;
+  // Save to localStorage always (fast, offline)
   localStorage.setItem(STORE_KEY(currentPatient.id), JSON.stringify(obesData));
+
+  // Save to Supabase if configured
+  if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' && currentUser) {
+    try {
+      const { error } = await supabase
+        .from('obes_patient_data')
+        .upsert({
+          patient_id: currentPatient.id,
+          user_id: currentUser.id,
+          data: obesData,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'patient_id' });
+      if (error) console.warn('Supabase sync error:', error.message);
+    } catch (e) { console.warn('Supabase offline, using localStorage'); }
+  }
 }
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
@@ -2582,6 +2975,7 @@ function switchView(view) {
   if (sidebarItem) sidebarItem.classList.add('active');
 
   if (!currentPatient) { $('no-patient').style.display = 'flex'; } else { $('no-patient').style.display = 'none'; }
+  if (view === 'cme') renderCMEView();
 }
 
 // ─── DASHBOARD RENDER ─────────────────────────────────────────────
@@ -2858,6 +3252,8 @@ function renderMedicoView() {
         </tr>`;
       }).join('')
     : '<tr><td colspan="6" class="table-empty">💊<br>Sin medicamentos registrados</td></tr>';
+
+  renderProcedures();
 }
 
 function setCalc(id, val, cls = '') {
@@ -3915,6 +4311,425 @@ function saveCPAP() {
   $('cpap-adh').value = 75;
   $('cpap-adh-display').textContent = '75';
 }
+
+// ─── ASCVD 10-YEAR RISK (Pooled Cohort Equations) ─────────────────
+function calcASCVD() {
+  const edad    = parseFloat($('ascvd-edad').value);
+  const sexo    = $('ascvd-sexo').value;
+  const raza    = $('ascvd-raza').value;
+  const colTotal = parseFloat($('ascvd-col-total').value);
+  const hdl     = parseFloat($('ascvd-hdl').value);
+  const pas     = parseFloat($('ascvd-pas').value);
+  const htaTx   = $('ascvd-hta-tx').checked;
+  const dm      = $('ascvd-dm').checked;
+  const tabaco  = $('ascvd-tabaco').checked;
+
+  if (!edad || !colTotal || !hdl || !pas) { showToast('Completa todos los campos requeridos', 'warn'); return; }
+  if (edad < 20 || edad > 79) { showToast('Edad debe estar entre 20 y 79 años', 'warn'); return; }
+
+  const lnEdad = Math.log(edad);
+  const lnCol  = Math.log(colTotal);
+  const lnHdl  = Math.log(hdl);
+  const lnPas  = Math.log(pas);
+
+  let score = 0, baseline = 0, meanCoeff = 0;
+
+  if (sexo === 'M' && raza === 'afro') {
+    score = 2.469 * lnEdad + 0.302 * lnCol - 0.307 * lnHdl + (htaTx ? 1.916 : 1.809) * lnPas + (tabaco ? 0.549 : 0) + (dm ? 0.645 : 0);
+    baseline = 0.8954; meanCoeff = 19.54;
+  } else if (sexo === 'M') {
+    score = 12.344 * lnEdad + 11.853 * lnCol - 2.664 * lnEdad * lnCol - 7.990 * lnHdl + 1.769 * lnEdad * lnHdl + (htaTx ? 2.432 : 1.764) * lnPas + (tabaco ? 7.837 - 1.795 * lnEdad : 0) + (dm ? 0.661 : 0);
+    baseline = 0.9144; meanCoeff = 61.18;
+  } else if (raza === 'afro') {
+    score = 17.1141 * lnEdad + 0.9396 * lnCol - 18.9196 * lnHdl + 4.4748 * lnEdad * lnHdl + (htaTx ? 29.2907 * lnPas - 6.4321 * lnEdad * lnPas : 27.8197 * lnPas - 6.0873 * lnEdad * lnPas) + (tabaco ? 0.8738 : 0) + (dm ? 0.8738 : 0);
+    baseline = 0.9533; meanCoeff = 86.61;
+  } else {
+    score = -29.799 * lnEdad + 4.884 * lnEdad * lnEdad + 13.540 * lnCol - 3.114 * lnEdad * lnCol - 13.578 * lnHdl + 3.149 * lnEdad * lnHdl + (htaTx ? 2.019 : 1.957) * lnPas + (tabaco ? 7.574 - 1.665 * lnEdad : 0) + (dm ? 0.661 : 0);
+    baseline = 0.9665; meanCoeff = -29.18;
+  }
+
+  const risk = (1 - Math.pow(baseline, Math.exp(score - meanCoeff))) * 100;
+  const r = Math.min(Math.max(risk, 0), 100).toFixed(1);
+  const cat = r < 5 ? { label: 'Bajo', color: '#1D8348', bg: 'rgba(30,130,70,.1)' }
+            : r < 7.5 ? { label: 'Borderline', color: '#9A7D0A', bg: 'rgba(212,172,13,.1)' }
+            : r < 20 ? { label: 'Intermedio', color: '#A04000', bg: 'rgba(160,64,0,.1)' }
+            : { label: 'Alto', color: '#C0392B', bg: 'rgba(192,57,43,.1)' };
+
+  const resPAS = $('ascvd-result');
+  resPAS.style.display = 'block';
+  resPAS.style.background = cat.bg;
+  resPAS.style.border = `1px solid ${cat.color}`;
+  resPAS.innerHTML = `
+    <div style="font-size:28px;font-weight:800;color:${cat.color}">${r}%</div>
+    <div style="font-size:14px;font-weight:700;color:${cat.color}">Riesgo ${cat.label}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Riesgo de eventos cardiovasculares mayores a 10 años (PCE — AHA/ACC 2013)</div>
+    ${r >= 7.5 ? `<div style="margin-top:8px;font-size:11px;color:${cat.color};font-weight:600">💊 Considerar estatina de alta intensidad · Meta LDL &lt;70 mg/dL</div>` : ''}
+    ${r >= 20 ? `<div style="font-size:11px;color:${cat.color};font-weight:600">⚠️ Riesgo muy alto — evaluación cardiológica y tratamiento agresivo</div>` : ''}`;
+
+  showToast(`ASCVD 10 años: ${r}% — Riesgo ${cat.label}`, r >= 7.5 ? 'warn' : 'success');
+}
+
+// ─── BARIATRIC PROCEDURES ─────────────────────────────────────────
+function saveProcedure() {
+  if (!currentPatient) return;
+  const tipo = $('proc-tipo').value;
+  if (!tipo) { showToast('Selecciona el tipo de procedimiento', 'warn'); return; }
+
+  const PROC_NAMES = {
+    manga_gastrica: 'Manga gástrica',
+    bypass_gastrico: 'Bypass gástrico RYGB',
+    banda_gastrica: 'Banda gástrica ajustable',
+    bypass_una_anastomosis: 'Bypass una anastomosis (OAGB)',
+    balon_intragastrico: 'Balón intragástrico',
+    revision: 'Procedimiento de revisión',
+    otro: 'Otro',
+  };
+
+  const entry = {
+    id: Date.now(),
+    fecha:          $('proc-fecha').value || new Date().toISOString().split('T')[0],
+    tipo,
+    nombre:         PROC_NAMES[tipo] || tipo,
+    abordaje:       $('proc-abordaje').value,
+    cirujano:       $('proc-cirujano').value,
+    pesoPre:        parseFloat($('proc-peso-pre').value) || null,
+    bmiPre:         parseFloat($('proc-bmi-pre').value) || null,
+    pesoIdeal:      parseFloat($('proc-peso-ideal').value) || null,
+    complicaciones: $('proc-complicaciones').value,
+    notas:          $('proc-notas').value,
+  };
+
+  if (!obesData.procedures) obesData.procedures = [];
+  obesData.procedures.push(entry);
+  saveOBESData();
+  renderProcedures();
+  closeModal('modal-procedure');
+  showToast('Procedimiento registrado');
+  ['proc-cirujano','proc-complicaciones','proc-notas'].forEach(id => { const el = $(id); if(el) el.value = ''; });
+  ['proc-peso-pre','proc-bmi-pre','proc-peso-ideal'].forEach(id => { const el = $(id); if(el) el.value = ''; });
+}
+
+function renderProcedures() {
+  const procs = (obesData.procedures || []).slice().sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+  $('tbody-procedures').innerHTML = procs.length
+    ? procs.map(p => `<tr>
+        <td>${new Date(p.fecha).toLocaleDateString('es-MX')}</td>
+        <td><b>${p.nombre}</b></td>
+        <td>${p.abordaje || '—'}</td>
+        <td>${p.pesoPre || '—'}</td>
+        <td>${p.bmiPre || '—'}</td>
+        <td>${p.cirujano || '—'}</td>
+        <td><span class="pill green">Registrado</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" class="table-empty">🔪<br>Sin procedimientos registrados</td></tr>';
+}
+
+// ─── CME MODULE ───────────────────────────────────────────────────
+const CME_MODULES = [
+  { id: 1, title: 'Fisiopatología de la obesidad', icon: '🧬', creditos: 2, duracion: '45 min', categoria: 'Ciencias básicas', nivel: 'Intermedio',
+    temas: ['Tejido adiposo como órgano endocrino','Resistencia a leptina e insulina','Inflamación crónica de bajo grado','Eje intestino-cerebro y regulación del apetito'],
+    quiz: [
+      { p: '¿Cuál hormona secretada por el tejido adiposo inhibe el apetito?', ops: ['Grelina','Leptina','Cortisol','Neuropéptido Y'], r: 1 },
+      { p: 'El HOMA-IR se calcula como:', ops: ['Glucosa × insulina / 22.5','Glucosa × insulina / 405','Insulina / glucosa','Glucosa / insulina × 100'], r: 1 },
+      { p: '¿Qué citocina pro-inflamatoria está elevada en la obesidad visceral?', ops: ['IL-10','IL-4','TNF-α','IL-2'], r: 2 },
+    ]
+  },
+  { id: 2, title: 'EOSS — Edmonton Obesity Staging System', icon: '📊', creditos: 1, duracion: '20 min', categoria: 'Evaluación clínica', nivel: 'Básico',
+    temas: ['Historia y fundamentos del EOSS','Estadios 0-4: criterios diagnósticos','EOSS vs. IMC: ventajas pronósticas','Aplicación clínica y toma de decisiones'],
+    quiz: [
+      { p: 'Un paciente con DM2 controlada e HTA tratada corresponde a EOSS estadio:', ops: ['0','1','2','3'], r: 2 },
+      { p: '¿Cuál es la principal ventaja del EOSS sobre el IMC?', ops: ['Es más fácil de calcular','Predice mejor mortalidad y necesidad de tratamiento','Requiere menos tiempo','Está validado internacionalmente'], r: 1 },
+      { p: 'EOSS estadio 4 implica:', ops: ['Solo obesidad clase III','Comorbilidades en etapa terminal','Necesidad de cirugía bariátrica','Resistencia a todos los tratamientos'], r: 1 },
+    ]
+  },
+  { id: 3, title: 'Farmacoterapia anti-obesidad 2024-2026', icon: '💊', creditos: 3, duracion: '60 min', categoria: 'Terapéutica', nivel: 'Avanzado',
+    temas: ['Agonistas GLP-1: semaglutida, liraglutida','Agonistas duales GIP/GLP-1: tirzepatida','Mecanismos de acción y evidencia clínica','Selección del agente según fenotipo del paciente','Manejo de efectos adversos y escalada de dosis'],
+    quiz: [
+      { p: '¿Cuál fármaco logra mayor %TWL promedio en ensayos clínicos?', ops: ['Semaglutida 2.4mg','Tirzepatida 15mg','Liraglutida 3mg','Orlistat 120mg'], r: 1 },
+      { p: 'El ensayo SELECT demostró que semaglutida reduce eventos cardiovasculares en:', ops: ['Pacientes con DM2','Pacientes con obesidad sin DM2 previos CV','Pacientes postbariátricos','Todos los pacientes con obesidad'], r: 1 },
+      { p: 'Tirzepatida actúa como agonista de:', ops: ['GLP-1 únicamente','GIP únicamente','GLP-1 y GIP dual','GLP-1, GIP y glucagón triple'], r: 2 },
+    ]
+  },
+  { id: 4, title: 'Nutrición clínica en obesidad', icon: '🥗', creditos: 2, duracion: '40 min', categoria: 'Nutrición', nivel: 'Intermedio',
+    temas: ['Cálculo de gasto energético — Mifflin-St Jeor','Distribución de macronutrimentos','Patrones alimentarios: mediterráneo, DASH, bajo en carbohidratos','TFEQ-R21: evaluación de conducta alimentaria'],
+    quiz: [
+      { p: 'La fórmula de Mifflin-St Jeor calcula:', ops: ['IMC','Gasto energético basal (GEB)','Distribución de macros','Porcentaje de grasa corporal'], r: 1 },
+      { p: '¿Qué dominio NO evalúa el TFEQ-R21?', ops: ['Restricción cognitiva','Desinhibición','Hambre','Conducta de purga'], r: 3 },
+    ]
+  },
+  { id: 5, title: 'Evaluación psicológica en obesidad', icon: '🧠', creditos: 2, duracion: '35 min', categoria: 'Salud mental', nivel: 'Intermedio',
+    temas: ['BES: Binge Eating Scale — puntos de corte','PHQ-9 y GAD-7 en el contexto de obesidad','Estadios de cambio de Prochaska','Intervención motivacional breve'],
+    quiz: [
+      { p: 'BES ≥ 27 indica trastorno por atracón:', ops: ['Leve','Moderado','Severo','No hay correlación'], r: 2 },
+      { p: 'PHQ-9 ≥ 15 corresponde a depresión:', ops: ['Leve','Moderada','Moderadamente severa','Severa'], r: 3 },
+      { p: 'El estadio "Contemplación" de Prochaska implica:', ops: ['No considera cambio','Considera cambio en los próximos 6 meses','Ya realizó el cambio','Mantiene el cambio por más de 6 meses'], r: 1 },
+    ]
+  },
+  { id: 6, title: 'Sueño y obesidad — SAOS', icon: '😴', creditos: 2, duracion: '30 min', categoria: 'Medicina del sueño', nivel: 'Intermedio',
+    temas: ['STOP-BANG: screening de SAOS','Escala de Epworth y somnolencia diurna','Polisomnografía: AHI y clasificación de severidad','CPAP: indicaciones y seguimiento','Obesidad — SAOS: bidireccionalidad'],
+    quiz: [
+      { p: 'STOP-BANG ≥ 5 indica riesgo de SAOS:', ops: ['Bajo','Intermedio','Alto','No tiene valor diagnóstico'], r: 2 },
+      { p: 'AHI > 30 eventos/hora corresponde a SAOS:', ops: ['Leve','Moderado','Severo','Muy severo'], r: 2 },
+      { p: 'Epworth ≥ 11 sugiere:', ops: ['SAOS leve','Somnolencia diurna excesiva','Insomnio','Ritmo circadiano alterado'], r: 1 },
+    ]
+  },
+];
+
+const CME_CASES = [
+  {
+    title: 'Caso 1 — Mujer con obesidad y EOSS 2',
+    historia: 'Mujer de 48 años, IMC 38.2 kg/m². HTA controlada con amlodipino 5mg, DM2 con metformina 850mg BID (HbA1c 7.1%). Escala de Epworth 10. Sin historia de apnea diagnosticada. Solicita tratamiento para bajar de peso.',
+    pregunta: '¿Cuál es el estadio EOSS correcto y cuál sería el fármaco anti-obesidad más adecuado considerando su perfil cardiovascular?',
+    opciones: [
+      'EOSS 1 — Orlistat por sus comorbilidades renales',
+      'EOSS 2 — Semaglutida o Tirzepatida (beneficio CV y glucémico demostrado)',
+      'EOSS 3 — Solo cirugía bariátrica es apropiada',
+      'EOSS 2 — Fentermina/Topiramato por mayor %TWL',
+    ],
+    respuesta: 1,
+    explicacion: 'Esta paciente tiene EOSS 2 (comorbilidades establecidas: HTA + DM2). Los agonistas GLP-1 (semaglutida) o GIP/GLP-1 (tirzepatida) tienen evidencia cardiovascular sólida (SELECT, SURMOUNT) y beneficio glucémico adicional, haciéndolos la primera línea óptima.',
+    creditos: 1,
+  },
+  {
+    title: 'Caso 2 — Hombre joven con obesidad clase III',
+    historia: 'Hombre de 32 años, peso 142 kg, talla 175 cm (IMC 46.4). Sin comorbilidades conocidas. BES: 24 (atracón moderado). PHQ-9: 8. Trabaja de noche, duerme 5 horas. STOP-BANG: 4 puntos.',
+    pregunta: 'Considerando el abordaje multidisciplinario, ¿qué evaluaciones son PRIORITARIAS antes de iniciar farmacoterapia?',
+    opciones: [
+      'Solo iniciar dieta hipocalórica y ejercicio',
+      'Polisomnografía, evaluación psicológica formal y laboratorio basal (glucosa, insulina, lípidos)',
+      'Cirugía bariátrica inmediata por IMC > 40',
+      'Solo farmacoterapia con tirzepatida por IMC elevado',
+    ],
+    respuesta: 1,
+    explicacion: 'Con STOP-BANG 4 (riesgo intermedio-alto de SAOS), BES 24 (atracón moderado que requiere evaluación formal), y obesidad clase III, el abordaje correcto es completar la evaluación multidisciplinaria antes de decidir el tratamiento: polisomnografía, psicología formal y laboratorio basal completo.',
+    creditos: 1,
+  },
+  {
+    title: 'Caso 3 — Seguimiento a 6 meses con semaglutida',
+    historia: 'Paciente masculino de 55 años inició semaglutida hace 6 meses. Peso inicial: 108 kg, peso actual: 96.5 kg. Reporta adherencia del 85%. HbA1c mejoró de 7.4% a 6.6%. Refiere náuseas ocasionales al inicio, ahora tolerancia adecuada. PA: 128/82 mmHg.',
+    pregunta: '¿Cómo interpretas la respuesta al tratamiento y qué %TWL ha logrado?',
+    opciones: [
+      '%TWL = 8.5% — respuesta subóptima, cambiar medicamento',
+      '%TWL = 10.6% — respuesta adecuada (meta ≥10% en 6 meses con GLP-1)',
+      '%TWL = 12.3% — respuesta excelente, reducir dosis',
+      '%TWL = 10.6% — respuesta marginal, agregar orlistat',
+    ],
+    respuesta: 1,
+    explicacion: '%TWL = (108-96.5)/108 × 100 = 10.6%. Una pérdida ≥10% del peso total en 6 meses con semaglutida se considera respuesta clínicamente significativa. Sumado a la mejoría de HbA1c (-0.8%), la respuesta es adecuada. Se debe continuar el esquema actual y escalar dosis según tolerancia.',
+    creditos: 1,
+  },
+];
+
+let cmeData = JSON.parse(localStorage.getItem('ece_cme') || '{}');
+if (!cmeData.completedModules) cmeData.completedModules = [];
+if (!cmeData.quizHistory) cmeData.quizHistory = [];
+if (!cmeData.cases) cmeData.cases = [];
+if (!cmeData.credits) cmeData.credits = 0;
+
+let activeQuiz = null;
+let activeQuizIdx = 0;
+let activeQuizScore = 0;
+let activeCaseIdx = 0;
+
+function saveCMEData() { localStorage.setItem('ece_cme', JSON.stringify(cmeData)); }
+
+function renderCMEView() {
+  const credits = cmeData.credits || 0;
+  $('cme-creditos-val').textContent = credits;
+  $('cme-modulos-val').textContent = `${cmeData.completedModules.length}/${CME_MODULES.length}`;
+  $('cme-casos-val').textContent = cmeData.cases.length;
+  const pct = Math.min((credits / 20) * 100, 100);
+  $('cme-progress-bar').style.width = pct + '%';
+  $('cme-progress-txt').textContent = `${credits} / 20 créditos`;
+  if (cmeData.quizHistory.length) {
+    const avg = (cmeData.quizHistory.reduce((s, q) => s + q.pct, 0) / cmeData.quizHistory.length).toFixed(0);
+    $('cme-quiz-avg-val').textContent = avg + '%';
+  }
+
+  const grid = $('cme-modules-grid');
+  grid.innerHTML = CME_MODULES.map(m => {
+    const done = cmeData.completedModules.includes(m.id);
+    return `<div style="border:1px solid ${done ? '#7D6608' : 'var(--border)'};border-radius:10px;padding:14px;background:${done ? 'rgba(125,102,8,.07)' : 'var(--surface)'};cursor:pointer;transition:all .2s" onclick="startModule(${m.id})">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:24px">${m.icon}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${m.title}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${m.categoria} · ${m.nivel}</div>
+        </div>
+        ${done ? '<span class="pill green">✓ Completado</span>' : ''}
+      </div>
+      <div style="display:flex;gap:8px;font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        <span>⏱ ${m.duracion}</span>
+        <span>·</span>
+        <span>🎓 ${m.creditos} crédito${m.creditos > 1 ? 's' : ''}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted)">${m.temas.slice(0,2).map(t => '• ' + t).join('<br>')}</div>
+      <button class="btn-add" style="margin-top:10px;width:100%;background:${done ? '#7D6608' : 'var(--primary)'}">${done ? '↺ Repetir' : '▶ Iniciar'}</button>
+    </div>`;
+  }).join('');
+
+  const tbody = $('tbody-cme-history');
+  const all = [...cmeData.quizHistory, ...cmeData.cases].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+  tbody.innerHTML = all.length ? all.map(h => `<tr>
+    <td>${new Date(h.fecha).toLocaleDateString('es-MX')}</td>
+    <td>${h.titulo}</td>
+    <td><span class="pill blue">${h.tipo}</span></td>
+    <td>${h.creditos}</td>
+    <td><span class="pill ${h.pct >= 70 ? 'green' : 'red'}">${h.pct}%</span></td>
+  </tr>`).join('') : '<tr><td colspan="5" class="table-empty">🎓<br>Sin actividad CME registrada</td></tr>';
+}
+
+function startModule(id) {
+  const mod = CME_MODULES.find(m => m.id === id);
+  if (!mod) return;
+  activeQuiz = mod;
+  activeQuizIdx = 0;
+  activeQuizScore = 0;
+  $('quiz-modal-title').textContent = `${mod.icon} ${mod.title}`;
+  renderQuizQuestion();
+  openModal('modal-cme-quiz');
+}
+
+function renderQuizQuestion() {
+  if (!activeQuiz) return;
+  const q = activeQuiz.quiz[activeQuizIdx];
+  const total = activeQuiz.quiz.length;
+  $('quiz-modal-body').innerHTML = `
+    <div style="background:var(--bg);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--text-muted)">
+      Pregunta ${activeQuizIdx + 1} de ${total} · Módulo: ${activeQuiz.title}
+    </div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px;line-height:1.5">${q.p}</div>
+    <div style="display:grid;gap:8px" id="quiz-options">
+      ${q.ops.map((op, i) => `
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          <input type="radio" name="quiz-opt" value="${i}" style="accent-color:var(--primary)" />
+          <span style="font-size:13px">${op}</span>
+        </label>`).join('')}
+    </div>`;
+  $('quiz-submit-btn').textContent = activeQuizIdx < total - 1 ? 'Siguiente →' : '✓ Finalizar';
+}
+
+function submitQuizAnswer() {
+  if (!activeQuiz) return;
+  const sel = document.querySelector('input[name="quiz-opt"]:checked');
+  if (!sel) { showToast('Selecciona una opción', 'warn'); return; }
+  const q = activeQuiz.quiz[activeQuizIdx];
+  const chosen = parseInt(sel.value);
+  const correct = chosen === q.r;
+  if (correct) activeQuizScore++;
+
+  const opts = document.querySelectorAll('#quiz-options label');
+  opts.forEach((lbl, i) => {
+    if (i === q.r) lbl.style.background = 'rgba(30,130,70,.15)', lbl.style.borderColor = 'var(--green)';
+    else if (i === chosen && !correct) lbl.style.background = 'rgba(192,57,43,.1)', lbl.style.borderColor = 'var(--red)';
+    lbl.querySelector('input').disabled = true;
+  });
+  $('quiz-submit-btn').textContent = 'Continuar →';
+  $('quiz-submit-btn').onclick = advanceQuiz;
+}
+
+function advanceQuiz() {
+  activeQuizIdx++;
+  if (activeQuizIdx < activeQuiz.quiz.length) {
+    renderQuizQuestion();
+    $('quiz-submit-btn').onclick = submitQuizAnswer;
+  } else {
+    const pct = Math.round((activeQuizScore / activeQuiz.quiz.length) * 100);
+    const passed = pct >= 70;
+    $('quiz-modal-body').innerHTML = `
+      <div style="text-align:center;padding:24px">
+        <div style="font-size:48px;margin-bottom:12px">${passed ? '🎉' : '📚'}</div>
+        <div style="font-size:22px;font-weight:800;margin-bottom:6px">${pct}% correcto</div>
+        <div style="color:var(--text-muted);margin-bottom:16px">${activeQuizScore}/${activeQuiz.quiz.length} respuestas correctas</div>
+        ${passed
+          ? `<div style="background:rgba(30,130,70,.1);border:1px solid var(--green);border-radius:8px;padding:12px;color:#1D8348;font-weight:600">
+              ✅ Módulo completado — +${activeQuiz.creditos} crédito${activeQuiz.creditos > 1 ? 's' : ''} CME otorgados
+            </div>`
+          : `<div style="background:rgba(192,57,43,.08);border:1px solid var(--red);border-radius:8px;padding:12px;color:var(--red)">
+              ❌ Necesitas ≥70% para obtener créditos. Puedes intentarlo de nuevo.
+            </div>`}
+      </div>`;
+    $('quiz-modal-footer').innerHTML = `<button class="btn-primary" onclick="closeModal('modal-cme-quiz');renderCMEView()">Cerrar</button>`;
+
+    if (passed && !cmeData.completedModules.includes(activeQuiz.id)) {
+      cmeData.completedModules.push(activeQuiz.id);
+      cmeData.credits = (cmeData.credits || 0) + activeQuiz.creditos;
+    }
+    cmeData.quizHistory.push({
+      fecha: new Date().toISOString(),
+      titulo: activeQuiz.title,
+      tipo: 'Módulo',
+      creditos: passed ? activeQuiz.creditos : 0,
+      pct,
+    });
+    saveCMEData();
+  }
+}
+
+function loadNextCase() {
+  const c = CME_CASES[activeCaseIdx % CME_CASES.length];
+  activeCaseIdx++;
+  const caseBody = $('cme-case-body');
+  caseBody.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:8px">${c.title}</div>
+      <div style="font-size:12px;color:var(--text-muted);background:var(--bg);padding:12px;border-radius:6px;line-height:1.7">${c.historia}</div>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">❓ ${c.pregunta}</div>
+    <div style="display:grid;gap:6px" id="case-options">
+      ${c.opciones.map((op, i) => `
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;transition:all .2s">
+          <input type="radio" name="case-opt" value="${i}" style="accent-color:var(--primary);margin-top:2px" />
+          <span>${op}</span>
+        </label>`).join('')}
+    </div>
+    <button class="btn-save" style="margin-top:12px;width:100%" onclick="submitCase(${activeCaseIdx-1})">✓ Responder caso</button>`;
+  window._currentCase = c;
+}
+
+function submitCase(idx) {
+  const c = CME_CASES[idx % CME_CASES.length];
+  const sel = document.querySelector('input[name="case-opt"]:checked');
+  if (!sel) { showToast('Selecciona una opción', 'warn'); return; }
+  const chosen = parseInt(sel.value);
+  const correct = chosen === c.respuesta;
+  const opts = document.querySelectorAll('#case-options label');
+  opts.forEach((lbl, i) => {
+    if (i === c.respuesta) lbl.style.background = 'rgba(30,130,70,.15)', lbl.style.borderColor = '#27AE60';
+    else if (i === chosen && !correct) lbl.style.background = 'rgba(192,57,43,.1)', lbl.style.borderColor = '#C0392B';
+    lbl.querySelector('input').disabled = true;
+  });
+  const pct = correct ? 100 : 0;
+  const caseBody = $('cme-case-body');
+  caseBody.innerHTML += `
+    <div style="margin-top:12px;padding:12px;border-radius:8px;background:${correct ? 'rgba(30,130,70,.1)' : 'rgba(192,57,43,.08)'};border:1px solid ${correct ? 'var(--green)' : 'var(--red)'}">
+      <div style="font-weight:700;margin-bottom:6px">${correct ? '✅ ¡Correcto!' : '❌ Respuesta incorrecta'}</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.6">${c.explicacion}</div>
+    </div>
+    <button class="btn-add" style="margin-top:10px;background:var(--secondary)" onclick="loadNextCase()">→ Siguiente caso</button>`;
+
+  if (!cmeData.cases.find(h => h.titulo === c.title)) {
+    cmeData.cases.push({ fecha: new Date().toISOString(), titulo: c.title, tipo: 'Caso clínico', creditos: c.creditos, pct });
+    if (correct) cmeData.credits = (cmeData.credits || 0) + c.creditos;
+    saveCMEData();
+    renderCMEView();
+  }
+}
+
+// ─── DARK MODE ────────────────────────────────────────────────────
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('ece_dark', isDark ? '1' : '0');
+  const btn = $('btn-dark-toggle');
+  if (btn) btn.innerHTML = isDark ? '☀️ Claro' : '🌙 Oscuro';
+}
+(function initDarkMode() {
+  if (localStorage.getItem('ece_dark') === '1') {
+    document.body.classList.add('dark');
+    const btn = $('btn-dark-toggle');
+    if (btn) btn.innerHTML = '☀️ Claro';
+  }
+})();
 
 // ─── INITIAL VIEW ─────────────────────────────────────────────────
 switchView('dashboard');
