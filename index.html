@@ -972,6 +972,16 @@
           <span>Medicina del Sueño</span>
         </div>
       </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-level">
+          <div class="sidebar-level-label">Expediente</div>
+          <div class="sidebar-level-name" id="sidebar-completeness">Iniciando</div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="sidebar-progress-bar" style="width:0%"></div>
+          </div>
+          <div style="font-size:10px;color:var(--sb-muted);margin-top:5px;font-weight:500" id="sidebar-progress-txt">0 / 6 módulos</div>
+        </div>
+      </div>
     </nav>
 
     <!-- Main -->
@@ -996,6 +1006,7 @@
           </div>
           <div class="eoss-badge-lg" id="dash-eoss-badge">EOSS ?</div>
           <div class="identity-alerts" id="dash-alerts"></div>
+          <button onclick="exportPatientCSV()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--text-muted);transition:all .15s" onmouseover="this.style.borderColor=this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">⬇ CSV</button>
         </div>
 
         <!-- Stats row -->
@@ -2643,8 +2654,14 @@ function renderDashboard() {
   // Comorbidities traffic lights
   renderDashboardComorbidities();
 
+  // Clinical alerts
+  renderDashboardAlerts();
+
   // Timeline
   renderTimeline();
+
+  // Update sidebar completeness widget
+  updateSidebarCompleteness();
 }
 
 function loadVitals() {
@@ -2918,6 +2935,95 @@ function calcIdealWeight(p) {
   if (!cm) return null;
   // Hamwi formula
   return p.sexo === 'M' ? 48 + 2.7 * ((cm - 152) / 2.54) : 45.4 + 2.3 * ((cm - 152) / 2.54);
+}
+
+// ─── SIDEBAR COMPLETENESS WIDGET ──────────────────────────────────
+function updateSidebarCompleteness() {
+  const modules = [
+    { key: 'measurements', label: 'Médico' },
+    { key: 'nutrition', label: 'Nutrición' },
+    { key: 'psychology', label: 'Psicología' },
+    { key: 'rehabilitation', label: 'Rehabilitación' },
+    { key: 'dental', label: 'Dental' },
+    { key: 'sleep', label: 'Sueño' },
+  ];
+  let filled = 0;
+  modules.forEach(m => {
+    let data = obesData[m.key];
+    if (m.key === 'psychology') data = obesData.psychology?.assessments || [];
+    else if (m.key === 'nutrition') data = obesData.nutrition?.plan ? [obesData.nutrition.plan] : [];
+    else if (m.key === 'rehabilitation') data = obesData.rehabilitation?.evaluacionInicial || [];
+    else if (m.key === 'dental') data = obesData.dental?.evaluacion || [];
+    else if (m.key === 'sleep') data = obesData.sleep?.cuestionarios || [];
+    if (data && (Array.isArray(data) ? data.length > 0 : Object.keys(data).length > 0)) filled++;
+  });
+  const pct = Math.round((filled / modules.length) * 100);
+  const names = ['Iniciando', 'En progreso', 'En progreso', 'Avanzado', 'Avanzado', 'Casi completo', 'Completo'];
+  const el = $('sidebar-completeness');
+  const bar = $('sidebar-progress-bar');
+  const txt = $('sidebar-progress-txt');
+  if (el) el.textContent = names[filled] || 'Completo';
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = `${filled} / ${modules.length} módulos`;
+}
+
+// ─── DASHBOARD ALERTS ─────────────────────────────────────────────
+function renderDashboardAlerts() {
+  const alerts = [];
+  const alertsEl = $('dash-alerts');
+  if (!alertsEl) return;
+
+  // EOSS >= 2 sin medicamentos
+  if (obesData.eoss >= 2 && (!obesData.medications || obesData.medications.length === 0)) {
+    alerts.push({ icon: '🔴', text: 'EOSS 2+ sin farmacoterapia' });
+  }
+
+  // Glucosa en ayuno >= 126
+  const latestLabs = (obesData.labs || []).slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+  if (latestLabs && latestLabs.glucosa >= 126) {
+    alerts.push({ icon: '🔴', text: 'Glucosa ≥ 126 mg/dL' });
+  }
+
+  // IMC > 40
+  const latestMeasure = (obesData.measurements || []).slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+  if (latestMeasure && parseFloat(latestMeasure.bmi) > 40) {
+    alerts.push({ icon: '🟠', text: 'IMC clase III' });
+  }
+
+  // Sin consulta en los últimos 90 días
+  if (obesData.measurements && obesData.measurements.length > 0) {
+    const lastDate = new Date(Math.max(...(obesData.measurements || []).map(m => new Date(m.fecha))));
+    const daysSince = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
+    if (daysSince > 90) {
+      alerts.push({ icon: '🟡', text: 'Sin consulta reciente' });
+    }
+  }
+
+  if (alerts.length === 0) {
+    alertsEl.innerHTML = '';
+  } else {
+    alertsEl.innerHTML = alerts.map(a => `<span class="alert-chip" style="display:inline-block;background:${a.icon.includes('🔴') ? '#FEE' : a.icon.includes('🟠') ? '#FFF3E0' : '#FFFBEA'};border:1px solid ${a.icon.includes('🔴') ? '#FFCDD2' : a.icon.includes('🟠') ? '#FFE0B2' : '#FFF9C4'};border-radius:6px;padding:4px 8px;font-size:11px;color:${a.icon.includes('🔴') ? '#C62828' : a.icon.includes('🟠') ? '#E65100' : '#F57F17'};margin-right:6px">${a.icon} ${a.text}</span>`).join('');
+  }
+}
+
+// ─── EXPORT CSV ───────────────────────────────────────────────────
+function exportPatientCSV() {
+  if (!currentPatient) return;
+  const rows = [['Fecha','Peso (kg)','IMC','Cintura (cm)','Glucosa (mg/dL)','HbA1c (%)','EOSS']];
+  (obesData.measurements || []).slice().sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).forEach(m => {
+    const lab = (obesData.labs || []).find(l => l.fecha === m.fecha) || {};
+    rows.push([m.fecha, m.peso, m.bmi || '', m.cintura || '', lab.glucosa || '', lab.hba1c || '', obesData.eoss ?? '']);
+  });
+  const csv = rows.map(r => r.map(v => typeof v === 'string' && v.includes(',') ? `"${v}"` : v).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `ECE_OBES_${currentPatient?.nombre?.replace(/\s+/g,'-') || 'paciente'}_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // ─── SAVE MEASUREMENT ─────────────────────────────────────────────
