@@ -2570,7 +2570,7 @@
 // ⚠️ REEMPLAZA con tus credenciales reales de Supabase (proyecto ECE META CORE)
 const SUPABASE_URL = 'https://cribrlkiynkjsyvaelkk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_4OX4yQeJAAvS98aUoRQoZw_uGehbyCD';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Legacy API fallback (mantener para compatibilidad con endpoints META CORE)
 const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -2687,7 +2687,7 @@ $('btn-login').addEventListener('click', async () => {
   try {
     // Try Supabase auth first
     if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co') {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+      const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pwd });
       if (error) throw error;
       currentUser = { email: data.user.email, id: data.user.id, nombre: data.user.user_metadata?.nombre || email.split('@')[0] };
       localStorage.setItem('ece_token', data.session.access_token);
@@ -2915,7 +2915,7 @@ async function loadOBESData(p) {
   let loaded = false;
   if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' && currentUser) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await sbClient
         .from('obes_patient_data')
         .select('data')
         .eq('patient_id', p.id)
@@ -2949,7 +2949,7 @@ async function saveOBESData() {
   // Save to Supabase if configured
   if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' && currentUser) {
     try {
-      const { error } = await supabase
+      const { error } = await sbClient
         .from('obes_patient_data')
         .upsert({
           patient_id: currentPatient.id,
