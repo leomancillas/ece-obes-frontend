@@ -564,6 +564,23 @@
     .eoss-stage-btn.s4 { background: #F2F3F4; color: #6E2F1A; }
     .eoss-stage-btn.selected { border-color: currentColor; transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,.15); }
 
+    /* KOSC domain cards */
+    .kosc-domain-card {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: center;
+      transition: border-color .15s;
+    }
+    .kosc-domain-card.score-0 { border-color: #1D8348; background: #D5F5E3; }
+    .kosc-domain-card.score-1 { border-color: #9A7D0A; background: #FEF9E7; }
+    .kosc-domain-card.score-2 { border-color: #A04000; background: #FDEBD0; }
+    .kosc-domain-card.score-3 { border-color: #C0392B; background: #FDEDEC; }
+    .kosc-domain-card.score-4 { border-color: #6E2F1A; background: #F9EBEA; }
+    .kosc-domain-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+    .kosc-domain-score { font-size: 26px; font-weight: 800; margin-top: 4px; }
+
     /* Measurements history table */
     .data-table { width: 100%; border-collapse: collapse; }
     .data-table th {
@@ -1220,6 +1237,37 @@
           </div>
         </div>
 
+        <!-- KOSC card -->
+        <div class="section-card mb-8" style="margin-bottom:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">👑 Estadificación KOSC — King's Obesity Staging Criteria</span>
+            <button class="btn-add" onclick="openModal('modal-kosc')">Actualizar KOSC</button>
+          </div>
+          <div class="section-card-body">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px" id="kosc-domains-display">
+              <div class="kosc-domain-card" id="kosc-d1-card">
+                <div class="kosc-domain-label">D1 · Cardiometabólico</div>
+                <div class="kosc-domain-score" id="kosc-d1-score">—</div>
+              </div>
+              <div class="kosc-domain-card" id="kosc-d2-card">
+                <div class="kosc-domain-label">D2 · Función física</div>
+                <div class="kosc-domain-score" id="kosc-d2-score">—</div>
+              </div>
+              <div class="kosc-domain-card" id="kosc-d3-card">
+                <div class="kosc-domain-label">D3 · Salud mental</div>
+                <div class="kosc-domain-score" id="kosc-d3-score">—</div>
+              </div>
+              <div class="kosc-domain-card" id="kosc-d4-card">
+                <div class="kosc-domain-label">D4 · Bienestar social</div>
+                <div class="kosc-domain-score" id="kosc-d4-score">—</div>
+              </div>
+            </div>
+            <div id="kosc-total-display" class="text-muted text-sm mt-8" style="margin-top:10px;padding:8px;background:var(--bg);border-radius:6px">
+              Selecciona o actualiza los dominios KOSC del paciente.
+            </div>
+          </div>
+        </div>
+
         <!-- Measurements + labs grid -->
         <div class="module-grid">
 
@@ -1276,6 +1324,18 @@
               <div class="calc-result">
                 <span class="calc-label">%EWL (desde inicio)</span>
                 <span class="calc-value" id="cur-ewl">—</span>
+              </div>
+              <div class="calc-result">
+                <span class="calc-label">VAI (Visceral Adiposity Index)</span>
+                <span class="calc-value" id="cur-vai">—</span>
+              </div>
+              <div class="calc-result">
+                <span class="calc-label">FIB-4 (MASLD/MASH staging)</span>
+                <span class="calc-value" id="cur-fib4">—</span>
+              </div>
+              <div class="calc-result" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px">
+                <span class="calc-label" style="font-weight:700">Fenotipo metabólico</span>
+                <span class="calc-value" id="cur-mho">—</span>
               </div>
             </div>
           </div>
@@ -1336,6 +1396,9 @@
             <button class="btn-add" style="background:#C0392B" onclick="calcASCVD()">Calcular</button>
           </div>
           <div class="section-card-body">
+            <div style="background:#FEF9E7;border:1px solid #F9E79F;border-radius:6px;padding:9px 14px;margin-bottom:14px;font-size:12px;color:#7D6608">
+              ⚠️ <b>Advertencia:</b> Las Pooled Cohort Equations (PCE) <b>no están validadas para población mexicana/latinoamericana</b>. Tienden a sobreestimar el riesgo. Considerar calibración local (ENSANUT) o calculadoras validadas para América Latina (SCORE2, GLOBORISK). El resultado es orientativo.
+            </div>
             <div class="form-row cols-3" style="margin-bottom:12px">
               <div class="form-group">
                 <label style="font-size:11px">Edad (años)</label>
@@ -1984,6 +2047,114 @@
   </div>
 </div>
 
+<!-- KOSC Modal -->
+<div class="modal-overlay" id="modal-kosc">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h3>👑 Actualizar estadio KOSC — King's Obesity Staging Criteria</h3>
+      <button class="modal-close" onclick="closeModal('modal-kosc')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;margin-bottom:16px;color:var(--text-muted)">
+        El KOSC evalúa la obesidad en <b>4 dominios independientes</b> (0–4 cada uno). Permite un perfil multidimensional complementario al EOSS. Puntaje total máximo: 16.
+      </div>
+
+      <!-- Domain 1 -->
+      <div class="lab-section-title">D1 — Complicaciones cardiometabólicas y sistémicas</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px">
+        <div class="kosc-opt-btn" data-domain="1" data-score="0" onclick="selectKOSC(1,0)" id="kosc-opt-1-0" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer;background:#D5F5E3">
+          <div style="font-size:16px;font-weight:800;color:#1D8348">0</div><div style="font-size:9px;color:#1D8348">Sin complicaciones</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="1" data-score="1" onclick="selectKOSC(1,1)" id="kosc-opt-1-1" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#9A7D0A">1</div><div style="font-size:9px;color:#9A7D0A">Factores de riesgo subumbrales (prediabetes, pre-HTA)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="1" data-score="2" onclick="selectKOSC(1,2)" id="kosc-opt-1-2" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#A04000">2</div><div style="font-size:9px;color:#A04000">Complicaciones establecidas (DM2, HTA, dislipidemia, MASLD)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="1" data-score="3" onclick="selectKOSC(1,3)" id="kosc-opt-1-3" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#C0392B">3</div><div style="font-size:9px;color:#C0392B">Daño orgánico severo (ICC, ERC avanzada, MASH/cirrosis)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="1" data-score="4" onclick="selectKOSC(1,4)" id="kosc-opt-1-4" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#6E2F1A">4</div><div style="font-size:9px;color:#6E2F1A">Etapa terminal / insuficiencia orgánica</div>
+        </div>
+      </div>
+
+      <!-- Domain 2 -->
+      <div class="lab-section-title">D2 — Función física y movilidad</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px">
+        <div class="kosc-opt-btn" data-domain="2" data-score="0" onclick="selectKOSC(2,0)" id="kosc-opt-2-0" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer;background:#D5F5E3">
+          <div style="font-size:16px;font-weight:800;color:#1D8348">0</div><div style="font-size:9px;color:#1D8348">Sin limitación</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="2" data-score="1" onclick="selectKOSC(2,1)" id="kosc-opt-2-1" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#9A7D0A">1</div><div style="font-size:9px;color:#9A7D0A">Leve (dolor ocasional, disnea leve de esfuerzo)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="2" data-score="2" onclick="selectKOSC(2,2)" id="kosc-opt-2-2" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#A04000">2</div><div style="font-size:9px;color:#A04000">Moderada (limitación funcional, osteoartritis, SAOS)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="2" data-score="3" onclick="selectKOSC(2,3)" id="kosc-opt-2-3" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#C0392B">3</div><div style="font-size:9px;color:#C0392B">Severa (discapacidad mayor, uso de silla de ruedas)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="2" data-score="4" onclick="selectKOSC(2,4)" id="kosc-opt-2-4" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#6E2F1A">4</div><div style="font-size:9px;color:#6E2F1A">Postrado / dependencia total para actividades básicas</div>
+        </div>
+      </div>
+
+      <!-- Domain 3 -->
+      <div class="lab-section-title">D3 — Salud mental y bienestar psicológico</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px">
+        <div class="kosc-opt-btn" data-domain="3" data-score="0" onclick="selectKOSC(3,0)" id="kosc-opt-3-0" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer;background:#D5F5E3">
+          <div style="font-size:16px;font-weight:800;color:#1D8348">0</div><div style="font-size:9px;color:#1D8348">Sin afectación</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="3" data-score="1" onclick="selectKOSC(3,1)" id="kosc-opt-3-1" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#9A7D0A">1</div><div style="font-size:9px;color:#9A7D0A">Leve (insatisfacción corporal, ansiedad leve)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="3" data-score="2" onclick="selectKOSC(3,2)" id="kosc-opt-3-2" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#A04000">2</div><div style="font-size:9px;color:#A04000">Moderada (depresión, TAG, BED, PHQ-9 ≥ 10)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="3" data-score="3" onclick="selectKOSC(3,3)" id="kosc-opt-3-3" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#C0392B">3</div><div style="font-size:9px;color:#C0392B">Severa (depresión refractaria, ideación suicida, psicosis)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="3" data-score="4" onclick="selectKOSC(3,4)" id="kosc-opt-3-4" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#6E2F1A">4</div><div style="font-size:9px;color:#6E2F1A">Incapacitante / internamiento psiquiátrico</div>
+        </div>
+      </div>
+
+      <!-- Domain 4 -->
+      <div class="lab-section-title">D4 — Bienestar social y funcionamiento en vida diaria</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px">
+        <div class="kosc-opt-btn" data-domain="4" data-score="0" onclick="selectKOSC(4,0)" id="kosc-opt-4-0" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer;background:#D5F5E3">
+          <div style="font-size:16px;font-weight:800;color:#1D8348">0</div><div style="font-size:9px;color:#1D8348">Sin afectación social</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="4" data-score="1" onclick="selectKOSC(4,1)" id="kosc-opt-4-1" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#9A7D0A">1</div><div style="font-size:9px;color:#9A7D0A">Leve (estigma, restricción actividades sociales)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="4" data-score="2" onclick="selectKOSC(4,2)" id="kosc-opt-4-2" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#A04000">2</div><div style="font-size:9px;color:#A04000">Moderada (afectación laboral, relaciones interpersonales)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="4" data-score="3" onclick="selectKOSC(4,3)" id="kosc-opt-4-3" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#C0392B">3</div><div style="font-size:9px;color:#C0392B">Severa (incapacidad laboral, aislamiento social)</div>
+        </div>
+        <div class="kosc-opt-btn" data-domain="4" data-score="4" onclick="selectKOSC(4,4)" id="kosc-opt-4-4" style="border:2px solid var(--border);border-radius:6px;padding:8px;text-align:center;cursor:pointer">
+          <div style="font-size:16px;font-weight:800;color:#6E2F1A">4</div><div style="font-size:9px;color:#6E2F1A">Dependencia total / exclusión social completa</div>
+        </div>
+      </div>
+
+      <div class="calc-result" style="background:var(--bg);border-radius:6px;padding:10px 14px">
+        <span class="calc-label" style="font-weight:700">Puntaje total KOSC</span>
+        <span class="calc-value" id="kosc-total-calc">D1:— D2:— D3:— D4:— | Total: —/16</span>
+      </div>
+      <div class="form-group mt-8" style="margin-top:12px">
+        <label>Notas clínicas KOSC</label>
+        <textarea id="kosc-notes" rows="2" placeholder="Observaciones por dominio, plan de intervención…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-kosc')">Cancelar</button>
+      <button class="btn-save" onclick="saveKOSC()">💾 Guardar KOSC</button>
+    </div>
+  </div>
+</div>
+
 <!-- Labs Modal -->
 <div class="modal-overlay" id="modal-labs">
   <div class="modal wide">
@@ -2021,8 +2192,8 @@
 
       <div class="lab-section-title">Función hepática</div>
       <div class="form-row cols-3">
-        <div class="form-group"><label>ALT / TGP (U/L)</label><input type="number" id="lab-alt" placeholder="ej. 38" /></div>
-        <div class="form-group"><label>AST / TGO (U/L)</label><input type="number" id="lab-ast" placeholder="ej. 30" /></div>
+        <div class="form-group"><label>ALT / TGP (U/L)</label><input type="number" id="lab-alt" placeholder="ej. 38" oninput="calcFIB4Lab()" /></div>
+        <div class="form-group"><label>AST / TGO (U/L)</label><input type="number" id="lab-ast" placeholder="ej. 30" oninput="calcFIB4Lab()" /></div>
         <div class="form-group"><label>GGT (U/L)</label><input type="number" id="lab-ggt" placeholder="ej. 45" /></div>
       </div>
 
@@ -2044,6 +2215,31 @@
         <div class="form-group"><label>Ácido úrico (mg/dL)</label><input type="number" id="lab-urico" step="0.1" placeholder="ej. 6.2" /></div>
         <div class="form-group"><label>hs-CRP (mg/L)</label><input type="number" id="lab-crp" step="0.1" placeholder="ej. 2.8" /></div>
       </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Cortisol matutino (µg/dL) <span style="font-size:10px;color:var(--text-muted)">(descartar Cushing si &gt;18)</span></label>
+          <input type="number" id="lab-cortisol" step="0.1" placeholder="ej. 14.5" oninput="checkCortisol()" />
+        </div>
+        <div class="form-group">
+          <label>Plaquetas (×10³/µL) <span style="font-size:10px;color:var(--text-muted)">(requerido para FIB-4)</span></label>
+          <input type="number" id="lab-plaquetas" placeholder="ej. 220" oninput="calcFIB4Lab()" />
+        </div>
+      </div>
+      <div id="cortisol-alert" style="display:none;background:#FDEDEC;border:1px solid #E74C3C;border-radius:6px;padding:9px 14px;margin-bottom:8px;font-size:12px;color:#C0392B">
+        ⚠️ <b>Cortisol elevado (&gt;18 µg/dL):</b> Considerar hipercortisolismo. Solicitar cortisol libre urinario 24h y cortisol nocturno salivar para descartar síndrome de Cushing.
+      </div>
+
+      <div class="lab-section-title">Índices calculados</div>
+      <div class="calc-result" id="vai-calc-result" style="display:none;margin-bottom:6px">
+        <span class="calc-label">VAI — Visceral Adiposity Index</span>
+        <span class="calc-value" id="lab-vai-val">—</span>
+      </div>
+      <div class="text-muted" id="vai-hint" style="font-size:10px;margin-bottom:10px;display:none">Requiere: TG, HDL, circunferencia de cintura (en medición) e IMC. H: VAI = (cintura/[39.68+1.88×IMC]) × (TG/1.03) × (1.31/HDL) · M: (cintura/[36.58+1.89×IMC]) × (TG/0.81) × (1.52/HDL)</div>
+      <div class="calc-result" id="fib4-calc-result" style="display:none;margin-bottom:6px">
+        <span class="calc-label">FIB-4 — Fibrosis hepática (MASLD/MASH staging)</span>
+        <span class="calc-value" id="lab-fib4-val">—</span>
+      </div>
+      <div class="text-muted" id="fib4-hint" style="font-size:10px;margin-bottom:10px;display:none">FIB-4 = (edad × AST) / (plaquetas × √ALT) · &lt;1.3 → bajo riesgo fibrosis · 1.3–2.67 → indeterminado · &gt;2.67 → alto riesgo F3-F4</div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-labs')">Cancelar</button>
@@ -2094,9 +2290,37 @@
           </select>
         </div>
       </div>
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label>Respuesta %TWL a 12 semanas</label>
+          <input type="number" id="med-twl12" step="0.1" placeholder="ej. −4.5" />
+        </div>
+        <div class="form-group">
+          <label>¿Dosis máxima alcanzada?</label>
+          <select id="med-dosis-max">
+            <option value="">— Sin registrar —</option>
+            <option value="si">Sí</option>
+            <option value="no">No — en titulación</option>
+            <option value="limitado">No — limitado por EAs</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="med-estado">
+            <option value="activo">Activo</option>
+            <option value="suspendido">Suspendido</option>
+            <option value="en_titulacion">En titulación</option>
+            <option value="completado">Completado</option>
+          </select>
+        </div>
+      </div>
       <div class="form-group">
-        <label>Notas / plan de titulación</label>
-        <textarea id="med-notas" rows="2" placeholder="Plan de escalada de dosis, tolerancia, metas…"></textarea>
+        <label>Plan de titulación / log de dosis</label>
+        <textarea id="med-titulacion" rows="3" placeholder="Semana 1–4: 0.25 mg/sem&#10;Semana 5–8: 0.5 mg/sem&#10;Semana 9+: 1 mg/sem&#10;Tolerancia: …"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Notas clínicas / efectos adversos</label>
+        <textarea id="med-notas" rows="2" placeholder="Tolerancia gastrointestinal, adherencia, metas..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -2397,7 +2621,82 @@
         </div>
         <div class="calc-result mt-8" style="margin-top:8px"><span class="calc-label">Puntaje STOP-BANG</span><span class="calc-value" id="sb-score-val">0 / 8</span></div>
       </div>
-      <!-- Score input for others -->
+      <!-- PSQI 7 components (shown when PSQI selected) -->
+      <div id="psqi-components" style="display:none">
+        <div class="lab-section-title">PSQI — 7 componentes (0–3 cada uno)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div class="form-group">
+            <label style="font-size:12px">C1 — Calidad subjetiva del sueño</label>
+            <select id="psqi-c1" onchange="calcPSQI()">
+              <option value="0">0 — Muy buena</option>
+              <option value="1">1 — Bastante buena</option>
+              <option value="2">2 — Bastante mala</option>
+              <option value="3">3 — Muy mala</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px">C2 — Latencia del sueño</label>
+            <select id="psqi-c2" onchange="calcPSQI()">
+              <option value="0">0 — ≤15 min</option>
+              <option value="1">1 — 16–30 min</option>
+              <option value="2">2 — 31–60 min</option>
+              <option value="3">3 — &gt;60 min</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px">C3 — Duración del sueño</label>
+            <select id="psqi-c3" onchange="calcPSQI()">
+              <option value="0">0 — &gt;7 h</option>
+              <option value="1">1 — 6–7 h</option>
+              <option value="2">2 — 5–6 h</option>
+              <option value="3">3 — &lt;5 h</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px">C4 — Eficiencia habitual del sueño</label>
+            <select id="psqi-c4" onchange="calcPSQI()">
+              <option value="0">0 — ≥85%</option>
+              <option value="1">1 — 75–84%</option>
+              <option value="2">2 — 65–74%</option>
+              <option value="3">3 — &lt;65%</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px">C5 — Perturbaciones del sueño</label>
+            <select id="psqi-c5" onchange="calcPSQI()">
+              <option value="0">0 — Ninguna en el último mes</option>
+              <option value="1">1 — Menos de 1 vez/sem</option>
+              <option value="2">2 — 1–2 veces/sem</option>
+              <option value="3">3 — 3+ veces/sem</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px">C6 — Uso de medicación para dormir</label>
+            <select id="psqi-c6" onchange="calcPSQI()">
+              <option value="0">0 — Ninguna</option>
+              <option value="1">1 — Menos de 1 vez/sem</option>
+              <option value="2">2 — 1–2 veces/sem</option>
+              <option value="3">3 — 3+ veces/sem</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label style="font-size:12px">C7 — Disfunción diurna</label>
+            <select id="psqi-c7" onchange="calcPSQI()">
+              <option value="0">0 — Sin disfunción</option>
+              <option value="1">1 — Dificultad leve para mantenerse despierto</option>
+              <option value="2">2 — Problema moderado (somnolencia 1–2/sem)</option>
+              <option value="3">3 — Problema severo (somnolencia ≥3/sem)</option>
+            </select>
+          </div>
+        </div>
+        <div class="calc-result" style="margin-bottom:8px">
+          <span class="calc-label">Puntaje global PSQI (suma 7 componentes)</span>
+          <span class="calc-value" id="psqi-total-val">—</span>
+        </div>
+        <div class="text-muted text-sm" style="margin-bottom:10px">PSQI &gt;5: mala calidad de sueño · &gt;10: alteración severa · Rango: 0–21</div>
+      </div>
+
+      <!-- Score input for Epworth and ISI -->
       <div id="sleep-score-block" style="display:none">
         <div class="form-group"><label id="sq-score-label">Puntaje total</label><input type="number" id="sq-score" oninput="autoSleepSeverity()" /></div>
         <div id="sq-severity-box" style="display:none" class="calc-result">
@@ -2586,10 +2885,12 @@ let obesData = {
   medications: [],
   eoss: null,
   eossNotes: '',
+  kosc: null,       // { d1, d2, d3, d4, notes }
 };
 let weightChart = null;
 let weightChartMedico = null;
 let selectedEOSS = null;
+let selectedKOSC = { d1: null, d2: null, d3: null, d4: null };
 
 const EOSS_DESCRIPTIONS = {
   0: 'Sin factores de riesgo, síntomas ni limitación funcional relacionados con la obesidad. No se requiere intervención médica activa por complicaciones.',
@@ -3063,8 +3364,11 @@ function loadVitals() {
   apiFetch(`/api/patients/${currentPatient.id}/vitals`).then(vitals => {
     if (!vitals || vitals.length === 0) return;
     const v = vitals[0];
+    const pp = v.pa_sist && v.pa_diast ? v.pa_sist - v.pa_diast : null;
+    const ppClass = pp ? (pp < 25 ? 'warn' : pp > 60 ? 'danger' : 'ok') : '';
     $('dash-vitals').innerHTML = `
       <div class="biometric-row"><span class="bio-label">Presión arterial</span><span class="bio-value ${v.pa_sist >= 140 || v.pa_diast >= 90 ? 'danger' : v.pa_sist >= 130 ? 'warn' : 'ok'}">${v.pa_sist}/${v.pa_diast} mmHg</span></div>
+      ${pp !== null ? `<div class="biometric-row"><span class="bio-label">Presión de pulso (PP)</span><span class="bio-value ${ppClass}">${pp} mmHg</span></div>` : ''}
       <div class="biometric-row"><span class="bio-label">Frecuencia cardíaca</span><span class="bio-value">${v.fc} lpm</span></div>
       ${v.spo2 ? `<div class="biometric-row"><span class="bio-label">SpO₂</span><span class="bio-value ${v.spo2 < 90 ? 'danger' : ''}">${v.spo2}%</span></div>` : ''}
       <div class="biometric-row text-sm text-muted"><span>Registrado</span><span>${new Date(v.fecha).toLocaleDateString('es-MX')}</span></div>
@@ -3205,7 +3509,62 @@ function renderMedicoView() {
   // HOMA from latest labs
   const labs = obesData.labs.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
   if (labs[0] && labs[0].homa_ir) {
-    setCalc('cur-homa', labs[0].homa_ir, parseFloat(labs[0].homa_ir) > 2.5 ? 'danger' : '');
+    setCalc('cur-homa', labs[0].homa_ir, parseFloat(labs[0].homa_ir) > 2.9 ? 'danger' : ''); // Umbral 2.9 para población mexicana mestiza
+  }
+  // VAI (Visceral Adiposity Index) — requires TG, HDL, cintura, IMC
+  if (mList[0] && labs[0]) {
+    const m = mList[0], l = labs[0];
+    const sex = currentPatient?.sexo || currentPatient?.sex || '';
+    if (m.cintura && m.bmi && l.tg && l.hdl) {
+      const cin = parseFloat(m.cintura), bmi = parseFloat(m.bmi), tg = parseFloat(l.tg), hdl = parseFloat(l.hdl);
+      // Convert TG to mmol/L (÷88.57), HDL to mmol/L (÷38.67)
+      const tgM = tg / 88.57, hdlM = hdl / 38.67;
+      let vai;
+      if (sex === 'M' || sex === 'masculino') {
+        vai = (cin / (39.68 + 1.88 * bmi)) * (tgM / 1.03) * (1.31 / hdlM);
+      } else {
+        vai = (cin / (36.58 + 1.89 * bmi)) * (tgM / 0.81) * (1.52 / hdlM);
+      }
+      setCalc('cur-vai', vai.toFixed(2), vai > 4 ? 'danger' : vai > 2 ? 'warn' : 'ok');
+    }
+    // FIB-4 (MASLD staging)
+    if (labs[0].fib4 !== undefined && labs[0].fib4 !== null) {
+      const fib4 = parseFloat(labs[0].fib4);
+      setCalc('cur-fib4', fib4 + (fib4 < 1.3 ? ' — bajo riesgo' : fib4 < 2.67 ? ' — indeterminado' : ' — alto riesgo F3-F4'), fib4 > 2.67 ? 'danger' : fib4 > 1.3 ? 'warn' : 'ok');
+    }
+  }
+  // MHO/MUO classification (IDF MetSyn criteria)
+  if (mList[0] && labs[0]) {
+    const m = mList[0], l = labs[0];
+    const sex = currentPatient?.sexo || currentPatient?.sex || '';
+    let criteria = 0;
+    const cin = parseFloat(m.cintura);
+    // IDF waist cutoffs for Latin American / Mexican (same as South Asian)
+    if (cin && ((sex === 'M' || sex === 'masculino') ? cin >= 90 : cin >= 80)) criteria++;
+    if (l.tg && parseFloat(l.tg) >= 150) criteria++;
+    if (l.hdl && ((sex === 'M' || sex === 'masculino') ? parseFloat(l.hdl) < 40 : parseFloat(l.hdl) < 50)) criteria++;
+    if (obesData.hta) criteria++; // PAS ≥130 / PAD ≥85 or treatment
+    if (l.glucosa && parseFloat(l.glucosa) >= 100) criteria++;
+    const mhoEl = $('cur-mho');
+    if (criteria >= 3) {
+      setCalc('cur-mho', `MUO — Obesidad Metabólicamente Enferma (${criteria}/5 criterios MetSyn IDF)`, 'danger');
+    } else {
+      setCalc('cur-mho', `MHO — Obesidad Metabólicamente Sana (${criteria}/5 criterios MetSyn IDF)`, 'ok');
+    }
+  }
+  // KOSC display
+  if (obesData.kosc) {
+    const k = obesData.kosc;
+    const scores = [k.d1, k.d2, k.d3, k.d4];
+    const labels = ['kosc-d1-score','kosc-d2-score','kosc-d3-score','kosc-d4-score'];
+    const cards  = ['kosc-d1-card','kosc-d2-card','kosc-d3-card','kosc-d4-card'];
+    scores.forEach((s, i) => {
+      const sc = $(labels[i]); const cd = $(cards[i]);
+      if (sc) sc.textContent = s !== null ? s : '—';
+      if (cd) { cd.className = `kosc-domain-card${s !== null ? ' score-'+s : ''}`; }
+    });
+    const tot = $('kosc-total-display');
+    if (tot) tot.textContent = `Total: ${k.total}/16 · D1:${k.d1} D2:${k.d2} D3:${k.d3} D4:${k.d4}${k.notes ? ' · ' + k.notes.slice(0,60) : ''}`;
   }
   // TWL / EWL
   if (mList.length >= 2) {
@@ -3230,7 +3589,7 @@ function renderMedicoView() {
         <td>${l.glucosa || '—'}</td>
         <td>${l.hba1c || '—'}</td>
         <td>${l.insulina || '—'}</td>
-        <td><span class="pill ${l.homa_ir > 2.5 ? 'red' : 'green'}">${l.homa_ir || '—'}</span></td>
+        <td><span class="pill ${l.homa_ir > 2.9 ? 'red' : 'green'}">${l.homa_ir || '—'}</span></td>
         <td>${l.ldl || '—'}</td>
         <td>${l.hdl || '—'}</td>
         <td>${l.tg || '—'}</td>
@@ -3306,7 +3665,7 @@ function calcHOMA() {
   if (g > 0 && i > 0) {
     const homa = ((g * i) / 405).toFixed(2);
     $('lab-homa-val').textContent = homa;
-    $('lab-homa-val').className = 'calc-value ' + (homa > 2.5 ? 'danger' : 'ok');
+    $('lab-homa-val').className = 'calc-value ' + (homa > 2.9 ? 'danger' : 'ok'); // Umbral 2.9 validado para población mexicana mestiza
     $('homa-calc-result').style.display = 'flex';
   } else { $('homa-calc-result').style.display = 'none'; }
 }
@@ -3463,6 +3822,19 @@ function saveLabs() {
   const insulina = parseFloat($('lab-insulina').value) || null;
   const homa_ir  = glucosa && insulina ? parseFloat(((glucosa * insulina) / 405).toFixed(2)) : null;
 
+  const alt       = parseFloat($('lab-alt').value) || null;
+  const ast       = parseFloat($('lab-ast').value) || null;
+  const plaquetas = parseFloat($('lab-plaquetas').value) || null;
+  const cortisol  = parseFloat($('lab-cortisol').value) || null;
+  // FIB-4 = (edad × AST) / (plaquetas × √ALT)
+  const edadP = currentPatient?.fecha_nacimiento
+    ? Math.floor((new Date() - new Date(currentPatient.fecha_nacimiento)) / 3.156e10)
+    : null;
+  let fib4 = null;
+  if (edadP && ast && alt && plaquetas && alt > 0 && plaquetas > 0) {
+    fib4 = parseFloat(((edadP * ast) / (plaquetas * Math.sqrt(alt))).toFixed(2));
+  }
+
   const entry = {
     fecha:      $('lab-fecha').value || new Date().toISOString().split('T')[0],
     glucosa,    insulina,   homa_ir,
@@ -3471,8 +3843,7 @@ function saveLabs() {
     ldl:        parseFloat($('lab-ldl').value) || null,
     hdl:        parseFloat($('lab-hdl').value) || null,
     tg:         parseFloat($('lab-tg').value) || null,
-    alt:        parseFloat($('lab-alt').value) || null,
-    ast:        parseFloat($('lab-ast').value) || null,
+    alt, ast,
     ggt:        parseFloat($('lab-ggt').value) || null,
     creatinina: parseFloat($('lab-creatinina').value) || null,
     egfr:       parseFloat($('lab-egfr').value) || null,
@@ -3482,6 +3853,7 @@ function saveLabs() {
     ferritina:  parseFloat($('lab-ferritina').value) || null,
     urico:      parseFloat($('lab-urico').value) || null,
     crp:        parseFloat($('lab-crp').value) || null,
+    cortisol,   plaquetas,  fib4,
     id:         Date.now(),
   };
   obesData.labs.push(entry);
@@ -3514,6 +3886,70 @@ function saveEOSS() {
   selectedEOSS = null;
 }
 
+// ─── KOSC ─────────────────────────────────────────────────────────
+function selectKOSC(domain, score) {
+  selectedKOSC[`d${domain}`] = score;
+  // Update visual selection for domain
+  for (let s = 0; s <= 4; s++) {
+    const el = $(`kosc-opt-${domain}-${s}`);
+    if (!el) continue;
+    el.style.borderColor = s === score ? 'var(--primary)' : 'var(--border)';
+    el.style.background  = s === score ? '#EBF5FB' : (s === 0 ? '#D5F5E3' : '');
+  }
+  // Update total display
+  const vals = [1,2,3,4].map(d => selectedKOSC[`d${d}`]);
+  const total = vals.every(v => v !== null) ? vals.reduce((a,b) => a+b, 0) : null;
+  const el = $('kosc-total-calc');
+  if (el) {
+    el.textContent = `D1:${selectedKOSC.d1??'—'} D2:${selectedKOSC.d2??'—'} D3:${selectedKOSC.d3??'—'} D4:${selectedKOSC.d4??'—'} | Total: ${total !== null ? total+'/16' : '—'}`;
+  }
+}
+
+function saveKOSC() {
+  const { d1, d2, d3, d4 } = selectedKOSC;
+  if (d1 === null || d2 === null || d3 === null || d4 === null) {
+    showToast('Selecciona puntaje para los 4 dominios KOSC', 'warn'); return;
+  }
+  obesData.kosc = { d1, d2, d3, d4, total: d1+d2+d3+d4, notes: $('kosc-notes').value };
+  saveOBESData();
+  renderMedicoView();
+  renderDashboard();
+  closeModal('modal-kosc');
+  showToast(`KOSC guardado — Total: ${d1+d2+d3+d4}/16`);
+  selectedKOSC = { d1: null, d2: null, d3: null, d4: null };
+  $('kosc-notes').value = '';
+}
+
+// ─── LAB HELPERS ──────────────────────────────────────────────────
+function checkCortisol() {
+  const val = parseFloat($('lab-cortisol')?.value);
+  const alertEl = $('cortisol-alert');
+  if (alertEl) alertEl.style.display = !isNaN(val) && val > 18 ? 'block' : 'none';
+}
+
+function calcFIB4Lab() {
+  const ast = parseFloat($('lab-ast')?.value);
+  const alt = parseFloat($('lab-alt')?.value);
+  const plaquetas = parseFloat($('lab-plaquetas')?.value);
+  const edadP = currentPatient?.fecha_nacimiento
+    ? Math.floor((new Date() - new Date(currentPatient.fecha_nacimiento)) / 3.156e10)
+    : null;
+  const resultEl = $('fib4-calc-result');
+  const valEl    = $('lab-fib4-val');
+  const hintEl   = $('fib4-hint');
+  if (!resultEl || !valEl) return;
+  if (edadP && ast && alt && plaquetas && alt > 0 && plaquetas > 0) {
+    const fib4 = ((edadP * ast) / (plaquetas * Math.sqrt(alt))).toFixed(2);
+    valEl.textContent = fib4;
+    valEl.className = 'calc-value ' + (fib4 > 2.67 ? 'danger' : fib4 > 1.3 ? 'warn' : 'ok');
+    resultEl.style.display = 'flex';
+    if (hintEl) hintEl.style.display = 'block';
+  } else {
+    resultEl.style.display = 'none';
+    if (hintEl) hintEl.style.display = 'none';
+  }
+}
+
 // ─── MED INFO ─────────────────────────────────────────────────────
 function updateMedInfo() {
   const key = $('med-nombre').value;
@@ -3537,6 +3973,10 @@ function saveMedication() {
     inicio:     $('med-inicio').value || new Date().toISOString().split('T')[0],
     indicacion: $('med-indicacion').value,
     notas:      $('med-notas').value,
+    titulacion: $('med-titulacion').value,
+    twl12:      parseFloat($('med-twl12').value) || null,
+    dosisMax:   $('med-dosis-max').value,
+    estado:     $('med-estado').value || 'activo',
     id:         Date.now(),
   };
   obesData.medications.push(entry);
@@ -4200,14 +4640,27 @@ function renderSleepView() {
 function updateSleepForm() {
   const tipo = $('sq-tipo').value;
   const isStopBang = tipo === 'STOP-BANG';
+  const isPSQI = tipo === 'PSQI';
   $('stopbang-items').style.display = isStopBang ? 'block' : 'none';
-  $('sleep-score-block').style.display = isStopBang ? 'none' : 'block';
+  $('psqi-components').style.display = isPSQI ? 'block' : 'none';
+  $('sleep-score-block').style.display = (!isStopBang && !isPSQI) ? 'block' : 'none';
   const hint = $('sq-range-hint');
   const cuts = SLEEP_CUTOFFS[tipo];
   if (hint && cuts) {
     hint.textContent = cuts.ranges.map(r => `${r[0]}-${r[1]}: ${r[2]}`).join(' · ');
   } else if (hint) { hint.textContent = ''; }
   $('sq-severity-box').style.display = 'none';
+}
+
+function calcPSQI() {
+  const ids = ['psqi-c1','psqi-c2','psqi-c3','psqi-c4','psqi-c5','psqi-c6','psqi-c7'];
+  const total = ids.reduce((sum, id) => sum + parseInt($(id)?.value || 0), 0);
+  const el = $('psqi-total-val');
+  if (el) {
+    el.textContent = total + ' / 21';
+    el.className = 'calc-value ' + (total > 10 ? 'danger' : total > 5 ? 'warn' : 'ok');
+  }
+  return total;
 }
 
 function autoSleepSeverity() {
@@ -4226,15 +4679,26 @@ function saveSleepAssessment() {
   if (!currentPatient) return;
   const tipo = $('sq-tipo').value;
   const isStopBang = tipo === 'STOP-BANG';
-  let puntaje, riesgo, interpretacion;
+  const isPSQI = tipo === 'PSQI';
+  let puntaje, riesgo, interpretacion, psqiComponents = null;
 
   if (isStopBang) {
     const items = ['sb-s','sb-t','sb-o','sb-p','sb-b','sb-a','sb-n','sb-g'];
     puntaje = items.filter(id => $(id).checked).length;
     riesgo = puntaje <= 2 ? 'Bajo' : puntaje <= 4 ? 'Intermedio' : 'Alto';
     interpretacion = `Riesgo ${riesgo} de SAOS (${puntaje}/8)`;
-    // reset
     items.forEach(id => { $(id).checked = false; });
+  } else if (isPSQI) {
+    const cIds = ['psqi-c1','psqi-c2','psqi-c3','psqi-c4','psqi-c5','psqi-c6','psqi-c7'];
+    psqiComponents = {};
+    puntaje = 0;
+    cIds.forEach((id, i) => {
+      const v = parseInt($(id)?.value || 0);
+      psqiComponents[`c${i+1}`] = v;
+      puntaje += v;
+    });
+    interpretacion = puntaje > 10 ? 'Alteración severa del sueño' : puntaje > 5 ? 'Mala calidad de sueño' : 'Buena calidad de sueño';
+    riesgo = puntaje > 5 ? 'Alterado' : 'Normal';
   } else {
     puntaje = parseInt($('sq-score').value);
     if (isNaN(puntaje)) { showToast('Ingresa el puntaje', 'warn'); return; }
@@ -4248,7 +4712,7 @@ function saveSleepAssessment() {
   }
 
   const entry = {
-    tipo, puntaje, riesgo, interpretacion,
+    tipo, puntaje, riesgo, interpretacion, psqiComponents,
     fecha: $('sq-fecha').value || new Date().toISOString().split('T')[0],
     notas: $('sq-notes').value,
     id: Date.now(),
