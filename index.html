@@ -3175,27 +3175,18 @@ $('btn-login').addEventListener('click', async () => {
   $('auth-error').style.display = 'none';
 
   try {
-    // Try Supabase auth first
-    if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co') {
-      const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pwd });
-      if (error) throw error;
-      currentUser = { email: data.user.email, id: data.user.id, nombre: data.user.user_metadata?.nombre || email.split('@')[0] };
-      localStorage.setItem('ece_token', data.session.access_token);
-      showApp();
-      await loadRecentPatients();
-    } else {
-      // Fallback to legacy API when Supabase not yet configured
-      const res = await fetch(API + '/api/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pwd }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Error de autenticación');
-      currentUser = data.user;
-      localStorage.setItem('ece_token', data.token);
-      showApp();
-      await loadRecentPatients();
-    }
+    // Authenticate via ECE META CORE API
+    const res = await fetch(API + '/api/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pwd }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.message || 'Credenciales invalidas');
+    currentUser = data.user;
+    localStorage.setItem('ece_token', data.token);
+    localStorage.setItem('ece_user', JSON.stringify(data.user));
+    showApp();
+    await loadRecentPatients();
   } catch (err) {
     showAuthError(err.message || 'Error al iniciar sesión');
   } finally {
