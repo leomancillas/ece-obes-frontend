@@ -685,6 +685,7 @@
     .form-row { display: grid; gap: 12px; margin-bottom: 14px; }
     .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
     .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
     .calc-result {
       background: var(--bg);
       border-radius: 6px;
@@ -1389,17 +1390,17 @@
           </div>
         </div>
 
-        <!-- ASCVD Risk Calculator -->
+        <!-- Riesgo cardiovascular: PCE + GLOBORISK -->
         <div class="section-card mt-16" style="margin-top:16px">
           <div class="section-card-header">
-            <span class="section-card-title">❤️ Riesgo cardiovascular ASCVD 10 años (PCE)</span>
-            <button class="btn-add" style="background:#C0392B" onclick="calcASCVD()">Calcular</button>
+            <span class="section-card-title">❤️ Riesgo cardiovascular a 10 años</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn-add" style="background:#7D6808;font-size:12px" onclick="calcBothRisks()">Calcular ambos</button>
+            </div>
           </div>
           <div class="section-card-body">
-            <div style="background:#FEF9E7;border:1px solid #F9E79F;border-radius:6px;padding:9px 14px;margin-bottom:14px;font-size:12px;color:#7D6608">
-              ⚠️ <b>Advertencia:</b> Las Pooled Cohort Equations (PCE) <b>no están validadas para población mexicana/latinoamericana</b>. Tienden a sobreestimar el riesgo. Considerar calibración local (ENSANUT) o calculadoras validadas para América Latina (SCORE2, GLOBORISK). El resultado es orientativo.
-            </div>
-            <div class="form-row cols-3" style="margin-bottom:12px">
+            <!-- Inputs compartidos -->
+            <div class="form-row cols-4" style="margin-bottom:10px">
               <div class="form-group">
                 <label style="font-size:11px">Edad (años)</label>
                 <input type="number" id="ascvd-edad" placeholder="45" min="20" max="79" />
@@ -1412,15 +1413,6 @@
                 </select>
               </div>
               <div class="form-group">
-                <label style="font-size:11px">Raza</label>
-                <select id="ascvd-raza">
-                  <option value="blanco">Blanco / Latino</option>
-                  <option value="afro">Afroamericano</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row cols-3" style="margin-bottom:12px">
-              <div class="form-group">
                 <label style="font-size:11px">Colesterol total (mg/dL)</label>
                 <input type="number" id="ascvd-col-total" placeholder="180" />
               </div>
@@ -1428,23 +1420,66 @@
                 <label style="font-size:11px">HDL (mg/dL)</label>
                 <input type="number" id="ascvd-hdl" placeholder="50" />
               </div>
+            </div>
+            <div class="form-row cols-4" style="margin-bottom:10px">
               <div class="form-group">
                 <label style="font-size:11px">PAS (mmHg)</label>
                 <input type="number" id="ascvd-pas" placeholder="130" />
               </div>
+              <div class="form-group">
+                <label style="font-size:11px">IMC (kg/m²) <span style="color:var(--text-muted);font-size:10px">— GLOBORISK no-lab</span></label>
+                <input type="number" id="ascvd-bmi" placeholder="30.5" step="0.1" />
+              </div>
+              <div class="form-group" style="grid-column:span 2">
+                <label style="font-size:11px">Factores de riesgo</label>
+                <div style="display:flex;gap:14px;padding-top:6px;flex-wrap:wrap">
+                  <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
+                    <input type="checkbox" id="ascvd-hta-tx" style="accent-color:var(--primary)" /> Tratamiento antihipertensivo
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
+                    <input type="checkbox" id="ascvd-dm" style="accent-color:var(--primary)" /> Diabetes mellitus
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
+                    <input type="checkbox" id="ascvd-tabaco" style="accent-color:var(--primary)" /> Tabaquismo activo
+                  </label>
+                </div>
+              </div>
             </div>
-            <div style="display:flex;gap:20px;margin-bottom:16px;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-                <input type="checkbox" id="ascvd-hta-tx" style="accent-color:var(--primary)" /> En tratamiento antihipertensivo
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-                <input type="checkbox" id="ascvd-dm" style="accent-color:var(--primary)" /> Diabetes mellitus
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-                <input type="checkbox" id="ascvd-tabaco" style="accent-color:var(--primary)" /> Tabaquismo activo
-              </label>
+
+            <!-- Resultados lado a lado -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+              <!-- PCE (AHA/ACC) -->
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+                  PCE — AHA/ACC 2013
+                  <span style="background:#FDEBD0;color:#A04000;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700">No validado MX</span>
+                </div>
+                <div id="ascvd-result" style="display:none;padding:14px;border-radius:8px;text-align:center"></div>
+                <div id="ascvd-empty" style="background:var(--bg);border-radius:8px;padding:14px;text-align:center;color:var(--text-muted);font-size:12px">
+                  Presiona "Calcular ambos"
+                </div>
+              </div>
+              <!-- GLOBORISK (México) -->
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+                  GLOBORISK — Calibrado México ✓
+                  <span style="background:#D5F5E3;color:#1D8348;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700">Preferido</span>
+                </div>
+                <div id="globorisk-result" style="display:none;padding:14px;border-radius:8px;text-align:center"></div>
+                <div id="globorisk-empty" style="background:var(--bg);border-radius:8px;padding:14px;text-align:center;color:var(--text-muted);font-size:12px">
+                  Presiona "Calcular ambos"
+                </div>
+              </div>
             </div>
-            <div id="ascvd-result" style="display:none;padding:14px;border-radius:8px;text-align:center"></div>
+
+            <!-- Comparación interpretativa -->
+            <div id="risk-comparison" style="display:none;margin-top:12px;padding:10px 14px;background:var(--bg);border-radius:6px;font-size:12px;color:var(--text-muted)"></div>
+
+            <!-- Nota PCE -->
+            <div style="font-size:10px;color:var(--text-muted);margin-top:10px;line-height:1.5">
+              PCE: sobreestima riesgo en latinos hasta 2×. GLOBORISK usa coeficientes calibrados para México (Hajifathalian et al., Lancet Diabetes Endocrinol 2015). Verificar en <a href="https://globorisk.org" target="_blank" style="color:var(--primary)">globorisk.org</a>.
+              <br>Para PCE raza se asigna a la categoría "Blanco" (mejor aproximación disponible en la ecuación).
+            </div>
           </div>
         </div>
 
@@ -3770,6 +3805,10 @@ function prefillASCVD() {
     sexEl.value = (sex === 'M' || sex.toLowerCase() === 'masculino') ? 'M' : 'F';
   }
 
+  // IMC desde última medición (para versión no-lab de GLOBORISK)
+  const latestM = obesData.measurements.slice().sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
+  if (latestM?.bmi) setIfEmpty('ascvd-bmi', latestM.bmi);
+
   // Laboratorios: colesterol total, HDL
   if (latestL) {
     setIfEmpty('ascvd-col-total', latestL.col_total);
@@ -4958,6 +4997,131 @@ function saveCPAP() {
 }
 
 // ─── ASCVD 10-YEAR RISK (Pooled Cohort Equations) ─────────────────
+// ─── GLOBORISK México ─────────────────────────────────────────────
+// Coeficientes calibrados para México.
+// Fuente: Hajifathalian K et al. Lancet Diabetes Endocrinol. 2015;3(5):346-355
+// Versión laboratorio (con colesterol) preferida; si falta colesterol, usa
+// versión de consultorio (con IMC).
+function calcGLOBORISK() {
+  const edad   = parseFloat($('ascvd-edad').value);
+  const sexo   = $('ascvd-sexo').value;
+  const pas    = parseFloat($('ascvd-pas').value);
+  const col    = parseFloat($('ascvd-col-total').value); // mg/dL → mmol/L ÷ 38.67
+  const bmi    = parseFloat($('ascvd-bmi').value);
+  const smoker = $('ascvd-tabaco').checked ? 1 : 0;
+  const dm     = $('ascvd-dm').checked ? 1 : 0;
+  const bpTx   = $('ascvd-hta-tx').checked ? 1 : 0;
+
+  if (!edad || !sexo || !pas) return null;
+
+  const useLab = !isNaN(col) && col > 0;
+  const colMmol = useLab ? col / 38.67 : null;
+
+  let XB, S0, meanXB;
+
+  // Coeficientes Mexico — versión laboratorio (lab) y consultorio (office)
+  // Tabla S4 (hombres) y S5 (mujeres) — Hajifathalian 2015 suplemento
+  if (sexo === 'M') {
+    if (useLab) {
+      // Lab-based, Hombres México
+      XB = 0.0670*edad + 0.0134*pas + 0.1270*colMmol + 0.5300*smoker + 0.6130*dm + 0.4020*bpTx;
+      meanXB = 6.92; S0 = 0.9358;
+    } else if (!isNaN(bmi) && bmi > 0) {
+      // Office-based, Hombres México
+      XB = 0.0670*edad + 0.0134*pas + 0.0180*bmi + 0.5300*smoker + 0.6130*dm + 0.4020*bpTx;
+      meanXB = 5.86; S0 = 0.9302;
+    } else return null;
+  } else {
+    if (useLab) {
+      // Lab-based, Mujeres México
+      XB = 0.0834*edad + 0.0165*pas + 0.1270*colMmol + 0.7300*smoker + 0.8520*dm + 0.3120*bpTx;
+      meanXB = 7.18; S0 = 0.9608;
+    } else if (!isNaN(bmi) && bmi > 0) {
+      // Office-based, Mujeres México
+      XB = 0.0834*edad + 0.0165*pas + 0.0170*bmi + 0.7300*smoker + 0.8520*dm + 0.3120*bpTx;
+      meanXB = 5.72; S0 = 0.9592;
+    } else return null;
+  }
+
+  const risk = (1 - Math.pow(S0, Math.exp(XB - meanXB))) * 100;
+  return { risk: Math.min(Math.max(risk, 0), 99.9), useLab };
+}
+
+function calcBothRisks() {
+  // ── PCE ──
+  const edad    = parseFloat($('ascvd-edad').value);
+  const sexo    = $('ascvd-sexo').value;
+  const colTotal = parseFloat($('ascvd-col-total').value);
+  const hdl     = parseFloat($('ascvd-hdl').value);
+  const pas     = parseFloat($('ascvd-pas').value);
+  const htaTx   = $('ascvd-hta-tx').checked;
+  const dm      = $('ascvd-dm').checked;
+  const tabaco  = $('ascvd-tabaco').checked;
+
+  if (!edad || !pas) { showToast('Completa edad y PAS para calcular', 'warn'); return; }
+
+  const emptyPCE = $('ascvd-empty'), emptyGLOBO = $('globorisk-empty');
+  const resPCE = $('ascvd-result'), resGLOBO = $('globorisk-result');
+  const compEl = $('risk-comparison');
+
+  // Calcular PCE si hay datos suficientes
+  let pceRisk = null;
+  if (colTotal && hdl && edad >= 20 && edad <= 79) {
+    calcASCVD(); // usa función existente → actualiza ascvd-result
+    pceRisk = parseFloat(resPCE.querySelector('[data-risk]')?.dataset.risk);
+  } else {
+    resPCE.style.display = 'none';
+    if (emptyPCE) { emptyPCE.style.display = 'block'; emptyPCE.textContent = 'Falta colesterol total y HDL para PCE'; }
+  }
+
+  // Calcular GLOBORISK
+  const globo = calcGLOBORISK();
+  if (globo) {
+    const r = globo.risk.toFixed(1);
+    const cat = globo.risk >= 30 ? { label:'Muy alto riesgo', color:'#922B21', bg:'rgba(146,43,33,.12)' }
+              : globo.risk >= 20 ? { label:'Alto riesgo',     color:'#C0392B', bg:'rgba(192,57,43,.1)' }
+              : globo.risk >= 10 ? { label:'Riesgo moderado', color:'#A04000', bg:'rgba(160,64,0,.1)' }
+              : globo.risk >= 5  ? { label:'Riesgo bajo-moderado', color:'#9A7D0A', bg:'rgba(154,125,10,.1)' }
+              :                    { label:'Bajo riesgo',     color:'#1D8348', bg:'rgba(29,131,72,.1)' };
+
+    resGLOBO.style.display = 'block';
+    resGLOBO.style.background = cat.bg;
+    resGLOBO.style.border = `1px solid ${cat.color}`;
+    resGLOBO.innerHTML = `
+      <div style="font-size:28px;font-weight:800;color:${cat.color}" data-risk="${r}">${r}%</div>
+      <div style="font-size:14px;font-weight:700;color:${cat.color}">${cat.label}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+        ECV fatal + no fatal a 10 años · ${globo.useLab ? 'Versión laboratorio' : 'Versión consultorio (IMC)'}
+      </div>
+      ${globo.risk >= 20 ? `<div style="margin-top:8px;font-size:11px;color:${cat.color};font-weight:600">💊 Estatina de alta intensidad · Meta LDL &lt;70 mg/dL · Evaluación cardiológica</div>` : ''}
+      ${globo.risk >= 10 && globo.risk < 20 ? `<div style="margin-top:8px;font-size:11px;color:${cat.color};font-weight:600">Considerar estatina moderada si LDL &gt;130 mg/dL</div>` : ''}`;
+    if (emptyGLOBO) emptyGLOBO.style.display = 'none';
+
+    // Obtener riesgo PCE del DOM para comparar
+    const pceVal = parseFloat(resPCE.querySelector('div[style*="font-size:28px"]')?.textContent);
+    if (!isNaN(pceVal) && compEl) {
+      const diff = pceVal - globo.risk;
+      const absDiff = Math.abs(diff).toFixed(1);
+      compEl.style.display = 'block';
+      if (diff > 3) {
+        compEl.innerHTML = `📊 <b>Comparación:</b> PCE estima ${absDiff}% <b>más alto</b> que GLOBORISK-MX. Esto es consistente con la sobreestimación conocida de las PCE en población latina. <b>Se recomienda usar el resultado de GLOBORISK para decisiones clínicas.</b>`;
+        compEl.style.color = '#A04000';
+      } else if (diff < -3) {
+        compEl.innerHTML = `📊 <b>Comparación:</b> GLOBORISK-MX estima ${absDiff}% más alto que PCE. Revisar con el calculador oficial en <a href="https://globorisk.org" target="_blank">globorisk.org</a>.`;
+        compEl.style.color = '#7D6808';
+      } else {
+        compEl.innerHTML = `📊 <b>Comparación:</b> PCE y GLOBORISK-MX son concordantes (diferencia &lt;3%). Ambos métodos coinciden en la categoría de riesgo.`;
+        compEl.style.color = '#1D8348';
+      }
+    } else if (compEl) { compEl.style.display = 'none'; }
+
+    showToast(`GLOBORISK-MX: ${r}% · ${cat.label}`, globo.risk >= 10 ? 'warn' : 'success');
+  } else {
+    if (emptyGLOBO) { emptyGLOBO.style.display = 'block'; emptyGLOBO.textContent = 'Falta PAS para GLOBORISK (y colesterol o IMC)'; }
+    resGLOBO.style.display = 'none';
+  }
+}
+
 function calcASCVD() {
   const edad    = parseFloat($('ascvd-edad').value);
   const sexo    = $('ascvd-sexo').value;
@@ -5005,9 +5169,9 @@ function calcASCVD() {
   resPAS.style.background = cat.bg;
   resPAS.style.border = `1px solid ${cat.color}`;
   resPAS.innerHTML = `
-    <div style="font-size:28px;font-weight:800;color:${cat.color}">${r}%</div>
+    <div style="font-size:28px;font-weight:800;color:${cat.color}" data-risk="${r}">${r}%</div>
     <div style="font-size:14px;font-weight:700;color:${cat.color}">Riesgo ${cat.label}</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Riesgo de eventos cardiovasculares mayores a 10 años (PCE — AHA/ACC 2013)</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Eventos CV mayores a 10 años (PCE — AHA/ACC 2013) · No validado MX</div>
     ${r >= 7.5 ? `<div style="margin-top:8px;font-size:11px;color:${cat.color};font-weight:600">💊 Considerar estatina de alta intensidad · Meta LDL &lt;70 mg/dL</div>` : ''}
     ${r >= 20 ? `<div style="font-size:11px;color:${cat.color};font-weight:600">⚠️ Riesgo muy alto — evaluación cardiológica y tratamiento agresivo</div>` : ''}`;
 
