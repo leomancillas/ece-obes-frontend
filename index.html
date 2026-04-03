@@ -2939,6 +2939,135 @@ function openModal(id) {
     if (searchInput) { searchInput.value = ''; searchInput.focus(); }
     loadRecentPatients();
   }
+  // Cross-module auto-fill
+  prefillModalFromObesData(id);
+}
+
+// ─── CROSS-MODULE PREFILL ────────────────────────────────────────────
+// Jala automáticamente los últimos datos registrados de obesData y currentPatient
+// cuando se abre cualquier modal, para que no haya que re-teclear datos.
+function prefillModalFromObesData(id) {
+  if (!currentPatient) return;
+
+  // Helpers
+  const latestM = obesData.measurements.slice().sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
+  const latestL = obesData.labs.slice().sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
+
+  const getAge = () => {
+    if (!currentPatient.fecha_nacimiento) return null;
+    return Math.floor((new Date() - new Date(currentPatient.fecha_nacimiento)) / 3.156e10);
+  };
+  const getSex = () => {
+    const s = currentPatient.sexo || currentPatient.sex || '';
+    return (s === 'M' || s.toLowerCase() === 'masculino' || s.toLowerCase() === 'hombre') ? 'M' : 'F';
+  };
+
+  const setVal = (fieldId, val) => {
+    const el = $(fieldId);
+    if (el && (el.value === '' || el.value === null || el.value === undefined) && val !== null && val !== undefined) {
+      el.value = val;
+    }
+  };
+  const forceVal = (fieldId, val) => {
+    const el = $(fieldId);
+    if (el && val !== null && val !== undefined) el.value = val;
+  };
+
+  // ── Plan Nutricional / GET ──────────────────────────────────────
+  if (id === 'modal-nutrition-plan') {
+    if (latestM) setVal('np-peso', latestM.peso);
+    setVal('np-height', currentPatient.talla_cm || latestM?.talla);
+    setVal('np-age', getAge());
+    forceVal('np-sex', getSex());
+    setTimeout(() => calcGET(), 30); // recalcular con datos prellenados
+    if (latestM || currentPatient.talla_cm) {
+      showPrefillBadge('modal-nutrition-plan', `Peso y talla del ${latestM ? new Date(latestM.fecha).toLocaleDateString('es-MX') : 'expediente'}`);
+    }
+  }
+
+  // ── Medición ───────────────────────────────────────────────────
+  if (id === 'modal-measurement') {
+    // Talla: casi nunca cambia — pre-llenar del expediente o última medición
+    setVal('m-talla', currentPatient.talla_cm || latestM?.talla);
+    if (latestM) {
+      // Pre-llenar peso anterior como referencia en placeholder
+      const pesoEl = $('m-peso');
+      if (pesoEl && !pesoEl.placeholder.includes('kg')) {
+        pesoEl.placeholder = `Anterior: ${latestM.peso} kg`;
+      }
+    }
+  }
+
+  // ── EOSS: mostrar estadio actual al abrir ──────────────────────
+  if (id === 'modal-eoss') {
+    if (obesData.eoss !== null && obesData.eoss !== undefined) {
+      selectedEOSS = obesData.eoss;
+      document.querySelectorAll('.eoss-option').forEach((optEl, i) => {
+        optEl.style.borderColor = i === obesData.eoss ? 'var(--primary)' : 'var(--border)';
+        optEl.style.background  = i === obesData.eoss ? '#EBF5FB' : '';
+      });
+      setVal('eoss-notes', obesData.eossNotes || '');
+    }
+  }
+
+  // ── KOSC: mostrar puntajes actuales al abrir ───────────────────
+  if (id === 'modal-kosc') {
+    if (obesData.kosc) {
+      const k = obesData.kosc;
+      selectedKOSC = { d1: k.d1, d2: k.d2, d3: k.d3, d4: k.d4 };
+      [1,2,3,4].forEach(d => { if (k[`d${d}`] !== null) selectKOSC(d, k[`d${d}`]); });
+      setVal('kosc-notes', k.notes || '');
+    }
+  }
+
+  // ── Laboratorios: advertencia si hay datos recientes ──────────
+  if (id === 'modal-labs') {
+    if (latestL) {
+      const diasDesde = Math.round((new Date() - new Date(latestL.fecha)) / 86400000);
+      if (diasDesde < 90) {
+        showPrefillBadge('modal-labs', `Últimos labs: ${new Date(latestL.fecha).toLocaleDateString('es-MX')} (hace ${diasDesde} días)`);
+      }
+    }
+  }
+
+  // ── Medicamento: mostrar contexto clínico ─────────────────────
+  if (id === 'modal-medication') {
+    if (latestM) {
+      showPrefillBadge('modal-medication', `IMC actual: ${latestM.bmi} · Peso: ${latestM.peso} kg`);
+    }
+  }
+
+  // ── Cuestionario de sueño: automarcar STOP-BANG ítem B (IMC>35) ──
+  if (id === 'modal-sleep-assessment') {
+    if (latestM && parseFloat(latestM.bmi) > 35) {
+      const sbB = $('sb-b');
+      if (sbB && !sbB.checked) {
+        sbB.checked = true;
+        // Update score display
+        const items = ['sb-s','sb-t','sb-o','sb-p','sb-b','sb-a','sb-n','sb-g'];
+        const score = items.filter(i => $(i)?.checked).length;
+        const scoreEl = $('sb-score-val');
+        if (scoreEl) scoreEl.textContent = score + ' / 8';
+        showPrefillBadge('modal-sleep-assessment', `ítem B marcado automáticamente — IMC ${latestM.bmi} > 35`);
+      }
+    }
+  }
+}
+
+// Muestra una pequeña nota de auto-llenado en la parte superior del modal-body
+function showPrefillBadge(modalId, text) {
+  const modal = $(modalId);
+  if (!modal) return;
+  const body = modal.querySelector('.modal-body');
+  if (!body) return;
+  // Eliminar badge previo
+  const prev = body.querySelector('.prefill-badge');
+  if (prev) prev.remove();
+  const badge = document.createElement('div');
+  badge.className = 'prefill-badge';
+  badge.innerHTML = `🔗 <b>Auto-llenado:</b> ${text}`;
+  badge.style.cssText = 'background:#EBF5FB;border:1px solid #AED6F1;border-radius:6px;padding:7px 12px;font-size:11px;color:#1A5276;margin-bottom:12px;';
+  body.insertBefore(badge, body.firstChild);
 }
 function closeModal(id) { $(id).classList.remove('open'); }
 
@@ -3613,6 +3742,58 @@ function renderMedicoView() {
     : '<tr><td colspan="6" class="table-empty">💊<br>Sin medicamentos registrados</td></tr>';
 
   renderProcedures();
+
+  // ── ASCVD: auto-llenar desde datos del expediente ─────────────
+  prefillASCVD();
+}
+
+// Auto-llena los campos ASCVD desde datos del paciente y últimos laboratorios
+function prefillASCVD() {
+  if (!currentPatient) return;
+  const latestL = obesData.labs.slice().sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
+
+  const setIfEmpty = (fieldId, val) => {
+    const el = $(fieldId);
+    if (el && !el.value && val !== null && val !== undefined) el.value = val;
+  };
+
+  // Edad desde fecha de nacimiento
+  if (currentPatient.fecha_nacimiento) {
+    const age = Math.floor((new Date() - new Date(currentPatient.fecha_nacimiento)) / 3.156e10);
+    setIfEmpty('ascvd-edad', age);
+  }
+
+  // Sexo
+  const sex = currentPatient.sexo || currentPatient.sex || '';
+  const sexEl = $('ascvd-sexo');
+  if (sexEl && sex) {
+    sexEl.value = (sex === 'M' || sex.toLowerCase() === 'masculino') ? 'M' : 'F';
+  }
+
+  // Laboratorios: colesterol total, HDL
+  if (latestL) {
+    setIfEmpty('ascvd-col-total', latestL.col_total);
+    setIfEmpty('ascvd-hdl', latestL.hdl);
+    // DM: glucosa ≥ 126 o HbA1c ≥ 6.5
+    if ((latestL.glucosa && latestL.glucosa >= 126) || (latestL.hba1c && latestL.hba1c >= 6.5)) {
+      const dmEl = $('ascvd-dm');
+      if (dmEl) dmEl.checked = true;
+    }
+  }
+
+  // Badge si se pre-llenó
+  const ascvdCard = $('ascvd-result')?.closest('.section-card');
+  if (ascvdCard && latestL) {
+    const old = ascvdCard.querySelector('.ascvd-prefill-note');
+    if (!old) {
+      const note = document.createElement('div');
+      note.className = 'ascvd-prefill-note';
+      note.style.cssText = 'font-size:11px;color:#1A5276;margin-bottom:8px;background:#EBF5FB;border-radius:5px;padding:5px 10px;';
+      note.innerHTML = `🔗 Colesterol y HDL cargados de labs del ${new Date(latestL.fecha).toLocaleDateString('es-MX')}`;
+      const body = $('ascvd-result')?.parentNode;
+      if (body) body.insertBefore(note, $('ascvd-result'));
+    }
+  }
 }
 
 function setCalc(id, val, cls = '') {
