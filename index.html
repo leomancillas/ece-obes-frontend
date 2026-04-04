@@ -600,6 +600,34 @@
     .endotipo-opt.sel { border-color:var(--primary); background:rgba(26,82,118,.07); }
     .endotipo-opt:hover:not(.sel) { border-color:#aaa; }
     .lipedema-row { display:flex; align-items:flex-start; gap:10px; padding:8px; border-radius:6px; margin-bottom:6px; background:var(--bg); }
+    /* ── Lancet 2025 ───────────────────────────────────────────── */
+    .lancet-badge { display:inline-flex;align-items:center;gap:6px;padding:7px 18px;border-radius:20px;font-size:13px;font-weight:800;letter-spacing:.3px; }
+    .lancet-badge.oc   { background:rgba(192,57,43,.12);color:#C0392B;border:2px solid #C0392B; }
+    .lancet-badge.op   { background:rgba(29,131,72,.12);color:#1D8348;border:2px solid #1D8348; }
+    .lancet-badge.pend { background:var(--bg);color:var(--text-muted);border:2px solid var(--border); }
+    .lancet-domain { border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;flex:1;min-width:120px; }
+    .lancet-domain.pos { border-color:#C0392B;background:rgba(192,57,43,.05); }
+    .lancet-domain.neg { border-color:#1D8348;background:rgba(29,131,72,.05); }
+    /* ── CBEC-8 ─────────────────────────────────────────────────── */
+    .cbec-q { border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px; }
+    .cbec-q-label { font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text); }
+    .cbec-opts { display:flex;gap:8px; }
+    .cbec-opt { flex:1;text-align:center;border:1.5px solid var(--border);border-radius:6px;padding:7px 4px;cursor:pointer;font-size:11px;transition:all .15s; }
+    .cbec-opt.sel { border-color:var(--primary);background:rgba(26,82,118,.1);font-weight:700;color:var(--primary); }
+    .cbec-score-bar { height:6px;border-radius:3px;background:var(--border);margin-top:4px;overflow:hidden; }
+    .cbec-score-fill { height:100%;border-radius:3px;background:var(--primary);transition:width .3s; }
+    /* ── Panel de Síntesis ──────────────────────────────────────── */
+    .sintesis-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px; }
+    .sintesis-tile { border:2px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;transition:border-color .2s; }
+    .sintesis-tile.ok    { border-color:#1D8348;background:rgba(29,131,72,.05); }
+    .sintesis-tile.alert { border-color:#C0392B;background:rgba(192,57,43,.05); }
+    .sintesis-tile.warn  { border-color:#E67E22;background:rgba(230,126,34,.05); }
+    .sintesis-tile .st-label { font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:.3px;margin-bottom:4px; }
+    .sintesis-tile .st-val   { font-size:12px;font-weight:700;line-height:1.3; }
+    .cdss-alert { display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-radius:6px;margin-bottom:6px;font-size:12px; }
+    .cdss-alert.rojo    { background:rgba(192,57,43,.08);border:1px solid #C0392B;color:#7B241C; }
+    .cdss-alert.naranja { background:rgba(230,126,34,.08);border:1px solid #E67E22;color:#784212; }
+    .cdss-alert.azul    { background:rgba(26,82,118,.08);border:1px solid #1A5276;color:#1A3650; }
 
     /* Measurements history table */
     .data-table { width: 100%; border-collapse: collapse; }
@@ -1223,6 +1251,37 @@
           </div>
         </div>
 
+        <!-- ── Diagnóstico Lancet Commission 2025 ──────────────── -->
+        <div class="section-card mb-8" style="margin-bottom:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">🎯 Diagnóstico Lancet Commission 2025 — OC vs OP</span>
+            <button class="btn-add" onclick="openModal('modal-lancet2025')">Actualizar diagnóstico</button>
+          </div>
+          <div class="section-card-body">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+              <span class="lancet-badge pend" id="lancet-main-badge">⏳ Sin clasificar</span>
+              <div style="font-size:11px;color:var(--text-muted);flex:1;min-width:180px" id="lancet-badge-sub">Registra mediciones y laboratorios para clasificación automática (Rubino et al., Lancet 2025).</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap" id="lancet-domains-display">
+              <div class="lancet-domain" id="lancet-d-cardio">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">❤️ Cardiometabólico</div>
+                <div style="font-size:12px;font-weight:700" id="lancet-d-cardio-val">—</div>
+                <div style="font-size:10px;color:var(--text-muted)" id="lancet-d-cardio-sub"></div>
+              </div>
+              <div class="lancet-domain" id="lancet-d-mec">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">🦴 Mecánico</div>
+                <div style="font-size:12px;font-weight:700" id="lancet-d-mec-val">—</div>
+                <div style="font-size:10px;color:var(--text-muted)" id="lancet-d-mec-sub"></div>
+              </div>
+              <div class="lancet-domain" id="lancet-d-mental">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">🧠 Mental / Funcional</div>
+                <div style="font-size:12px;font-weight:700" id="lancet-d-mental-val">—</div>
+                <div style="font-size:10px;color:var(--text-muted)" id="lancet-d-mental-sub"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- EOSS card -->
         <div class="section-card mb-8" style="margin-bottom:16px">
           <div class="section-card-header">
@@ -1331,6 +1390,17 @@
             <div id="fen-lipedema-flag" style="display:none;margin-top:12px;padding:10px 14px;background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;font-size:12px;color:#92400E">
               ⚠️ <b>Screening lipedema positivo</b> — Distribución bilateral simétrica, tejido doloroso y/o sin respuesta a dieta/ejercicio. Considerar evaluación por angiólogo/cirujano vascular para diferenciación lipedema vs. linfedema.
             </div>
+          </div>
+        </div>
+
+        <!-- ── Panel de Síntesis ─────────────────────────────── -->
+        <div class="section-card mb-8" id="panel-sintesis-card" style="margin-bottom:16px;display:none">
+          <div class="section-card-header">
+            <span class="section-card-title">🗂️ Panel de Síntesis — Fenotipo integral</span>
+          </div>
+          <div class="section-card-body">
+            <div class="sintesis-grid" id="sintesis-grid-display"></div>
+            <div id="cdss-alerts-container"></div>
           </div>
         </div>
 
@@ -2340,37 +2410,98 @@
         </div>
       </div>
 
-      <!-- 3. ENDOTIPO CONDUCTUAL ───────────────────────── -->
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px;margin-top:4px">🧠 Endotipo conductual (Acosta et al., Cell Metabolism 2019)</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Selecciona el o los endotipos que mejor describen al paciente. Guían la elección del fármaco anti-obesidad.</div>
-      <div class="endotipo-opt" id="endo-opt-1" onclick="toggleEndotipo(1)">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:13px;font-weight:700">🧠 Hambre cerebral <span style="font-size:10px;color:var(--text-muted);font-weight:400">(Hungry Brain)</span></div>
-          <div style="font-size:10px;font-weight:700;color:var(--primary)" id="endo-tag-1" style="display:none">✓ SELECCIONADO</div>
+      <!-- 3. ENDOTIPO CONDUCTUAL — CBEC-8 ────────────────────── -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:6px;margin-top:4px">🧠 Endotipo conductual — CBEC-8 (Acosta / Tuccinardi 2025)</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Cuestionario breve de 8 ítems (2 por endotipo). Puntaje 0–4 por endotipo. El(los) predominante(s) guía(n) la farmacoterapia anti-obesidad.</div>
+
+      <!-- E1: Hambre Cerebral -->
+      <div class="cbec-q">
+        <div class="cbec-q-label">🧠 E1-A — Al ver o sentir el olor de comida, ¿siente antojo intenso difícil de ignorar?</div>
+        <div class="cbec-opts">
+          <div class="cbec-opt" id="cbec-1a-0" onclick="setCBEC(1,'a',0)">0<br><span style="color:var(--text-muted)">Nunca</span></div>
+          <div class="cbec-opt" id="cbec-1a-1" onclick="setCBEC(1,'a',1)">1<br><span style="color:var(--text-muted)">A veces</span></div>
+          <div class="cbec-opt" id="cbec-1a-2" onclick="setCBEC(1,'a',2)">2<br><span style="color:var(--text-muted)">Frecuente</span></div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Alta sensibilidad hedónica: come más al ver o sentir el olor de comida, antojos intensos, difícil controlar porciones ante estímulos externos. <b>Responde mejor a:</b> semaglutida, bupropión/naltrexona.</div>
       </div>
-      <div class="endotipo-opt" id="endo-opt-2" onclick="toggleEndotipo(2)">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:13px;font-weight:700">🫀 Hambre gástrica <span style="font-size:10px;color:var(--text-muted);font-weight:400">(Hungry Gut)</span></div>
-          <div style="font-size:10px;font-weight:700;color:var(--primary)" id="endo-tag-2" style="display:none">✓ SELECCIONADO</div>
+      <div class="cbec-q">
+        <div class="cbec-q-label">🧠 E1-B — ¿Le resulta difícil controlar las porciones cuando la comida está disponible o es apetitosa?</div>
+        <div class="cbec-opts">
+          <div class="cbec-opt" id="cbec-1b-0" onclick="setCBEC(1,'b',0)">0<br><span style="color:var(--text-muted)">Nunca</span></div>
+          <div class="cbec-opt" id="cbec-1b-1" onclick="setCBEC(1,'b',1)">1<br><span style="color:var(--text-muted)">A veces</span></div>
+          <div class="cbec-opt" id="cbec-1b-2" onclick="setCBEC(1,'b',2)">2<br><span style="color:var(--text-muted)">Frecuente</span></div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Saciedad tardía o deficiente: vuelve a tener hambre poco tiempo después de comer, porciones grandes sin saciedad, vaciamiento gástrico rápido. <b>Responde mejor a:</b> GLP-1 (liraglutida, semaglutida), tirzepatida.</div>
       </div>
-      <div class="endotipo-opt" id="endo-opt-3" onclick="toggleEndotipo(3)">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:13px;font-weight:700">💔 Hambre emocional <span style="font-size:10px;color:var(--text-muted);font-weight:400">(Emotional Hunger)</span></div>
-          <div style="font-size:10px;font-weight:700;color:var(--primary)" id="endo-tag-3" style="display:none">✓ SELECCIONADO</div>
+      <div id="cbec-score-1-bar-container" style="margin-bottom:12px;font-size:11px;color:var(--text-muted)">
+        Hambre cerebral: <b id="cbec-score-1">—</b>/4 &nbsp;<div class="cbec-score-bar"><div class="cbec-score-fill" id="cbec-fill-1" style="width:0%"></div></div>
+        <div style="font-size:10px;margin-top:3px" id="cbec-rx-1"></div>
+      </div>
+
+      <!-- E2: Hambre Gástrica -->
+      <div class="cbec-q">
+        <div class="cbec-q-label">🫀 E2-A — ¿Cuánto tiempo después de comer vuelve a sentir hambre?</div>
+        <div class="cbec-opts">
+          <div class="cbec-opt" id="cbec-2a-0" onclick="setCBEC(2,'a',0)">0<br><span style="color:var(--text-muted)">≥4 horas</span></div>
+          <div class="cbec-opt" id="cbec-2a-1" onclick="setCBEC(2,'a',1)">1<br><span style="color:var(--text-muted)">2–4 horas</span></div>
+          <div class="cbec-opt" id="cbec-2a-2" onclick="setCBEC(2,'a',2)">2<br><span style="color:var(--text-muted)">&lt;2 horas</span></div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Come en respuesta a emociones negativas (estrés, ansiedad, tristeza, aburrimiento), no a hambre fisiológica. BES frecuentemente elevado. <b>Responde mejor a:</b> TCC + bupropión/naltrexona, topiramato.</div>
       </div>
-      <div class="endotipo-opt" id="endo-opt-4" onclick="toggleEndotipo(4)">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:13px;font-weight:700">🔥 Metabolismo lento <span style="font-size:10px;color:var(--text-muted);font-weight:400">(Slow Burn)</span></div>
-          <div style="font-size:10px;font-weight:700;color:var(--primary)" id="endo-tag-4" style="display:none">✓ SELECCIONADO</div>
+      <div class="cbec-q">
+        <div class="cbec-q-label">🫀 E2-B — ¿Necesita porciones grandes para sentirse satisfecho/a y dejar de comer?</div>
+        <div class="cbec-opts">
+          <div class="cbec-opt" id="cbec-2b-0" onclick="setCBEC(2,'b',0)">0<br><span style="color:var(--text-muted)">No</span></div>
+          <div class="cbec-opt" id="cbec-2b-1" onclick="setCBEC(2,'b',1)">1<br><span style="color:var(--text-muted)">A veces</span></div>
+          <div class="cbec-opt" id="cbec-2b-2" onclick="setCBEC(2,'b',2)">2<br><span style="color:var(--text-muted)">Sí</span></div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Bajo gasto energético en reposo, recupera el peso con facilidad incluso con restricción calórica moderada, termogénesis adaptativa marcada. <b>Responde mejor a:</b> tirzepatida, agonistas beta-3, combinaciones.</div>
       </div>
+      <div id="cbec-score-2-bar-container" style="margin-bottom:12px;font-size:11px;color:var(--text-muted)">
+        Hambre gástrica: <b id="cbec-score-2">—</b>/4 &nbsp;<div class="cbec-score-bar"><div class="cbec-score-fill" id="cbec-fill-2" style="width:0%"></div></div>
+        <div style="font-size:10px;margin-top:3px" id="cbec-rx-2"></div>
+      </div>
+
+      <!-- E3: Hambre Emocional -->
+      <div class="cbec-q">
+        <div class="cbec-q-label">💔 E3-A — ¿Con qué frecuencia come en respuesta a emociones negativas (estrés, ansiedad, tristeza, aburrimiento)?</div>
+        <div class="cbec-opts">
+          <div class="cbec-opt" id="cbec-3a-0" onclick="setCBEC(3,'a',0)">0<br><span style="color:var(--text-muted)">Nunca</span></div>
+          <div class="cbec-opt" id="cbec-3a-1" onclick="setCBEC(3,'a',1)">1<br><span style="color:var(--text-muted)">A veces</span></div>
+          <div class="cbec-opt" id="cbec-3a-2" onclick="setCBEC(3,'a',2)">2<br><span style="color:var(--text-muted)">Frecuente</span></div>
+        </div>
+      </div>
+      <div class="cbec-q">
+        <div class="cbec-q-label">💔 E3-B — ¿Come sin tener hambre fisiológica real cuando está tenso/a, solo/a o aburrido/a?</div>
+        <div class="cbec-opts">
+          <div class="cbec-opt" id="cbec-3b-0" onclick="setCBEC(3,'b',0)">0<br><span style="color:var(--text-muted)">Nunca</span></div>
+          <div class="cbec-opt" id="cbec-3b-1" onclick="setCBEC(3,'b',1)">1<br><span style="color:var(--text-muted)">A veces</span></div>
+          <div class="cbec-opt" id="cbec-3b-2" onclick="setCBEC(3,'b',2)">2<br><span style="color:var(--text-muted)">Frecuente</span></div>
+        </div>
+      </div>
+      <div id="cbec-score-3-bar-container" style="margin-bottom:12px;font-size:11px;color:var(--text-muted)">
+        Hambre emocional: <b id="cbec-score-3">—</b>/4 &nbsp;<div class="cbec-score-bar"><div class="cbec-score-fill" id="cbec-fill-3" style="width:0%"></div></div>
+        <div style="font-size:10px;margin-top:3px" id="cbec-rx-3"></div>
+      </div>
+
+      <!-- E4: Metabolismo Lento -->
+      <div class="cbec-q">
+        <div class="cbec-q-label">🔥 E4-A — ¿Ha notado que recupera el peso fácilmente incluso comiendo poco o restricción calórica moderada?</div>
+        <div class="cbec-opts">
+          <div class="cbec-opt" id="cbec-4a-0" onclick="setCBEC(4,'a',0)">0<br><span style="color:var(--text-muted)">No</span></div>
+          <div class="cbec-opt" id="cbec-4a-1" onclick="setCBEC(4,'a',1)">1<br><span style="color:var(--text-muted)">A veces</span></div>
+          <div class="cbec-opt" id="cbec-4a-2" onclick="setCBEC(4,'a',2)">2<br><span style="color:var(--text-muted)">Sí</span></div>
+        </div>
+      </div>
+      <div class="cbec-q">
+        <div class="cbec-q-label">🔥 E4-B — Comparado con otras personas de su talla/peso, ¿come igual o menos pero sube de peso más fácil?</div>
+        <div class="cbec-opts">
+          <div class="cbec-opt" id="cbec-4b-0" onclick="setCBEC(4,'b',0)">0<br><span style="color:var(--text-muted)">No</span></div>
+          <div class="cbec-opt" id="cbec-4b-1" onclick="setCBEC(4,'b',1)">1<br><span style="color:var(--text-muted)">A veces</span></div>
+          <div class="cbec-opt" id="cbec-4b-2" onclick="setCBEC(4,'b',2)">2<br><span style="color:var(--text-muted)">Sí</span></div>
+        </div>
+      </div>
+      <div id="cbec-score-4-bar-container" style="margin-bottom:12px;font-size:11px;color:var(--text-muted)">
+        Metabolismo lento: <b id="cbec-score-4">—</b>/4 &nbsp;<div class="cbec-score-bar"><div class="cbec-score-fill" id="cbec-fill-4" style="width:0%"></div></div>
+        <div style="font-size:10px;margin-top:3px" id="cbec-rx-4"></div>
+      </div>
+      <div id="cbec-resultado" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:8px"></div>
 
       <!-- 4. LIPEDEMA SCREENING ────────────────────────── -->
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px;margin-top:16px">🦵 Screening de lipedema (Consenso Internacional 2020)</div>
@@ -2410,6 +2541,59 @@
         </div>
       </div>
 
+      <!-- 5. PCOS SCREENING ─────────────────────────────────── -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px;margin-top:16px">🔵 Cribado SOP — Síndrome de Ovario Poliquístico (Rotterdam 2003)</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Solo en mujeres. Diagnóstico requiere ≥2 de 3 criterios de Rotterdam.</div>
+      <div id="pcos-section">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="pcos-oligo" onchange="calcPcosScreening()" /> <span><b>Oligo/anovulación</b><br><span style="font-size:10px;color:var(--text-muted)">Ciclos &gt;35 días o &lt;8 ciclos/año</span></span></label>
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="pcos-hiperandrog" onchange="calcPcosScreening()" /> <span><b>Hiperandrogenismo</b><br><span style="font-size:10px;color:var(--text-muted)">Clínico (hirsutismo, acné) o bioquímico (testosterona libre elevada)</span></span></label>
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="pcos-ovarios" onchange="calcPcosScreening()" /> <span><b>Ovarios poliquísticos</b><br><span style="font-size:10px;color:var(--text-muted)">≥12 folículos 2–9 mm por ovario (ultrasonido)</span></span></label>
+        </div>
+        <div id="pcos-resultado" style="display:none;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:8px"></div>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Clasificación fenotípica SOP</label>
+            <select id="pcos-fenotipo">
+              <option value="">— No aplica / No evaluado —</option>
+              <option value="A">Fenotipo A — Hiperandrog. + Oligo/anovul. + Ovarios poliquísticos</option>
+              <option value="B">Fenotipo B — Hiperandrog. + Oligo/anovulación</option>
+              <option value="C">Fenotipo C — Hiperandrog. + Ovarios poliquísticos (ciclos regulares)</option>
+              <option value="D">Fenotipo D — Oligo/anovulación + Ovarios poliquísticos (sin hiperandrog.)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Score HOMA-IR (para riesgo metabólico SOP)</label>
+            <input type="number" id="pcos-homa" step="0.01" placeholder="ej. 3.2 (>2.9 = RI en México)" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. CRIBADO GENÉTICO ──────────────────────────────── -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px;margin-top:16px;border-top:1px solid var(--border);padding-top:14px">🧬 Cribado de obesidad genética / sindrómica</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Criterios de sospecha. La presencia de ≥2 criterios justifica derivación a genética.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="gen-inicio-temprano" onchange="calcGeneticScreening()" /> <span><b>Inicio de obesidad &lt;5 años</b><br><span style="font-size:10px;color:var(--text-muted)">Obesidad en la infancia temprana</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="gen-hiperfagia-severa" onchange="calcGeneticScreening()" /> <span><b>Hiperfagia severa</b><br><span style="font-size:10px;color:var(--text-muted)">Insaciabilidad marcada, búsqueda compulsiva de alimento</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="gen-discapacidad" onchange="calcGeneticScreening()" /> <span><b>Discapacidad intelectual</b><br><span style="font-size:10px;color:var(--text-muted)">Retraso del desarrollo o discapacidad cognitiva</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="gen-historia-familiar" onchange="calcGeneticScreening()" /> <span><b>Historia familiar de obesidad severa</b><br><span style="font-size:10px;color:var(--text-muted)">≥2 familiares de 1er grado con obesidad mórbida</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="gen-dismorfias" onchange="calcGeneticScreening()" /> <span><b>Dismorfias o malformaciones</b><br><span style="font-size:10px;color:var(--text-muted)">Facies atípica, polidactilia, retinitis pigmentosa, hipogonadismo</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="gen-no-responde" onchange="calcGeneticScreening()" /> <span><b>Sin respuesta a tratamiento convencional</b><br><span style="font-size:10px;color:var(--text-muted)">Fracaso de ≥2 intervenciones bien ejecutadas</span></span></label>
+      </div>
+      <div id="gen-resultado" style="display:none;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:8px"></div>
+      <div class="form-group">
+        <label>Sospecha sindrómica específica</label>
+        <select id="gen-sindrome">
+          <option value="">— No aplica —</option>
+          <option value="prader_willi">Síndrome de Prader-Willi</option>
+          <option value="bardet_biedl">Síndrome de Bardet-Biedl</option>
+          <option value="mc4r">Variante en MC4R</option>
+          <option value="lepctin_r">Deficiencia de leptina / receptor de leptina</option>
+          <option value="sim1">Haploinsuficiencia SIM1</option>
+          <option value="otro">Otro — especificar en notas</option>
+        </select>
+      </div>
+
       <!-- Notas libres -->
       <div class="form-group" style="margin-top:14px">
         <label>Notas clínicas adicionales</label>
@@ -2419,6 +2603,87 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-fenotipos')">Cancelar</button>
       <button class="btn-save" onclick="saveFenotipos()">💾 Guardar fenotipificación</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Diagnóstico Lancet 2025 ──────────────────────────── -->
+<div class="modal-overlay" id="modal-lancet2025">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h3>🎯 Diagnóstico Lancet Commission 2025</h3>
+      <button class="modal-close" onclick="closeModal('modal-lancet2025')">×</button>
+    </div>
+    <div class="modal-body" style="max-height:72vh;overflow-y:auto">
+      <div style="background:rgba(26,82,118,.07);border-radius:8px;padding:11px 14px;font-size:12px;margin-bottom:16px;border:1px solid rgba(26,82,118,.2)">
+        <b>Rubino et al., The Lancet 2025.</b> Obesidad Clínica (OC) = adiposidad en exceso + ≥1 criterio de disfunción orgánica atribuida a la obesidad. Obesidad Preclínica (OP) = adiposidad en exceso sin disfunción orgánica actual pero con riesgo futuro elevado.
+      </div>
+
+      <!-- Paso 1 -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:8px">Paso 1 — Adiposidad en exceso confirmada</div>
+      <div id="lancet-adiposidad-auto" style="background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:12px;color:var(--text-muted)">Sin mediciones registradas.</div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Método de confirmación de adiposidad</label>
+        <select id="lancet-metodo-adiposidad">
+          <option value="">— Seleccionar —</option>
+          <option value="imc30">IMC ≥30 kg/m²</option>
+          <option value="imc25_cc">IMC 25-29.9 + cintura ≥90 cm (H) / ≥80 cm (M)</option>
+          <option value="bf_bia">% grasa elevado por BIA (H &gt;25% / M &gt;35%)</option>
+          <option value="bf_dexa">% grasa elevado por DEXA</option>
+          <option value="monw">MONW — IMC normal + adiposidad visceral elevada (MetSyn)</option>
+        </select>
+      </div>
+
+      <!-- Dominio A: Cardiometabólico -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:8px;border-top:1px solid var(--border);padding-top:12px">Dominio A — Cardiometabólico <span style="font-weight:400;font-style:italic;text-transform:none">(≥1 = dominio positivo → OC)</span></div>
+      <div id="lancet-cardio-auto" style="background:var(--bg);border-radius:6px;padding:8px 12px;font-size:11px;margin-bottom:10px;color:var(--text-muted)"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px" id="lancet-cardio-checks">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-dm2" onchange="calcLancetPreview()" /> <span><b>Diabetes tipo 2</b><br><span style="font-size:10px;color:var(--text-muted)">HbA1c ≥6.5% o glucosa ≥126 mg/dL</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-hta" onchange="calcLancetPreview()" /> <span><b>Hipertensión arterial</b><br><span style="font-size:10px;color:var(--text-muted)">≥130/80 mmHg confirmada</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-masld" onchange="calcLancetPreview()" /> <span><b>MASLD / MASH</b><br><span style="font-size:10px;color:var(--text-muted)">Hepatopatía metabólica confirmada</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-ascvd" onchange="calcLancetPreview()" /> <span><b>ASCVD / GLOBORISK ≥10%</b><br><span style="font-size:10px;color:var(--text-muted)">Riesgo CV a 10 años elevado</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-homa" onchange="calcLancetPreview()" /> <span><b>HOMA-IR &gt;2.9</b><br><span style="font-size:10px;color:var(--text-muted)">Resistencia a insulina (punto de corte mexicano)</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-dislip" onchange="calcLancetPreview()" /> <span><b>Dislipidemia aterogénica</b><br><span style="font-size:10px;color:var(--text-muted)">TG ≥150 y/o HDL &lt;40/50 (H/M)</span></span></label>
+      </div>
+
+      <!-- Dominio B: Mecánico -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:8px;border-top:1px solid var(--border);padding-top:12px">Dominio B — Mecánico / Estructural</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-saos" onchange="calcLancetPreview()" /> <span><b>SAOS moderado-severo</b><br><span style="font-size:10px;color:var(--text-muted)">AHI ≥15 y/o STOP-BANG ≥3</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-sho" onchange="calcLancetPreview()" /> <span><b>SHO</b><br><span style="font-size:10px;color:var(--text-muted)">Síndrome hipoventilación por obesidad</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-artro" onchange="calcLancetPreview()" /> <span><b>Osteoartritis atribuida</b><br><span style="font-size:10px;color:var(--text-muted)">Rodilla, cadera, tobillo, pie plano</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-erge" onchange="calcLancetPreview()" /> <span><b>ERGE severo</b><br><span style="font-size:10px;color:var(--text-muted)">Reflujo gastroesofágico crónico sintomático</span></span></label>
+      </div>
+
+      <!-- Dominio C: Mental/Funcional -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:8px;border-top:1px solid var(--border);padding-top:12px">Dominio C — Mental / Funcional</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-phq9" onchange="calcLancetPreview()" /> <span><b>PHQ-9 ≥10</b><br><span style="font-size:10px;color:var(--text-muted)">Depresión moderada a severa</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-bes" onchange="calcLancetPreview()" /> <span><b>BES ≥27</b><br><span style="font-size:10px;color:var(--text-muted)">Trastorno por atracón severo</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-6mwt" onchange="calcLancetPreview()" /> <span><b>6MWT &lt;350 m</b><br><span style="font-size:10px;color:var(--text-muted)">Limitación funcional significativa</span></span></label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer"><input type="checkbox" id="lc-gad7" onchange="calcLancetPreview()" /> <span><b>GAD-7 ≥15</b><br><span style="font-size:10px;color:var(--text-muted)">Ansiedad severa</span></span></label>
+      </div>
+
+      <!-- Clasificación resultante -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:8px;border-top:1px solid var(--border);padding-top:12px">Paso 3 — Clasificación diagnóstica</div>
+      <div id="lancet-clasificacion-preview" style="border-radius:8px;padding:13px;font-size:13px;text-align:center;background:var(--bg);border:1.5px solid var(--border);margin-bottom:12px;font-weight:700">Marca los criterios para ver la clasificación.</div>
+      <div class="form-group">
+        <label>Clasificación final (confirmar o corregir la automática)</label>
+        <select id="lancet-clasificacion-final">
+          <option value="">— Automática según criterios marcados —</option>
+          <option value="OC">OC — Obesidad Clínica</option>
+          <option value="OP">OP — Obesidad Preclínica</option>
+          <option value="no_aplica">No aplica (sin obesidad confirmada)</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label>Notas del diagnóstico</label>
+        <textarea id="lancet-notas" rows="2" placeholder="Hallazgos, justificación, plan de seguimiento…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-lancet2025')">Cancelar</button>
+      <button class="btn-save" onclick="saveLancet2025()">💾 Guardar diagnóstico Lancet</button>
     </div>
   </div>
 </div>
@@ -3154,7 +3419,9 @@ let obesData = {
   eoss: null,
   eossNotes: '',
   kosc: null,       // { d1, d2, d3, d4, notes }
-  fenotipos: null,  // { etiologia, contribuyentes, endotipos[], handgrip, vel_marcha, lipedema, notas }
+  fenotipos: null,  // { etiologia, contribuyentes, cbec8, handgrip, vel_marcha, lipedema, pcos, genetics, notas }
+  lancet2025: null, // { oc_op, metodo_adiposidad, cardio:{}, mec:{}, mental:{}, notas, fecha }
+
 };
 let weightChart = null;
 let weightChartMedico = null;
@@ -3212,6 +3479,8 @@ function openModal(id) {
   prefillModalFromObesData(id);
   // Fenotipificación: pre-llenar al abrir
   if (id === 'modal-fenotipos') openFenotiposModal();
+  // Lancet 2025: pre-llenar al abrir
+  if (id === 'modal-lancet2025') openLancet2025Modal();
 }
 
 // ─── CROSS-MODULE PREFILL ────────────────────────────────────────────
@@ -4018,8 +4287,14 @@ function renderMedicoView() {
 
   renderProcedures();
 
+  // ── Lancet 2025 diagnosis ─────────────────────────────────────
+  renderLancet2025();
+
   // ── Fenotipificación ──────────────────────────────────────────
   renderFenotipos();
+
+  // ── Panel de Síntesis ─────────────────────────────────────────
+  renderPanelSintesis();
 
   // ── ASCVD: auto-llenar desde datos del expediente ─────────────
   prefillASCVD();
@@ -4579,24 +4854,34 @@ function openFenotiposModal() {
   ['dieta','sedentarismo','sueno','estres','farmaco','microbiota','ambiental','genetico'].forEach(c => {
     const el = $(`fen-c-${c}`); if (el) el.checked = !!(f.contribuyentes||{})[c];
   });
-  [1,2,3,4].forEach(n => {
-    const sel = (f.endotipos||[]).includes(n);
-    const btn = $(`endo-opt-${n}`), tag = $(`endo-tag-${n}`);
-    if (btn) { btn.classList.toggle('sel', sel); }
-    if (tag) tag.style.display = sel ? 'block' : 'none';
-  });
+  // Restore CBEC-8 scores
+  openCBEC8FromSaved();
+  // Restore lipedema
   [1,2,3,4,5].forEach(i => { const el = $(`lipe-${i}`); if (el) el.checked = !!(f.lipedema||{})[`c${i}`]; });
   if ((f.lipedema||{}).estadio) $('fen-lipedema-estadio').value = f.lipedema.estadio;
+  // Restore PCOS
+  const pc = f.pcos || {};
+  if ($('pcos-oligo'))      $('pcos-oligo').checked      = !!pc.oligo;
+  if ($('pcos-hiperandrog'))$('pcos-hiperandrog').checked= !!pc.hiperandrog;
+  if ($('pcos-ovarios'))    $('pcos-ovarios').checked    = !!pc.ovarios;
+  if ($('pcos-fenotipo'))   $('pcos-fenotipo').value     = pc.fenotipo||'';
+  if ($('pcos-homa'))       $('pcos-homa').value         = pc.homa||'';
+  // Restore genetics
+  const gen = f.genetics || {};
+  ['gen-inicio-temprano','gen-hiperfagia-severa','gen-discapacidad','gen-historia-familiar','gen-dismorfias','gen-no-responde'].forEach(id=>{
+    const el=$(id); if(el) el.checked=!!(gen[id.replace('gen-','').replace(/-/g,'_')]);
+  });
+  if ($('gen-sindrome')) $('gen-sindrome').value = gen.sindrome||'';
+  // Handgrip/vel_marcha/notas
   $('fen-handgrip').value = f.handgrip || '';
   $('fen-vel-marcha').value = f.vel_marcha || '';
   $('fen-notas').value = f.notas || '';
-  calcLipedema(); calcSarcopenica();
+  calcLipedema(); calcSarcopenica(); calcPcosScreening(); calcGeneticScreening();
 }
 
 // Guardar fenotipificación
 function saveFenotipos() {
   if (!currentPatient) return;
-  const endotipos = [1,2,3,4].filter(n => $(`endo-opt-${n}`)?.classList.contains('sel'));
   const contribuyentes = {};
   ['dieta','sedentarismo','sueno','estres','farmaco','microbiota','ambiental','genetico'].forEach(c => {
     const el = $(`fen-c-${c}`); if (el) contribuyentes[c] = el.checked;
@@ -4606,18 +4891,38 @@ function saveFenotipos() {
     c4:!!$('lipe-4')?.checked, c5:!!$('lipe-5')?.checked,
     estadio: $('fen-lipedema-estadio')?.value || '',
   };
+  // CBEC-8 scores
+  const cbec8 = {};
+  [1,2,3,4].forEach(e=>{['a','b'].forEach(it=>{ cbec8[`e${e}${it}`]=CBEC_SCORES[e][it]; }); });
+  // PCOS
+  const pcos = {
+    oligo:!!$('pcos-oligo')?.checked, hiperandrog:!!$('pcos-hiperandrog')?.checked,
+    ovarios:!!$('pcos-ovarios')?.checked, fenotipo:$('pcos-fenotipo')?.value||'',
+    homa: parseFloat($('pcos-homa')?.value)||null,
+  };
+  // Genetics
+  const genIds=['inicio_temprano','hiperfagia_severa','discapacidad','historia_familiar','dismorfias','no_responde'];
+  const genElIds=['gen-inicio-temprano','gen-hiperfagia-severa','gen-discapacidad','gen-historia-familiar','gen-dismorfias','gen-no-responde'];
+  const genetics = {};
+  genIds.forEach((k,i)=>{ genetics[k]=!!$(genElIds[i])?.checked; });
+  genetics.sindrome = $('gen-sindrome')?.value||'';
+  genetics.count = genIds.filter(k=>genetics[k]).length;
+
   obesData.fenotipos = {
     etiologia: $('fen-etiologia-principal').value,
     contribuyentes,
-    endotipos,
+    cbec8,
     handgrip: parseFloat($('fen-handgrip').value) || null,
     vel_marcha: parseFloat($('fen-vel-marcha').value) || null,
     lipedema,
+    pcos,
+    genetics,
     notas: $('fen-notas').value,
     fecha: new Date().toISOString(),
   };
   localStorage.setItem(`ece_obes_${currentPatient.id}`, JSON.stringify(obesData));
   renderFenotipos();
+  renderPanelSintesis();
   closeModal('modal-fenotipos');
   showToast('Fenotipificación guardada', 'success');
 }
@@ -4668,8 +4973,17 @@ function renderFenotipos() {
     setCard('fen-etio-card','fen-etio','fen-etio-sub', ETIOLOGIA_LABELS[f.etiologia]||f.etiologia, contrib ? `+ ${contrib}` : '', 'definido');
   }
 
-  // 5. Endotipo conductual
-  if (f.endotipos?.length) {
+  // 5. Endotipo conductual — from CBEC-8
+  if (f.cbec8 && Object.values(f.cbec8).some(v=>v!==null)) {
+    const scores = [1,2,3,4].map(e=>((f.cbec8[`e${e}a`]||0)+(f.cbec8[`e${e}b`]||0)));
+    const domIdx = scores.indexOf(Math.max(...scores));
+    const domLabels = ['🧠 Hambre cerebral','🫀 Hambre gástrica','💔 Hambre emocional','🔥 Metab. lento'];
+    const domScore = scores[domIdx];
+    const sub = scores.map((s,i)=>`E${i+1}:${s}`).join(' ');
+    setCard('fen-endotipo-card','fen-endotipo','fen-endotipo-sub',
+      domScore>=2 ? domLabels[domIdx] : 'Sin predominio claro', `CBEC-8 · ${sub}`, domScore>=3?'alerta':domScore>=2?'definido':'');
+  } else if (f.endotipos?.length) {
+    // backward compat: old click-style saved endotipos
     const labels = f.endotipos.map(n => ENDOTIPO_LABELS[n]).join(' + ');
     setCard('fen-endotipo-card','fen-endotipo','fen-endotipo-sub', labels, 'Acosta et al. 2019', 'definido');
   }
@@ -4680,6 +4994,469 @@ function renderFenotipos() {
     const score = f.lipedema ? [1,2,3,4,5].filter(i => f.lipedema[`c${i}`]).length : 0;
     lipeFlag.style.display = score >= 3 ? 'block' : 'none';
   }
+}
+
+// ─── LANCET 2025 ──────────────────────────────────────────────────
+
+// Auto-detect criteria from existing obesData
+function calcLancet2025Auto() {
+  if (!currentPatient) return null;
+  const latestL = (obesData.labs||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+  const latestM = (obesData.measurements||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+  const psy     = obesData.psychology;
+  const sleep   = obesData.sleep;
+  const rehab   = obesData.rehabilitation;
+
+  const auto = { cardio:{}, mec:{}, mental:{} };
+
+  if (latestL) {
+    // DM2: HbA1c ≥6.5% or glucose ≥126
+    if ((latestL.hba1c && latestL.hba1c >= 6.5) || (latestL.glucosa && latestL.glucosa >= 126))
+      auto.cardio.dm2 = true;
+    // HOMA-IR >2.9
+    if (latestL.insulina && latestL.glucosa) {
+      const homa = (latestL.glucosa * latestL.insulina) / 405;
+      if (homa > 2.9) auto.cardio.homa = true;
+    }
+    // Dyslipidemia: TG ≥150 or low HDL
+    const sexo = (currentPatient.sexo||'').toUpperCase().startsWith('F') ? 'F' : 'M';
+    if ((latestL.trigliceridos && latestL.trigliceridos >= 150) ||
+        (latestL.hdl && latestL.hdl < (sexo==='F'?50:40)))
+      auto.cardio.dislip = true;
+    // MASLD proxy: ALT/AST elevated
+    if ((latestL.alt && latestL.alt > 40) || (latestL.ast && latestL.ast > 40))
+      auto.cardio.masld_susp = true;
+  }
+
+  // EOSS ≥2 suggests established comorbidities
+  if (obesData.eoss >= 2) auto.eoss2plus = true;
+
+  // Psych assessments
+  if (psy && psy.assessments) {
+    const lastPHQ = psy.assessments.filter(a=>a.type==='phq9').sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const lastBES = psy.assessments.filter(a=>a.type==='bes').sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const lastGAD = psy.assessments.filter(a=>a.type==='gad7').sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    if (lastPHQ && lastPHQ.score >= 10) auto.mental.phq9 = true;
+    if (lastBES && lastBES.score >= 27) auto.mental.bes  = true;
+    if (lastGAD && lastGAD.score >= 15) auto.mental.gad7 = true;
+  }
+
+  // Sleep: STOP-BANG ≥3
+  if (sleep && sleep.cuestionarios) {
+    const lastSB = sleep.cuestionarios.filter(q=>q.tipo==='stop_bang').sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    if (lastSB && lastSB.score >= 3) auto.mec.saos = true;
+  }
+
+  // Rehab: 6MWT <350m
+  if (rehab && rehab.evaluacionInicial && rehab.evaluacionInicial.distancia6mwt < 350)
+    auto.mental.mwt6 = true;
+
+  return auto;
+}
+
+// Build a plain-text summary of what was auto-detected
+function autoDetectSummaryCardio(auto) {
+  const found = [];
+  if (auto.cardio.dm2)       found.push('DM2 (glucosa/HbA1c)');
+  if (auto.cardio.homa)      found.push('HOMA-IR >2.9');
+  if (auto.cardio.dislip)    found.push('Dislipidemia TG/HDL');
+  if (auto.cardio.masld_susp) found.push('⚠️ Alt AST/ALT (sospecha MASLD)');
+  return found.length ? '🔗 Detectado automáticamente: ' + found.join(' · ') : 'Sin datos suficientes para detección automática.';
+}
+
+// Live preview while checking boxes in modal
+function calcLancetPreview() {
+  const cardio = ['lc-dm2','lc-hta','lc-masld','lc-ascvd','lc-homa','lc-dislip'].some(id=>$(id)&&$(id).checked);
+  const mec    = ['lc-saos','lc-sho','lc-artro','lc-erge'].some(id=>$(id)&&$(id).checked);
+  const mental = ['lc-phq9','lc-bes','lc-6mwt','lc-gad7'].some(id=>$(id)&&$(id).checked);
+  const domPos = [cardio, mec, mental].filter(Boolean).length;
+  const prev   = $('lancet-clasificacion-preview');
+  if (!prev) return;
+  if (domPos >= 1) {
+    const doms = [];
+    if (cardio)  doms.push('Cardiometabólico');
+    if (mec)     doms.push('Mecánico');
+    if (mental)  doms.push('Mental/Funcional');
+    prev.style.background = 'rgba(192,57,43,.1)'; prev.style.borderColor = '#C0392B'; prev.style.color = '#7B241C';
+    prev.innerHTML = `🔴 <b>OBESIDAD CLÍNICA (OC)</b><br><span style="font-size:11px;font-weight:400">Dominio(s) positivo(s): ${doms.join(', ')}</span>`;
+  } else if ($('lancet-metodo-adiposidad')&&$('lancet-metodo-adiposidad').value) {
+    prev.style.background = 'rgba(29,131,72,.1)'; prev.style.borderColor = '#1D8348'; prev.style.color = '#145A32';
+    prev.innerHTML = '🟢 <b>OBESIDAD PRECLÍNICA (OP)</b><br><span style="font-size:11px;font-weight:400">Adiposidad confirmada sin disfunción orgánica presente.</span>';
+  } else {
+    prev.style.background = 'var(--bg)'; prev.style.borderColor = 'var(--border)'; prev.style.color = 'var(--text-muted)';
+    prev.textContent = 'Marca los criterios para ver la clasificación.';
+  }
+}
+
+// Open modal and pre-fill with auto-detected + saved data
+function openLancet2025Modal() {
+  const auto = calcLancet2025Auto();
+  const saved = obesData.lancet2025 || {};
+
+  // Show auto-detected adiposity info
+  const latestM = (obesData.measurements||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+  const adipo   = $('lancet-adiposidad-auto');
+  if (adipo && latestM) {
+    const imc = latestM.imc || (latestM.peso && latestM.talla ? (latestM.peso/(latestM.talla/100)**2) : null);
+    const sexo = (currentPatient.sexo||'').toUpperCase().startsWith('F') ? 'F' : 'M';
+    const ccCutoff = sexo==='F' ? 80 : 90;
+    const items = [];
+    if (imc) items.push(`IMC ${imc.toFixed(1)} kg/m²${imc>=30 ? ' ✅ ≥30' : ' (25-29.9 — revisar CC)'}`);
+    if (latestM.cintura) items.push(`Cintura ${latestM.cintura} cm (corte ${ccCutoff} cm): ${latestM.cintura>=ccCutoff?'✅ elevada':'—'}`);
+    if (latestM.grasa)   items.push(`%BF ${latestM.grasa}% (${sexo==='F'?'corte >35%':'corte >25%'}): ${latestM.grasa>(sexo==='F'?35:25)?'✅ elevado':'—'}`);
+    adipo.innerHTML = items.length
+      ? `<b>Última medición (${latestM.fecha||''}):</b> ${items.join(' · ')}`
+      : 'Sin datos de mediciones recientes.';
+    adipo.style.background = 'rgba(26,82,118,.07)'; adipo.style.border = '1px solid rgba(26,82,118,.2)';
+  }
+
+  // Show auto-detected cardiometabolic info
+  const cardioEl = $('lancet-cardio-auto');
+  if (cardioEl && auto) cardioEl.textContent = autoDetectSummaryCardio(auto);
+
+  // Pre-fill from saved data
+  const c = saved.cardio || {};
+  const m = saved.mec    || {};
+  const n = saved.mental || {};
+  [['lc-dm2',c.dm2],['lc-hta',c.hta],['lc-masld',c.masld],['lc-ascvd',c.ascvd],['lc-homa',c.homa],['lc-dislip',c.dislip],
+   ['lc-saos',m.saos],['lc-sho',m.sho],['lc-artro',m.artro],['lc-erge',m.erge],
+   ['lc-phq9',n.phq9],['lc-bes',n.bes],['lc-6mwt',n.mwt6],['lc-gad7',n.gad7]
+  ].forEach(([id,val]) => { const el=$(id); if(el) el.checked = !!val; });
+
+  // Auto-fill from auto-detected if no saved data yet
+  if (!saved.cardio && auto) {
+    if (auto.cardio.dm2)  { const el=$('lc-dm2');  if(el) el.checked=true; }
+    if (auto.cardio.homa) { const el=$('lc-homa'); if(el) el.checked=true; }
+    if (auto.cardio.dislip) { const el=$('lc-dislip'); if(el) el.checked=true; }
+    if (auto.mec && auto.mec.saos) { const el=$('lc-saos'); if(el) el.checked=true; }
+    if (auto.mental && auto.mental.phq9) { const el=$('lc-phq9'); if(el) el.checked=true; }
+    if (auto.mental && auto.mental.bes)  { const el=$('lc-bes');  if(el) el.checked=true; }
+    if (auto.mental && auto.mental.mwt6) { const el=$('lc-6mwt'); if(el) el.checked=true; }
+    if (auto.mental && auto.mental.gad7) { const el=$('lc-gad7'); if(el) el.checked=true; }
+  }
+
+  if (saved.metodo_adiposidad && $('lancet-metodo-adiposidad')) $('lancet-metodo-adiposidad').value = saved.metodo_adiposidad;
+  if (saved.clasificacion_final && $('lancet-clasificacion-final')) $('lancet-clasificacion-final').value = saved.clasificacion_final;
+  if (saved.notas && $('lancet-notas')) $('lancet-notas').value = saved.notas;
+
+  calcLancetPreview();
+}
+
+function saveLancet2025() {
+  if (!currentPatient) return;
+  const c = { dm2:!!$('lc-dm2')?.checked, hta:!!$('lc-hta')?.checked, masld:!!$('lc-masld')?.checked,
+              ascvd:!!$('lc-ascvd')?.checked, homa:!!$('lc-homa')?.checked, dislip:!!$('lc-dislip')?.checked };
+  const m = { saos:!!$('lc-saos')?.checked, sho:!!$('lc-sho')?.checked,
+              artro:!!$('lc-artro')?.checked, erge:!!$('lc-erge')?.checked };
+  const n = { phq9:!!$('lc-phq9')?.checked, bes:!!$('lc-bes')?.checked,
+              mwt6:!!$('lc-6mwt')?.checked, gad7:!!$('lc-gad7')?.checked };
+
+  const cardioPos = Object.values(c).some(Boolean);
+  const mecPos    = Object.values(m).some(Boolean);
+  const mentalPos = Object.values(n).some(Boolean);
+  const override  = $('lancet-clasificacion-final')?.value;
+  let oc_op;
+  if (override) { oc_op = override; }
+  else { oc_op = (cardioPos || mecPos || mentalPos) ? 'OC' : ($('lancet-metodo-adiposidad')?.value ? 'OP' : null); }
+
+  obesData.lancet2025 = { oc_op, metodo_adiposidad: $('lancet-metodo-adiposidad')?.value||'',
+    cardio: c, mec: m, mental: n, clasificacion_final: override||'',
+    notas: $('lancet-notas')?.value||'', fecha: new Date().toISOString() };
+  localStorage.setItem(`ece_obes_${currentPatient.id}`, JSON.stringify(obesData));
+  renderLancet2025();
+  renderPanelSintesis();
+  closeModal('modal-lancet2025');
+  showToast('Diagnóstico Lancet 2025 guardado', 'success');
+}
+
+function renderLancet2025() {
+  const d = obesData.lancet2025;
+  const badge = $('lancet-main-badge');
+  const sub   = $('lancet-badge-sub');
+  if (!badge) return;
+
+  if (!d) {
+    badge.className = 'lancet-badge pend'; badge.textContent = '⏳ Sin clasificar';
+    if (sub) sub.textContent = 'Registra mediciones y laboratorios para clasificación automática (Rubino et al., Lancet 2025).';
+    ['lancet-d-cardio','lancet-d-mec','lancet-d-mental'].forEach(id => {
+      const el=$(id); if(el) { el.className='lancet-domain'; $(id+'-val').textContent='—'; $(id+'-sub').textContent=''; }
+    });
+    return;
+  }
+
+  // Main badge
+  if (d.oc_op === 'OC') { badge.className='lancet-badge oc'; badge.textContent='🔴 Obesidad Clínica (OC)'; }
+  else if (d.oc_op === 'OP') { badge.className='lancet-badge op'; badge.textContent='🟢 Obesidad Preclínica (OP)'; }
+  else if (d.oc_op === 'no_aplica') { badge.className='lancet-badge pend'; badge.textContent='— No aplica'; }
+  else { badge.className='lancet-badge pend'; badge.textContent='⏳ Sin clasificar'; }
+  if (sub) sub.textContent = d.notas || (d.fecha ? 'Actualizado ' + (d.fecha||'').split('T')[0] : '');
+
+  // Domain tiles
+  const setDomain = (id, valId, subId, pos, posItems, negLabel) => {
+    const el=$(id); const vel=$(valId); const sel=$(subId);
+    if (!el) return;
+    el.className = 'lancet-domain ' + (pos?'pos':'neg');
+    if (vel) vel.textContent = pos ? '✅ Positivo' : '✓ Negativo';
+    if (sel) sel.textContent = pos ? posItems.slice(0,3).join(', ') : negLabel;
+  };
+
+  const cardioItems = Object.entries(d.cardio||{}).filter(([,v])=>v).map(([k])=>({dm2:'DM2',hta:'HTA',masld:'MASLD',ascvd:'ASCVD≥10%',homa:'HOMA-IR>2.9',dislip:'Dislipidemia'}[k]||k));
+  const mecItems    = Object.entries(d.mec||{}).filter(([,v])=>v).map(([k])=>({saos:'SAOS',sho:'SHO',artro:'Osteoartritis',erge:'ERGE'}[k]||k));
+  const mentalItems = Object.entries(d.mental||{}).filter(([,v])=>v).map(([k])=>({phq9:'PHQ-9≥10',bes:'BES≥27',mwt6:'6MWT<350m',gad7:'GAD-7≥15'}[k]||k));
+
+  setDomain('lancet-d-cardio','lancet-d-cardio-val','lancet-d-cardio-sub', cardioItems.length>0, cardioItems, 'Sin disfunción cardiometabólica');
+  setDomain('lancet-d-mec',   'lancet-d-mec-val',   'lancet-d-mec-sub',   mecItems.length>0,    mecItems,    'Sin disfunción mecánica');
+  setDomain('lancet-d-mental','lancet-d-mental-val','lancet-d-mental-sub',mentalItems.length>0, mentalItems, 'Sin disfunción mental/funcional');
+}
+
+// ─── CBEC-8 ────────────────────────────────────────────────────────
+const CBEC_SCORES = { 1:{a:null,b:null}, 2:{a:null,b:null}, 3:{a:null,b:null}, 4:{a:null,b:null} };
+const CBEC_RX = {
+  1: 'Farmacoterapia sugerida: semaglutida · bupropión/naltrexona',
+  2: 'Farmacoterapia sugerida: GLP-1 (liraglutida, semaglutida) · tirzepatida',
+  3: 'Farmacoterapia sugerida: TCC + bupropión/naltrexona · topiramato',
+  4: 'Farmacoterapia sugerida: tirzepatida · agonistas beta-3 · combinaciones',
+};
+
+function setCBEC(endo, item, val) {
+  CBEC_SCORES[endo][item] = val;
+  // Update visual selection
+  ['a','b'].forEach(it => {
+    [0,1,2].forEach(v => {
+      const el = $(`cbec-${endo}${it}-${v}`);
+      if (el) el.classList.toggle('sel', CBEC_SCORES[endo][it] === v);
+    });
+  });
+  updateCBECScore(endo);
+}
+
+function updateCBECScore(endo) {
+  const a = CBEC_SCORES[endo].a, b = CBEC_SCORES[endo].b;
+  if (a === null || b === null) return;
+  const score = a + b;
+  const scoreEl = $(`cbec-score-${endo}`);
+  const fillEl  = $(`cbec-fill-${endo}`);
+  const rxEl    = $(`cbec-rx-${endo}`);
+  if (scoreEl) scoreEl.textContent = score;
+  if (fillEl)  fillEl.style.width  = (score / 4 * 100) + '%';
+  if (fillEl)  fillEl.style.background = score >= 3 ? '#C0392B' : score >= 2 ? '#E67E22' : '#1A5276';
+  if (rxEl)    rxEl.textContent = score >= 2 ? CBEC_RX[endo] : '';
+  // Update result summary
+  updateCBECResultado();
+}
+
+function updateCBECResultado() {
+  const scores = [1,2,3,4].map(e => {
+    const a=CBEC_SCORES[e].a, b=CBEC_SCORES[e].b;
+    return (a===null||b===null) ? null : a+b;
+  });
+  const allDone = scores.every(s => s !== null);
+  const el = $('cbec-resultado');
+  if (!el || !allDone) return;
+  const labels = ['🧠 Hambre cerebral','🫀 Hambre gástrica','💔 Hambre emocional','🔥 Metabolismo lento'];
+  const dominant = scores.reduce((best,s,i) => s>scores[best]?i:best, 0);
+  const domList  = scores.map((s,i) => `${labels[i]}: <b>${s}/4</b>`).join(' &nbsp;·&nbsp; ');
+  el.style.display = 'block';
+  el.style.background = 'rgba(26,82,118,.08)'; el.style.border = '1px solid #1A5276'; el.style.borderRadius = '8px'; el.style.padding = '10px 14px';
+  el.innerHTML = `<b>Endotipo dominante: ${labels[dominant]}</b><br><span style="font-size:11px;color:var(--text-muted)">${domList}</span>`;
+}
+
+function openCBEC8FromSaved() {
+  const saved = (obesData.fenotipos||{}).cbec8 || {};
+  [1,2,3,4].forEach(endo => {
+    ['a','b'].forEach(item => {
+      const val = saved[`e${endo}${item}`];
+      if (val !== undefined && val !== null) {
+        CBEC_SCORES[endo][item] = val;
+        [0,1,2].forEach(v => {
+          const el = $(`cbec-${endo}${item}-${v}`);
+          if (el) el.classList.toggle('sel', val === v);
+        });
+        updateCBECScore(endo);
+      } else {
+        CBEC_SCORES[endo][item] = null;
+      }
+    });
+  });
+}
+
+// ─── PCOS SCREENING ───────────────────────────────────────────────
+function calcPcosScreening() {
+  const oligo = !!$('pcos-oligo')?.checked;
+  const hiper = !!$('pcos-hiperandrog')?.checked;
+  const ovari = !!$('pcos-ovarios')?.checked;
+  const count = [oligo, hiper, ovari].filter(Boolean).length;
+  const el = $('pcos-resultado');
+  if (!el) return;
+  if (count === 0) { el.style.display='none'; return; }
+  el.style.display = 'block';
+  if (count >= 2) {
+    el.style.background='rgba(192,57,43,.1)'; el.style.border='1px solid #C0392B'; el.style.color='#7B241C'; el.style.borderRadius='6px'; el.style.padding='8px 12px';
+    el.innerHTML = `<b>⚠️ Screening SOP POSITIVO (${count}/3 criterios de Rotterdam)</b> — Considerar evaluación hormonal completa (testosterona libre, LH/FSH, SHBG, insulina) y ultrasonido pélvico.`;
+  } else {
+    el.style.background='var(--bg)'; el.style.border='1px solid var(--border)'; el.style.color='var(--text-muted)'; el.style.borderRadius='6px'; el.style.padding='8px 12px';
+    el.innerHTML = `${count}/3 criterios — Screening negativo (requiere ≥2 para diagnóstico de Rotterdam).`;
+  }
+}
+
+// ─── CRIBADO GENÉTICO ─────────────────────────────────────────────
+function calcGeneticScreening() {
+  const ids = ['gen-inicio-temprano','gen-hiperfagia-severa','gen-discapacidad','gen-historia-familiar','gen-dismorfias','gen-no-responde'];
+  const count = ids.filter(id=>$(`${id}`)?.checked).length;
+  const el = $('gen-resultado');
+  if (!el) return;
+  if (count === 0) { el.style.display='none'; return; }
+  el.style.display = 'block';
+  if (count >= 2) {
+    el.style.background='rgba(108,52,131,.1)'; el.style.border='1px solid #6C3483'; el.style.color='#4A235A'; el.style.borderRadius='6px'; el.style.padding='8px 12px';
+    el.innerHTML = `<b>🧬 Sospecha de obesidad genética/sindrómica (${count}/6 criterios)</b> — Derivar a genética médica. Considerar panel genético de obesidad monogénica (MC4R, LEPR, LEP, PCSK1, POMC, SIM1, Prader-Willi, Bardet-Biedl).`;
+  } else {
+    el.style.background='var(--bg)'; el.style.border='1px solid var(--border)'; el.style.color='var(--text-muted)'; el.style.borderRadius='6px'; el.style.padding='8px 12px';
+    el.innerHTML = `${count}/6 criterios — Sin sospecha fuerte de etiología genética por el momento.`;
+  }
+}
+
+// ─── PANEL DE SÍNTESIS ────────────────────────────────────────────
+function renderPanelSintesis() {
+  if (!currentPatient) return;
+  const card  = $('panel-sintesis-card');
+  const grid  = $('sintesis-grid-display');
+  const cdss  = $('cdss-alerts-container');
+  if (!card || !grid) return;
+
+  const L = obesData.lancet2025;
+  const f = obesData.fenotipos || {};
+  const morfo = calcFenotiposMorfologicos();
+  const latestL = (obesData.labs||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+  const sexo = (currentPatient.sexo||'').toUpperCase().startsWith('F') ? 'F' : 'M';
+
+  // Only show panel if we have at least Lancet or Fenotipo data
+  const hasData = L || f.etiologia || f.cbec8 || f.lipedema;
+  card.style.display = hasData ? 'block' : 'none';
+  if (!hasData) return;
+
+  // Build tiles
+  const tiles = [];
+
+  // 1. Lancet OC/OP
+  tiles.push({
+    label: 'Lancet 2025',
+    val: L ? (L.oc_op==='OC'?'🔴 OC':L.oc_op==='OP'?'🟢 OP':'—') : '—',
+    cls: L ? (L.oc_op==='OC'?'alert':L.oc_op==='OP'?'ok':'') : '',
+  });
+
+  // 2. EOSS
+  tiles.push({
+    label: 'EOSS',
+    val: obesData.eoss !== null ? `Estadio ${obesData.eoss}` : '—',
+    cls: obesData.eoss >= 2 ? 'alert' : obesData.eoss !== null ? 'ok' : '',
+  });
+
+  // 3. Distribución adiposa
+  tiles.push({
+    label: 'Distribución',
+    val: morfo?.distribucion?.label || '—',
+    cls: morfo?.distribucion?.tipo === 'alerta' ? 'alert' : morfo?.distribucion ? 'ok' : '',
+  });
+
+  // 4. Sarcopenia
+  const handgripBajo = f.handgrip && f.handgrip < (sexo==='F'?16:27);
+  const marchaLenta  = f.vel_marcha && f.vel_marcha < 0.8;
+  const sarcoCount   = [morfo?.ffmi?.bajo, handgripBajo, marchaLenta].filter(Boolean).length;
+  tiles.push({
+    label: 'Sarcopénica',
+    val: (morfo?.ffmi||f.handgrip||f.vel_marcha) ? (sarcoCount===0?'✓ Negativa':sarcoCount===1?'⚠️ Probable':'🔴 Confirmada') : '—',
+    cls: sarcoCount===0?'ok':sarcoCount===1?'warn':'alert',
+  });
+
+  // 5. Metabolic phenotype (MHO/MUO proxy)
+  let metabVal = '—', metabCls = '';
+  if (latestL) {
+    const cc = (obesData.measurements||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0]?.cintura;
+    const ccCutoff = sexo==='F'?80:90;
+    const metSynCriteria = [
+      cc && cc >= ccCutoff,
+      latestL.trigliceridos && latestL.trigliceridos >= 150,
+      latestL.hdl && latestL.hdl < (sexo==='F'?50:40),
+      latestL.glucosa && latestL.glucosa >= 100,
+    ].filter(Boolean).length;
+    if (metSynCriteria >= 3) { metabVal='🔴 MUO'; metabCls='alert'; }
+    else if (metSynCriteria > 0) { metabVal=`⚠️ Riesgo (${metSynCriteria}/4)`; metabCls='warn'; }
+    else { metabVal='🟢 MHO'; metabCls='ok'; }
+  }
+  tiles.push({ label: 'Fenotipo metab.', val: metabVal, cls: metabCls });
+
+  // 6. Endotipo conductual
+  let endotipoVal = '—';
+  if (f.cbec8) {
+    const scores = [1,2,3,4].map(e=>((f.cbec8[`e${e}a`]||0)+(f.cbec8[`e${e}b`]||0)));
+    const dom = scores.indexOf(Math.max(...scores));
+    const domLabels = ['🧠 Cerebral','🫀 Gástrico','💔 Emocional','🔥 Metab. lento'];
+    endotipoVal = scores[dom]>=2 ? domLabels[dom] : '—';
+  }
+  tiles.push({ label: 'Endotipo', val: endotipoVal, cls: endotipoVal!=='—'?'ok':'' });
+
+  // 7. Lipedema
+  const lipeScore = f.lipedema ? [1,2,3,4,5].filter(i=>f.lipedema[`c${i}`]).length : 0;
+  tiles.push({
+    label: 'Lipedema',
+    val: lipeScore>=3?`⚠️ Screening+\n(${lipeScore}/5)`:lipeScore>0?`${lipeScore}/5`:f.lipedema?'✓ Negativo':'—',
+    cls: lipeScore>=3?'alert':lipeScore>0?'warn':f.lipedema?'ok':'',
+  });
+
+  // 8. PCOS (solo mujeres)
+  let pcosVal = '—', pcosCls = '';
+  if (sexo === 'F' && f.pcos) {
+    const pc = f.pcos;
+    const cnt=[pc.oligo,pc.hiperandrog,pc.ovarios].filter(Boolean).length;
+    if (cnt>=2) { pcosVal='⚠️ SOP+'; pcosCls='alert'; }
+    else if (cnt>0) { pcosVal=`${cnt}/3`; pcosCls='warn'; }
+    else { pcosVal='✓ Neg.'; pcosCls='ok'; }
+  } else if (sexo==='M') { pcosVal='N/A'; }
+  tiles.push({ label: sexo==='F'?'SOP':'—', val: pcosVal, cls: pcosCls });
+
+  grid.innerHTML = tiles.map(t=>`
+    <div class="sintesis-tile ${t.cls}">
+      <div class="st-label">${t.label}</div>
+      <div class="st-val">${t.val}</div>
+    </div>`).join('');
+
+  // ── CDSS Alerts ────────────────────────────────────────────────
+  const alerts = [];
+
+  // OC + EOSS ≥2 + MUO → farmacoterapia
+  if (L?.oc_op==='OC' && obesData.eoss>=2 && metabCls==='alert')
+    alerts.push({cls:'rojo', txt:'<b>OC + EOSS≥2 + MUO</b> — Candidato a farmacoterapia anti-obesidad. Evaluar GLP-1/dual agonist + seguimiento metabólico intensivo.'});
+
+  // Sarcopenia confirmada → FITT obligatorio
+  if (sarcoCount>=2)
+    alerts.push({cls:'naranja', txt:'<b>Obesidad sarcopénica confirmada</b> — Prescripción FITT obligatoria: resistencia + proteína ≥1.2 g/kg/día. Evitar restricción calórica severa.'});
+
+  // OC sin farmacoterapia registrada
+  if (L?.oc_op==='OC' && obesData.eoss>=2 && !(obesData.medications||[]).length)
+    alerts.push({cls:'naranja', txt:'<b>Obesidad Clínica sin farmacoterapia registrada</b> — Revisar elegibilidad para tratamiento médico activo (EOSS 2+, IMC ≥30 o ≥27+comorbilidad).'});
+
+  // Endotipo emocional + BES → psicología
+  if (f.cbec8 && ((f.cbec8.e3a||0)+(f.cbec8.e3b||0))>=3)
+    alerts.push({cls:'azul', txt:'<b>Endotipo hambre emocional dominante (CBEC-8 ≥3/4)</b> — Referir a psicología para TCC + manejo de trastorno por atracón si BES ≥27.'});
+
+  // Lipedema positivo → angiología
+  if (lipeScore>=3)
+    alerts.push({cls:'naranja', txt:'<b>Screening lipedema positivo</b> — Derivar a angiología/cirugía vascular para diferenciación lipedema vs. linfedema. No iniciar dieta hipocalórica agresiva.'});
+
+  // PCOS positivo → endocrinología
+  if (sexo==='F' && f.pcos && [f.pcos.oligo,f.pcos.hiperandrog,f.pcos.ovarios].filter(Boolean).length>=2)
+    alerts.push({cls:'azul', txt:'<b>Screening SOP positivo</b> — Evaluación endocrinológica completa. Considerar metformina si hay resistencia a insulina + GLP-1 para pérdida de peso.'});
+
+  // Genetic screening positive
+  if (f.genetics && f.genetics.count>=2)
+    alerts.push({cls:'azul', txt:'<b>Cribado de obesidad genética positivo</b> — Derivar a genética médica. Manejo puede diferir significativamente del abordaje convencional.'});
+
+  // OP without CDSS needs — preventive note
+  if (L?.oc_op==='OP' && !alerts.length)
+    alerts.push({cls:'azul', txt:'<b>Obesidad Preclínica</b> — Sin disfunción orgánica actual. Intervención preventiva intensiva (dieta + actividad física). Monitoreo anual de criterios cardiometabólicos.'});
+
+  cdss.innerHTML = alerts.map(a=>`<div class="cdss-alert ${a.cls}"><span style="font-size:16px">${a.cls==='rojo'?'🔴':a.cls==='naranja'?'🟠':'🔵'}</span><span>${a.txt}</span></div>`).join('');
 }
 
 // ─── MED INFO ─────────────────────────────────────────────────────
