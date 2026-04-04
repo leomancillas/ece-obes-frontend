@@ -584,6 +584,23 @@
     .kosc-domain-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
     .kosc-domain-score { font-size: 26px; font-weight: 800; margin-top: 4px; }
 
+    /* ── Fenotipificación ─────────────────────────────────────────── */
+    .fenotipo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .fenotipo-card {
+      background:var(--bg); border:2px solid var(--border); border-radius:8px;
+      padding:12px 10px; text-align:center; transition:border-color .2s;
+    }
+    .fenotipo-card.definido { border-color:var(--primary); background:rgba(26,82,118,.05); }
+    .fenotipo-card.alerta   { border-color:#C0392B; background:rgba(192,57,43,.06); }
+    .fenotipo-card.positivo { border-color:#1D8348; background:rgba(29,131,72,.06); }
+    .fenotipo-label { font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700; letter-spacing:.4px; margin-bottom:5px; }
+    .fenotipo-value { font-size:12px; font-weight:700; color:var(--text); line-height:1.35; }
+    .fenotipo-sub   { font-size:10px; color:var(--text-muted); margin-top:2px; }
+    .endotipo-opt { border:2px solid var(--border); border-radius:8px; padding:10px 12px; cursor:pointer; transition:all .15s; margin-bottom:8px; }
+    .endotipo-opt.sel { border-color:var(--primary); background:rgba(26,82,118,.07); }
+    .endotipo-opt:hover:not(.sel) { border-color:#aaa; }
+    .lipedema-row { display:flex; align-items:flex-start; gap:10px; padding:8px; border-radius:6px; margin-bottom:6px; background:var(--bg); }
+
     /* Measurements history table */
     .data-table { width: 100%; border-collapse: collapse; }
     .data-table th {
@@ -1268,6 +1285,51 @@
             </div>
             <div id="kosc-total-display" class="text-muted text-sm mt-8" style="margin-top:10px;padding:8px;background:var(--bg);border-radius:6px">
               Selecciona o actualiza los dominios KOSC del paciente.
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Fenotipificación de la obesidad ──────────────────── -->
+        <div class="section-card mb-8" style="margin-bottom:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">🔬 Fenotipificación de la obesidad</span>
+            <button class="btn-add" onclick="openModal('modal-fenotipos')">Actualizar fenotipos</button>
+          </div>
+          <div class="section-card-body">
+            <div class="fenotipo-grid" id="fenotipos-display">
+              <div class="fenotipo-card" id="fen-morfo-card">
+                <div class="fenotipo-label">Distribución adiposa</div>
+                <div class="fenotipo-value" id="fen-morfo">—</div>
+                <div class="fenotipo-sub" id="fen-morfo-sub"></div>
+              </div>
+              <div class="fenotipo-card" id="fen-bai-card">
+                <div class="fenotipo-label">BAI — % grasa estimado</div>
+                <div class="fenotipo-value" id="fen-bai">—</div>
+                <div class="fenotipo-sub" id="fen-bai-sub"></div>
+              </div>
+              <div class="fenotipo-card" id="fen-sarco-card">
+                <div class="fenotipo-label">Obesidad sarcopénica</div>
+                <div class="fenotipo-value" id="fen-sarco">—</div>
+                <div class="fenotipo-sub" id="fen-sarco-sub"></div>
+              </div>
+              <div class="fenotipo-card" id="fen-etio-card">
+                <div class="fenotipo-label">Etiología principal</div>
+                <div class="fenotipo-value" id="fen-etio">—</div>
+                <div class="fenotipo-sub" id="fen-etio-sub"></div>
+              </div>
+              <div class="fenotipo-card" id="fen-endotipo-card">
+                <div class="fenotipo-label">Endotipo conductual</div>
+                <div class="fenotipo-value" id="fen-endotipo">—</div>
+                <div class="fenotipo-sub" id="fen-endotipo-sub"></div>
+              </div>
+              <div class="fenotipo-card" id="fen-ffmi-card">
+                <div class="fenotipo-label">FFMI (masa magra)</div>
+                <div class="fenotipo-value" id="fen-ffmi">—</div>
+                <div class="fenotipo-sub" id="fen-ffmi-sub"></div>
+              </div>
+            </div>
+            <div id="fen-lipedema-flag" style="display:none;margin-top:12px;padding:10px 14px;background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;font-size:12px;color:#92400E">
+              ⚠️ <b>Screening lipedema positivo</b> — Distribución bilateral simétrica, tejido doloroso y/o sin respuesta a dieta/ejercicio. Considerar evaluación por angiólogo/cirujano vascular para diferenciación lipedema vs. linfedema.
             </div>
           </div>
         </div>
@@ -2218,6 +2280,149 @@
   </div>
 </div>
 
+<!-- ── MODAL FENOTIPIFICACIÓN ──────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-fenotipos">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h3>🔬 Fenotipificación de la obesidad</h3>
+      <button class="modal-close" onclick="closeModal('modal-fenotipos')">×</button>
+    </div>
+    <div class="modal-body" style="max-height:72vh;overflow-y:auto">
+
+      <!-- 1. MORFOLÓGICO ────────────────────────────────── -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px">📐 Fenotipo morfológico (distribución de adiposidad)</div>
+      <div id="fen-morfo-auto" style="background:var(--bg);border-radius:8px;padding:12px;font-size:12px;margin-bottom:14px;color:var(--text-muted)">Registra una medición con cintura y cadera para calcular automáticamente.</div>
+      <div class="form-row cols-2" style="margin-bottom:14px">
+        <div class="form-group">
+          <label>Handgrip / Fuerza de prensión (kg) <span style="color:var(--text-muted);font-size:10px">— dinamometría</span></label>
+          <input type="number" id="fen-handgrip" step="0.1" placeholder="ej. 24.5" oninput="calcSarcopenica()" />
+          <div style="font-size:10px;color:var(--text-muted);margin-top:3px">Punto de corte: hombres &lt;27 kg · mujeres &lt;16 kg</div>
+        </div>
+        <div class="form-group">
+          <label>Velocidad de marcha (m/s) <span style="color:var(--text-muted);font-size:10px">— prueba 4 metros</span></label>
+          <input type="number" id="fen-vel-marcha" step="0.01" placeholder="ej. 0.85" oninput="calcSarcopenica()" />
+          <div style="font-size:10px;color:var(--text-muted);margin-top:3px">Punto de corte: &lt;0.8 m/s indica rendimiento físico bajo</div>
+        </div>
+      </div>
+      <div id="fen-sarco-result" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px"></div>
+
+      <!-- 2. ETIOLOGÍA ──────────────────────────────────── -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px;margin-top:4px">🧬 Fenotipo etiológico</div>
+      <div class="form-row cols-2" style="margin-bottom:10px">
+        <div class="form-group">
+          <label>Causa principal de la obesidad</label>
+          <select id="fen-etiologia-principal">
+            <option value="">— Seleccionar —</option>
+            <option value="alimentario">Alimentario / hiperfagia</option>
+            <option value="sedentario">Sedentario / bajo gasto energético</option>
+            <option value="emocional">Emocional / psicológico (comer emocional, BED)</option>
+            <option value="endocrino">Endocrino (hipotiroidismo, Cushing, SOP, hipogonadismo)</option>
+            <option value="farmacologico">Farmacológico (antipsicóticos, corticosteroides, insulina)</option>
+            <option value="hipotalamico">Hipotalámico / neurológico (daño hipotalámico, tumores)</option>
+            <option value="genetico">Genético / sindrómica (Prader-Willi, Bardet-Biedl, variantes MC4R)</option>
+            <option value="iatrogeno">Iatrogénico / post-cirugía</option>
+            <option value="mixto">Multifactorial / mixto</option>
+            <option value="no_determinado">No determinado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Causas contribuyentes <span style="color:var(--text-muted);font-size:10px">(selección múltiple)</span></label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;padding-top:4px">
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="fen-c-dieta" /> Dieta hipercalórica</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="fen-c-sedentarismo" /> Sedentarismo</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="fen-c-sueno" /> Alteración del sueño</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="fen-c-estres" /> Estrés crónico</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="fen-c-farmaco" /> Fármacos obesogénicos</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="fen-c-microbiota" /> Disbiosis intestinal</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="fen-c-ambiental" /> Ambiente obesogénico</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="fen-c-genetico" /> Predisposición genética</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. ENDOTIPO CONDUCTUAL ───────────────────────── -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px;margin-top:4px">🧠 Endotipo conductual (Acosta et al., Cell Metabolism 2019)</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Selecciona el o los endotipos que mejor describen al paciente. Guían la elección del fármaco anti-obesidad.</div>
+      <div class="endotipo-opt" id="endo-opt-1" onclick="toggleEndotipo(1)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:700">🧠 Hambre cerebral <span style="font-size:10px;color:var(--text-muted);font-weight:400">(Hungry Brain)</span></div>
+          <div style="font-size:10px;font-weight:700;color:var(--primary)" id="endo-tag-1" style="display:none">✓ SELECCIONADO</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Alta sensibilidad hedónica: come más al ver o sentir el olor de comida, antojos intensos, difícil controlar porciones ante estímulos externos. <b>Responde mejor a:</b> semaglutida, bupropión/naltrexona.</div>
+      </div>
+      <div class="endotipo-opt" id="endo-opt-2" onclick="toggleEndotipo(2)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:700">🫀 Hambre gástrica <span style="font-size:10px;color:var(--text-muted);font-weight:400">(Hungry Gut)</span></div>
+          <div style="font-size:10px;font-weight:700;color:var(--primary)" id="endo-tag-2" style="display:none">✓ SELECCIONADO</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Saciedad tardía o deficiente: vuelve a tener hambre poco tiempo después de comer, porciones grandes sin saciedad, vaciamiento gástrico rápido. <b>Responde mejor a:</b> GLP-1 (liraglutida, semaglutida), tirzepatida.</div>
+      </div>
+      <div class="endotipo-opt" id="endo-opt-3" onclick="toggleEndotipo(3)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:700">💔 Hambre emocional <span style="font-size:10px;color:var(--text-muted);font-weight:400">(Emotional Hunger)</span></div>
+          <div style="font-size:10px;font-weight:700;color:var(--primary)" id="endo-tag-3" style="display:none">✓ SELECCIONADO</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Come en respuesta a emociones negativas (estrés, ansiedad, tristeza, aburrimiento), no a hambre fisiológica. BES frecuentemente elevado. <b>Responde mejor a:</b> TCC + bupropión/naltrexona, topiramato.</div>
+      </div>
+      <div class="endotipo-opt" id="endo-opt-4" onclick="toggleEndotipo(4)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:700">🔥 Metabolismo lento <span style="font-size:10px;color:var(--text-muted);font-weight:400">(Slow Burn)</span></div>
+          <div style="font-size:10px;font-weight:700;color:var(--primary)" id="endo-tag-4" style="display:none">✓ SELECCIONADO</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Bajo gasto energético en reposo, recupera el peso con facilidad incluso con restricción calórica moderada, termogénesis adaptativa marcada. <b>Responde mejor a:</b> tirzepatida, agonistas beta-3, combinaciones.</div>
+      </div>
+
+      <!-- 4. LIPEDEMA SCREENING ────────────────────────── -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px;margin-top:16px">🦵 Screening de lipedema (Consenso Internacional 2020)</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Criterios diagnósticos. Screening positivo: ≥3 criterios presentes.</div>
+      <div class="lipedema-row">
+        <input type="checkbox" id="lipe-1" style="margin-top:2px;accent-color:#C0392B" onchange="calcLipedema()" />
+        <div><div style="font-size:12px;font-weight:700">Distribución bilateral simétrica de tejido adiposo</div><div style="font-size:11px;color:var(--text-muted)">Afecta extremidades inferiores (muslos, piernas) de forma bilateral; respeta manos y pies</div></div>
+      </div>
+      <div class="lipedema-row">
+        <input type="checkbox" id="lipe-2" style="margin-top:2px;accent-color:#C0392B" onchange="calcLipedema()" />
+        <div><div style="font-size:12px;font-weight:700">Dolor espontáneo o a la presión (alodinia)</div><div style="font-size:11px;color:var(--text-muted)">Tejido adiposo doloroso al tacto leve; sensación de pesadez crónica en extremidades</div></div>
+      </div>
+      <div class="lipedema-row">
+        <input type="checkbox" id="lipe-3" style="margin-top:2px;accent-color:#C0392B" onchange="calcLipedema()" />
+        <div><div style="font-size:12px;font-weight:700">Facilidad para formar hematomas</div><div style="font-size:11px;color:var(--text-muted)">Hematomas espontáneos o ante traumatismo mínimo en zonas afectadas</div></div>
+      </div>
+      <div class="lipedema-row">
+        <input type="checkbox" id="lipe-4" style="margin-top:2px;accent-color:#C0392B" onchange="calcLipedema()" />
+        <div><div style="font-size:12px;font-weight:700">Sin respuesta a dieta estricta y ejercicio</div><div style="font-size:11px;color:var(--text-muted)">La distribución de grasa en extremidades no mejora con pérdida de peso general</div></div>
+      </div>
+      <div class="lipedema-row">
+        <input type="checkbox" id="lipe-5" style="margin-top:2px;accent-color:#C0392B" onchange="calcLipedema()" />
+        <div><div style="font-size:12px;font-weight:700">Signo del "manguito" (cuff sign)</div><div style="font-size:11px;color:var(--text-muted)">Demarcación abrupta en tobillo entre tejido afectado y pie normal</div></div>
+      </div>
+      <div id="lipe-result" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12px"></div>
+
+      <!-- Estadificación Wold (si lipedema positivo) -->
+      <div id="lipe-estadificacion" style="display:none;margin-top:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Estadificación de Wold</div>
+        <div class="form-group">
+          <select id="fen-lipedema-estadio">
+            <option value="">— Seleccionar estadio —</option>
+            <option value="1">Estadio I — Piel lisa, tejido blando y esponjoso</option>
+            <option value="2">Estadio II — Piel irregular (aspecto de colchón), nódulos palpables</option>
+            <option value="3">Estadio III — Lobulaciones grandes, deformidad marcada de extremidades</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Notas libres -->
+      <div class="form-group" style="margin-top:14px">
+        <label>Notas clínicas adicionales</label>
+        <textarea id="fen-notas" rows="2" placeholder="Observaciones sobre el fenotipo, hallazgos relevantes…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-fenotipos')">Cancelar</button>
+      <button class="btn-save" onclick="saveFenotipos()">💾 Guardar fenotipificación</button>
+    </div>
+  </div>
+</div>
+
 <!-- Labs Modal -->
 <div class="modal-overlay" id="modal-labs">
   <div class="modal wide">
@@ -2949,6 +3154,7 @@ let obesData = {
   eoss: null,
   eossNotes: '',
   kosc: null,       // { d1, d2, d3, d4, notes }
+  fenotipos: null,  // { etiologia, contribuyentes, endotipos[], handgrip, vel_marcha, lipedema, notas }
 };
 let weightChart = null;
 let weightChartMedico = null;
@@ -3004,6 +3210,8 @@ function openModal(id) {
   }
   // Cross-module auto-fill
   prefillModalFromObesData(id);
+  // Fenotipificación: pre-llenar al abrir
+  if (id === 'modal-fenotipos') openFenotiposModal();
 }
 
 // ─── CROSS-MODULE PREFILL ────────────────────────────────────────────
@@ -3810,6 +4018,9 @@ function renderMedicoView() {
 
   renderProcedures();
 
+  // ── Fenotipificación ──────────────────────────────────────────
+  renderFenotipos();
+
   // ── ASCVD: auto-llenar desde datos del expediente ─────────────
   prefillASCVD();
 }
@@ -4225,6 +4436,249 @@ function calcFIB4Lab() {
   } else {
     resultEl.style.display = 'none';
     if (hintEl) hintEl.style.display = 'none';
+  }
+}
+
+// ─── FENOTIPIFICACIÓN ────────────────────────────────────────────
+const ETIOLOGIA_LABELS = {
+  alimentario: 'Alimentario / hiperfagia',
+  sedentario: 'Sedentario / bajo GE',
+  emocional: 'Emocional / psicológico',
+  endocrino: 'Endocrino',
+  farmacologico: 'Farmacológico',
+  hipotalamico: 'Hipotalámico / neurológico',
+  genetico: 'Genético / sindrómica',
+  iatrogeno: 'Iatrogénico',
+  mixto: 'Multifactorial / mixto',
+  no_determinado: 'No determinado',
+};
+const ENDOTIPO_LABELS = { 1:'Hambre cerebral', 2:'Hambre gástrica', 3:'Hambre emocional', 4:'Metabolismo lento' };
+
+// Calcula fenotipo morfológico y sarcopénico desde datos existentes
+function calcFenotiposMorfologicos() {
+  if (!currentPatient || !obesData.measurements.length) return null;
+  const m = obesData.measurements.slice().sort((a,b) => new Date(b.fecha)-new Date(a.fecha))[0];
+  const sexo = (currentPatient.sexo||'').toUpperCase().startsWith('F') ? 'F' : 'M';
+  const result = {};
+
+  // Distribución adiposa (ICC)
+  if (m.icc) {
+    const umbral = sexo === 'F' ? 0.85 : 0.90;
+    if (m.icc > umbral + 0.05) result.distribucion = { label: 'Android (central)', sub: `ICC ${m.icc.toFixed(2)} — riesgo CV elevado`, tipo: 'alerta' };
+    else if (m.icc < umbral - 0.05) result.distribucion = { label: 'Ginoide (periférico)', sub: `ICC ${m.icc.toFixed(2)}`, tipo: 'positivo' };
+    else result.distribucion = { label: 'Mixto', sub: `ICC ${m.icc.toFixed(2)}`, tipo: 'definido' };
+  }
+
+  // BAI (Body Adiposity Index) = (cadera_cm / talla_m^1.5) - 18
+  if (m.cadera && m.talla) {
+    const bai = (m.cadera / Math.pow(m.talla / 100, 1.5)) - 18;
+    const grasa_ref = sexo === 'F'
+      ? (bai < 21 ? 'bajo' : bai < 33 ? 'normal' : bai < 39 ? 'elevado' : 'muy elevado')
+      : (bai < 8 ? 'bajo' : bai < 21 ? 'normal' : bai < 26 ? 'elevado' : 'muy elevado');
+    result.bai = { label: `${bai.toFixed(1)}%`, sub: `${grasa_ref} · BAI`, tipo: bai > (sexo==='F'?33:21) ? 'alerta' : 'definido' };
+  }
+
+  // FFMI desde % grasa + peso + talla
+  if (m.grasa && m.peso && m.talla) {
+    const ffm = m.peso * (1 - m.grasa / 100);
+    const talla_m = m.talla / 100;
+    const ffmi = ffm / (talla_m * talla_m);
+    const umbral_ffmi = sexo === 'F' ? 15 : 17;
+    result.ffmi = {
+      valor: ffmi,
+      label: `${ffmi.toFixed(1)} kg/m²`,
+      sub: ffmi < umbral_ffmi ? `↓ Bajo (cut-off ${umbral_ffmi})` : `Normal (cut-off ${umbral_ffmi})`,
+      bajo: ffmi < umbral_ffmi,
+      tipo: ffmi < umbral_ffmi ? 'alerta' : 'definido',
+    };
+  }
+  return result;
+}
+
+// Calcula diagnóstico de obesidad sarcopénica
+function calcSarcopenica() {
+  if (!currentPatient) return;
+  const sexo = (currentPatient.sexo||'').toUpperCase().startsWith('F') ? 'F' : 'M';
+  const morfo = calcFenotiposMorfologicos();
+  const handgrip = parseFloat($('fen-handgrip').value);
+  const velMarcha = parseFloat($('fen-vel-marcha').value);
+  const el = $('fen-sarco-result');
+
+  const ffmiBajo = morfo?.ffmi?.bajo;
+  const handgripBajo = !isNaN(handgrip) && handgrip > 0 && handgrip < (sexo==='F' ? 16 : 27);
+  const marchaLenta = !isNaN(velMarcha) && velMarcha > 0 && velMarcha < 0.8;
+
+  const criteriosPositivos = [ffmiBajo, handgripBajo, marchaLenta].filter(Boolean).length;
+
+  let diag = '', bg = '', color = '';
+  if (criteriosPositivos === 0 && (morfo?.ffmi || !isNaN(handgrip))) {
+    diag = '✅ Criterios negativos — Obesidad sarcopénica no sugerida';
+    bg = 'rgba(29,131,72,.1)'; color = '#1D8348';
+  } else if (criteriosPositivos === 1) {
+    diag = '⚠️ Probable obesidad sarcopénica (1/3 criterios) — Completar evaluación';
+    bg = 'rgba(160,64,0,.1)'; color = '#A04000';
+  } else if (criteriosPositivos >= 2) {
+    diag = '🔴 Obesidad sarcopénica confirmada (≥2/3 criterios) — Requiere prescripción FITT + proteína ≥1.2 g/kg';
+    bg = 'rgba(192,57,43,.1)'; color = '#C0392B';
+  } else { el.style.display = 'none'; return; }
+
+  el.style.display = 'block';
+  el.style.background = bg; el.style.color = color; el.style.border = `1px solid ${color}`;
+  el.style.borderRadius = '8px'; el.style.padding = '10px 14px';
+  el.innerHTML = `<b>${diag}</b><div style="margin-top:6px;font-size:11px">
+    ${morfo?.ffmi ? `FFMI: ${morfo.ffmi.label} (${morfo.ffmi.bajo ? '↓ bajo' : '✓ normal'}) · ` : ''}
+    ${!isNaN(handgrip) && handgrip > 0 ? `Handgrip: ${handgrip} kg (${handgripBajo ? '↓ bajo' : '✓ normal'}) · ` : ''}
+    ${!isNaN(velMarcha) && velMarcha > 0 ? `V.marcha: ${velMarcha} m/s (${marchaLenta ? '↓ lenta' : '✓ normal'})` : ''}
+  </div>`;
+}
+
+// Toggle endotipo selection
+function toggleEndotipo(n) {
+  const btn = $(`endo-opt-${n}`);
+  const tag = $(`endo-tag-${n}`);
+  btn.classList.toggle('sel');
+  if (tag) tag.style.display = btn.classList.contains('sel') ? 'block' : 'none';
+}
+
+// Calcula screening lipedema
+function calcLipedema() {
+  const score = [1,2,3,4,5].filter(i => $(`lipe-${i}`)?.checked).length;
+  const el = $('lipe-result');
+  const estadif = $('lipe-estadificacion');
+  if (score === 0) { el.style.display = 'none'; estadif.style.display = 'none'; return; }
+
+  el.style.display = 'block';
+  if (score >= 3) {
+    el.style.background = 'rgba(192,57,43,.1)'; el.style.border = '1px solid #C0392B'; el.style.color = '#C0392B';
+    el.innerHTML = `<b>⚠️ Screening POSITIVO (${score}/5 criterios)</b> — Considerar evaluación especializada (angiología/cirugía vascular) para confirmar diagnóstico de lipedema vs. linfedema vs. distribución ginoide.`;
+    estadif.style.display = 'block';
+  } else {
+    el.style.background = 'var(--bg)'; el.style.border = '1px solid var(--border)'; el.style.color = 'var(--text-muted)';
+    el.innerHTML = `${score}/5 criterios presentes — Screening negativo (requiere ≥3 para positivo).`;
+    estadif.style.display = 'none';
+  }
+}
+
+// Abre el modal y pre-llena con datos existentes
+function openFenotiposModal() {
+  if (!currentPatient) return;
+  // Mostrar info morfológica calculada
+  const morfo = calcFenotiposMorfologicos();
+  const autoEl = $('fen-morfo-auto');
+  if (morfo && (morfo.distribucion || morfo.bai || morfo.ffmi)) {
+    const lines = [];
+    if (morfo.distribucion) lines.push(`<b>Distribución:</b> ${morfo.distribucion.label} (${morfo.distribucion.sub})`);
+    if (morfo.bai) lines.push(`<b>BAI:</b> ${morfo.bai.label} — ${morfo.bai.sub}`);
+    if (morfo.ffmi) lines.push(`<b>FFMI:</b> ${morfo.ffmi.label} — ${morfo.ffmi.sub}`);
+    autoEl.innerHTML = `<div style="color:var(--text)">🔗 <b>Calculado automáticamente de la última medición:</b><br>${lines.join(' · ')}</div>`;
+    autoEl.style.background = 'rgba(26,82,118,.07)'; autoEl.style.border = '1px solid rgba(26,82,118,.2)';
+  }
+  // Restaurar datos guardados
+  const f = obesData.fenotipos || {};
+  if (f.etiologia) $('fen-etiologia-principal').value = f.etiologia;
+  ['dieta','sedentarismo','sueno','estres','farmaco','microbiota','ambiental','genetico'].forEach(c => {
+    const el = $(`fen-c-${c}`); if (el) el.checked = !!(f.contribuyentes||{})[c];
+  });
+  [1,2,3,4].forEach(n => {
+    const sel = (f.endotipos||[]).includes(n);
+    const btn = $(`endo-opt-${n}`), tag = $(`endo-tag-${n}`);
+    if (btn) { btn.classList.toggle('sel', sel); }
+    if (tag) tag.style.display = sel ? 'block' : 'none';
+  });
+  [1,2,3,4,5].forEach(i => { const el = $(`lipe-${i}`); if (el) el.checked = !!(f.lipedema||{})[`c${i}`]; });
+  if ((f.lipedema||{}).estadio) $('fen-lipedema-estadio').value = f.lipedema.estadio;
+  $('fen-handgrip').value = f.handgrip || '';
+  $('fen-vel-marcha').value = f.vel_marcha || '';
+  $('fen-notas').value = f.notas || '';
+  calcLipedema(); calcSarcopenica();
+}
+
+// Guardar fenotipificación
+function saveFenotipos() {
+  if (!currentPatient) return;
+  const endotipos = [1,2,3,4].filter(n => $(`endo-opt-${n}`)?.classList.contains('sel'));
+  const contribuyentes = {};
+  ['dieta','sedentarismo','sueno','estres','farmaco','microbiota','ambiental','genetico'].forEach(c => {
+    const el = $(`fen-c-${c}`); if (el) contribuyentes[c] = el.checked;
+  });
+  const lipedema = {
+    c1:!!$('lipe-1')?.checked, c2:!!$('lipe-2')?.checked, c3:!!$('lipe-3')?.checked,
+    c4:!!$('lipe-4')?.checked, c5:!!$('lipe-5')?.checked,
+    estadio: $('fen-lipedema-estadio')?.value || '',
+  };
+  obesData.fenotipos = {
+    etiologia: $('fen-etiologia-principal').value,
+    contribuyentes,
+    endotipos,
+    handgrip: parseFloat($('fen-handgrip').value) || null,
+    vel_marcha: parseFloat($('fen-vel-marcha').value) || null,
+    lipedema,
+    notas: $('fen-notas').value,
+    fecha: new Date().toISOString(),
+  };
+  localStorage.setItem(`ece_obes_${currentPatient.id}`, JSON.stringify(obesData));
+  renderFenotipos();
+  closeModal('modal-fenotipos');
+  showToast('Fenotipificación guardada', 'success');
+}
+
+// Renderiza las tarjetas de fenotipo en el módulo médico
+function renderFenotipos() {
+  if (!currentPatient) return;
+  const f = obesData.fenotipos || {};
+  const morfo = calcFenotiposMorfologicos();
+  const sexo = (currentPatient.sexo||'').toUpperCase().startsWith('F') ? 'F' : 'M';
+
+  // Helper: actualizar tarjeta
+  const setCard = (cardId, valueId, subId, label, sub, tipo) => {
+    const card = $(cardId); const val = $(valueId); const subEl = $(subId);
+    if (card && val) {
+      val.textContent = label || '—';
+      if (subEl) subEl.textContent = sub || '';
+      card.className = `fenotipo-card${tipo ? ' '+tipo : ''}`;
+    }
+  };
+
+  // 1. Distribución adiposa
+  if (morfo?.distribucion) {
+    setCard('fen-morfo-card','fen-morfo','fen-morfo-sub', morfo.distribucion.label, morfo.distribucion.sub, morfo.distribucion.tipo);
+  }
+
+  // 2. BAI
+  if (morfo?.bai) {
+    setCard('fen-bai-card','fen-bai','fen-bai-sub', morfo.bai.label, morfo.bai.sub, morfo.bai.tipo);
+  }
+
+  // 3. FFMI + sarcopénica
+  if (morfo?.ffmi) {
+    setCard('fen-ffmi-card','fen-ffmi','fen-ffmi-sub', morfo.ffmi.label, morfo.ffmi.sub, morfo.ffmi.tipo);
+  }
+  if (f.handgrip || f.vel_marcha || morfo?.ffmi) {
+    const handgripBajo = f.handgrip && f.handgrip < (sexo==='F'?16:27);
+    const marchaLenta = f.vel_marcha && f.vel_marcha < 0.8;
+    const criterios = [morfo?.ffmi?.bajo, handgripBajo, marchaLenta].filter(Boolean).length;
+    const sarcoLabel = criterios === 0 ? 'No sugerida' : criterios === 1 ? 'Probable' : 'Confirmada';
+    const sarcoTipo = criterios === 0 ? 'positivo' : criterios === 1 ? 'definido' : 'alerta';
+    setCard('fen-sarco-card','fen-sarco','fen-sarco-sub', sarcoLabel, `${criterios}/3 criterios ESPEN-EASO`, sarcoTipo);
+  }
+
+  // 4. Etiología
+  if (f.etiologia) {
+    const contrib = Object.entries(f.contribuyentes||{}).filter(([,v])=>v).map(([k])=>k.replace('_',' ')).slice(0,2).join(', ');
+    setCard('fen-etio-card','fen-etio','fen-etio-sub', ETIOLOGIA_LABELS[f.etiologia]||f.etiologia, contrib ? `+ ${contrib}` : '', 'definido');
+  }
+
+  // 5. Endotipo conductual
+  if (f.endotipos?.length) {
+    const labels = f.endotipos.map(n => ENDOTIPO_LABELS[n]).join(' + ');
+    setCard('fen-endotipo-card','fen-endotipo','fen-endotipo-sub', labels, 'Acosta et al. 2019', 'definido');
+  }
+
+  // 6. Lipedema flag
+  const lipeFlag = $('fen-lipedema-flag');
+  if (lipeFlag) {
+    const score = f.lipedema ? [1,2,3,4,5].filter(i => f.lipedema[`c${i}`]).length : 0;
+    lipeFlag.style.display = score >= 3 ? 'block' : 'none';
   }
 }
 
