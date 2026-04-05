@@ -988,6 +988,102 @@
       transition: all .2s; margin-left: 8px; white-space: nowrap;
     }
     .dark-toggle:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.4); }
+
+    /* ─── CHAT ──────────────────────────────────────────────────── */
+    #chat-fab {
+      position: fixed; bottom: 28px; right: 28px; z-index: 1100;
+      width: 54px; height: 54px; border-radius: 50%;
+      background: var(--primary); color: #fff; border: none; cursor: pointer;
+      font-size: 22px; box-shadow: 0 4px 18px rgba(26,82,118,.38);
+      display: none; align-items: center; justify-content: center;
+      transition: all .25s;
+    }
+    #chat-fab:hover { transform: scale(1.09); box-shadow: 0 6px 22px rgba(26,82,118,.48); }
+    #chat-badge {
+      position: absolute; top: -3px; right: -3px;
+      background: #C0392B; color: #fff; border-radius: 50%;
+      width: 19px; height: 19px; font-size: 10px; font-weight: 800;
+      display: none; align-items: center; justify-content: center; border: 2px solid #fff;
+    }
+    #chat-panel {
+      position: fixed; bottom: 92px; right: 28px; z-index: 1099;
+      width: 365px; height: 530px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; box-shadow: 0 10px 36px rgba(0,0,0,.18);
+      display: none; flex-direction: column; overflow: hidden;
+    }
+    #chat-panel.open { display: flex; }
+    .chat-hdr {
+      background: var(--primary); color: #fff;
+      padding: 12px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .chat-hdr-info { flex: 1; min-width: 0; }
+    .chat-hdr-title { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-hdr-sub { font-size: 10.5px; opacity: .72; margin-top: 1px; }
+    .chat-enc-pill {
+      background: rgba(255,255,255,.18); border-radius: 10px;
+      padding: 2px 8px; font-size: 9.5px; font-weight: 700;
+      display: flex; align-items: center; gap: 3px; white-space: nowrap;
+    }
+    #chat-msgs {
+      flex: 1; overflow-y: auto; padding: 12px 12px 6px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .chat-msg {
+      max-width: 82%; padding: 9px 13px; border-radius: 16px;
+      font-size: 12.5px; line-height: 1.55; word-break: break-word;
+      animation: chatIn .18s ease;
+    }
+    @keyframes chatIn { from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)} }
+    .chat-msg-out {
+      background: var(--primary); color: #fff;
+      align-self: flex-end; border-bottom-right-radius: 5px;
+    }
+    .chat-msg-in {
+      background: var(--bg); color: var(--text);
+      align-self: flex-start; border-bottom-left-radius: 5px; border: 1px solid var(--border);
+    }
+    .chat-msg-meta { font-size: 10px; opacity: .6; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+    .chat-tag-pill {
+      font-size: 9.5px; font-weight: 700; padding: 1.5px 7px; border-radius: 10px;
+      background: rgba(255,255,255,.22); margin-bottom: 5px; display: inline-block;
+    }
+    .chat-tag-pill.in { background: rgba(26,82,118,.10); color: var(--primary); }
+    .chat-input-area {
+      padding: 10px 12px 12px; border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
+    }
+    .chat-tag-sel {
+      font-size: 11px; border: 1px solid var(--border); border-radius: 12px;
+      padding: 3px 8px; background: var(--bg); color: var(--text); outline: none; cursor: pointer;
+    }
+    .chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+    #chat-input {
+      flex: 1; padding: 9px 13px; border: 1px solid var(--border);
+      border-radius: 20px; font-size: 12.5px; background: var(--bg);
+      color: var(--text); resize: none; min-height: 38px; max-height: 80px;
+      outline: none; font-family: inherit; line-height: 1.5;
+    }
+    #chat-input:focus { border-color: var(--primary); }
+    #chat-send-btn {
+      background: var(--primary); color: #fff; border: none; border-radius: 50%;
+      width: 38px; height: 38px; cursor: pointer; font-size: 15px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background .2s;
+    }
+    #chat-send-btn:hover { background: #154360; }
+    .chat-empty { text-align: center; color: var(--text-muted); font-size: 12px; padding: 48px 16px; line-height: 1.7; }
+    .chat-thread {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background .15s;
+    }
+    .chat-thread:hover { background: var(--bg); }
+    .chat-thread.unread { border-left: 3px solid var(--primary); }
+    .chat-thread-name { font-weight: 700; font-size: 12.5px; color: var(--text); }
+    .chat-thread-preview { font-size: 11px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #chat-back-btn { background: none; border: none; color: #fff; cursor: pointer; font-size: 17px; padding: 0 2px; flex-shrink: 0; }
+    #chat-close-btn { background: none; border: none; color: rgba(255,255,255,.8); cursor: pointer; font-size: 18px; padding: 0 2px; flex-shrink: 0; }
+    #chat-admin-list { flex: 1; overflow-y: auto; }
   </style>
 </head>
 <body>
@@ -3684,6 +3780,8 @@ function showApp() {
     const initials = (currentUser.name || 'U').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
     $('user-avatar-hdr').textContent = initials;
     $('user-name-hdr').textContent = currentUser.name || currentUser.email;
+    // Init encrypted chat after login
+    initChat().catch(console.error);
   }
 }
 
@@ -6850,6 +6948,287 @@ function toggleDarkMode() {
 
 // ─── INITIAL VIEW ─────────────────────────────────────────────────
 switchView('dashboard');
+
+// ─── CHAT — CIFRADO AES-256-GCM ────────────────────────────────────
+const CHAT_ADMIN_EMAIL = 'leomancillas@gmail.com';
+const CHAT_PASSPHRASE  = 'ece-obes-secure-chat-2026-v1';
+let _chatKey = null;
+let _chatSub = null;
+let _chatAdminUserId   = null;
+let _chatAdminUserName = null;
+
+async function _getChatKey() {
+  if (_chatKey) return _chatKey;
+  const enc = new TextEncoder();
+  const mat = await crypto.subtle.importKey('raw', enc.encode(CHAT_PASSPHRASE), 'PBKDF2', false, ['deriveKey']);
+  _chatKey = await crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt:enc.encode('ece-obes-salt-v1'), iterations:100000, hash:'SHA-256' },
+    mat, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+  return _chatKey;
+}
+
+async function _encChat(text) {
+  const key = await _getChatKey();
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const ct  = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, new TextEncoder().encode(text));
+  const b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+  return { enc: b64(ct), iv: b64(iv) };
+}
+
+async function _decChat(encB64, ivB64) {
+  try {
+    const key = await _getChatKey();
+    const ct  = Uint8Array.from(atob(encB64), c => c.charCodeAt(0));
+    const iv  = Uint8Array.from(atob(ivB64),  c => c.charCodeAt(0));
+    return new TextDecoder().decode(await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct));
+  } catch { return '[mensaje cifrado]'; }
+}
+
+function _isAdmin() { return currentUser?.email === CHAT_ADMIN_EMAIL; }
+
+function _escChat(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function initChat() {
+  if (!currentUser) return;
+  const fab = $('chat-fab');
+  if (fab) fab.style.display = 'flex';
+  await _chatLoad();
+  // Realtime subscription
+  if (_chatSub) sbClient.removeChannel(_chatSub);
+  _chatSub = sbClient.channel('ece_obes_chat_rt')
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'ece_obes_chat' }, async p => {
+      const r = p.new;
+      const mine = !_isAdmin() && (r.user_id === currentUser.id || r.reply_to_user_id === currentUser.id);
+      const adminRelevant = _isAdmin() && (
+        !_chatAdminUserId || r.user_id === _chatAdminUserId || r.reply_to_user_id === _chatAdminUserId
+      );
+      if (mine || adminRelevant) {
+        await _chatLoad();
+        const panel = $('chat-panel');
+        if (panel?.classList.contains('open')) _chatScrollBottom();
+        else if (mine && r.is_admin_reply) _chatUpdateBadge();
+      }
+    }).subscribe();
+}
+
+function toggleChat() {
+  const panel = $('chat-panel');
+  if (!panel) return;
+  const opened = panel.classList.toggle('open');
+  if (opened) {
+    if (_isAdmin()) _chatRenderAdminList();
+    else { _chatScrollBottom(); _chatMarkRead(); }
+  }
+}
+
+function _chatScrollBottom() {
+  const el = $('chat-msgs'); if (el) el.scrollTop = el.scrollHeight;
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+}
+
+async function sendChatMessage() {
+  if (!currentUser) return;
+  const input = $('chat-input');
+  const tagSel = $('chat-tag-sel');
+  const text = (input?.value || '').trim();
+  if (!text) return;
+
+  $('chat-send-btn').disabled = true;
+  try {
+    const { enc, iv } = await _encChat(text);
+    const row = {
+      user_id:          _isAdmin() ? (_chatAdminUserId || currentUser.id) : currentUser.id,
+      user_email:       _isAdmin() ? (_chatAdminUserId ? null : currentUser.email) : currentUser.email,
+      user_name:        _isAdmin() ? (_chatAdminUserId ? 'Admin' : currentUser.name) : (currentUser.name || currentUser.email),
+      is_admin_reply:   _isAdmin(),
+      message_enc:      enc,
+      iv:               iv,
+      feature_tag:      tagSel?.value || 'General',
+      reply_to_user_id: _isAdmin() ? _chatAdminUserId : null,
+    };
+    const { error } = await sbClient.from('ece_obes_chat').insert([row]);
+    if (error) throw new Error(error.message);
+    input.value = '';
+    await _chatLoad();
+    _chatScrollBottom();
+  } catch (e) {
+    showToast('Error al enviar: ' + e.message, 'error');
+  } finally {
+    $('chat-send-btn').disabled = false;
+  }
+}
+
+async function _chatLoad() {
+  if (!currentUser) return;
+  if (_isAdmin()) {
+    if (_chatAdminUserId) {
+      const { data } = await sbClient.from('ece_obes_chat').select('*')
+        .or(`user_id.eq.${_chatAdminUserId},reply_to_user_id.eq.${_chatAdminUserId}`)
+        .order('created_at', { ascending: true });
+      await _chatRenderMsgs(data || []);
+    } else {
+      await _chatRenderAdminList();
+    }
+  } else {
+    const { data } = await sbClient.from('ece_obes_chat').select('*')
+      .or(`user_id.eq.${currentUser.id},reply_to_user_id.eq.${currentUser.id}`)
+      .order('created_at', { ascending: true });
+    await _chatRenderMsgs(data || []);
+    _chatUpdateBadge(data || []);
+  }
+}
+
+async function _chatRenderMsgs(rows) {
+  const container = $('chat-msgs');
+  if (!container) return;
+  if (!rows.length) {
+    container.innerHTML = `<div class="chat-empty">💬<br><br>Aún no hay mensajes.<br>Tu mensaje está <strong>cifrado con AES-256</strong> —<br>solo el administrador puede leerlo.</div>`;
+    return;
+  }
+  const dec = await Promise.all(rows.map(async r => ({ ...r, text: await _decChat(r.message_enc, r.iv) })));
+  container.innerHTML = dec.map(r => {
+    const isMine = _isAdmin() ? r.is_admin_reply : (!r.is_admin_reply && r.user_id === currentUser.id);
+    const cls = isMine ? 'chat-msg-out' : 'chat-msg-in';
+    const dt  = new Date(r.created_at).toLocaleString('es-MX', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    const tagHtml = (r.feature_tag && r.feature_tag !== 'General')
+      ? `<div class="chat-tag-pill ${isMine ? '' : 'in'}">${_escChat(r.feature_tag)}</div>` : '';
+    const senderHtml = !isMine
+      ? `<div style="font-size:10px;font-weight:700;opacity:.6;margin-bottom:3px">${_escChat(r.is_admin_reply ? '👤 Administrador' : (r.user_name || r.user_email || 'Usuario'))}</div>` : '';
+    return `<div class="chat-msg ${cls}">${senderHtml}${tagHtml}<div>${_escChat(r.text)}</div><div class="chat-msg-meta">🔒 ${dt}</div></div>`;
+  }).join('');
+}
+
+async function _chatRenderAdminList() {
+  $('chat-admin-list-view').style.display = 'flex';
+  $('chat-user-view').style.display = 'none';
+  $('chat-back-btn').style.display = 'none';
+  $('chat-hdr-title').textContent = '💬 Mensajes de usuarios';
+  $('chat-hdr-sub').textContent = 'Vista administrador · cifrado AES-256';
+
+  const { data } = await sbClient.from('ece_obes_chat').select('*')
+    .eq('is_admin_reply', false).order('created_at', { ascending: false });
+
+  const list = $('chat-admin-list');
+  if (!list) return;
+
+  if (!data || !data.length) {
+    list.innerHTML = `<div class="chat-empty">Sin mensajes aún.</div>`; return;
+  }
+
+  const threads = {};
+  for (const r of data) {
+    const uid = r.user_id;
+    if (!threads[uid]) threads[uid] = { uid, name: r.user_name || r.user_email || uid, latest: r, unread: 0 };
+    if (!r.read_at) threads[uid].unread++;
+  }
+
+  list.innerHTML = Object.values(threads).map(t => {
+    const dt = new Date(t.latest.created_at).toLocaleString('es-MX', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    const badge = t.unread > 0 ? `<span style="background:var(--primary);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;margin-left:6px">${t.unread}</span>` : '';
+    return `<div class="chat-thread ${t.unread ? 'unread' : ''}" onclick="chatOpenThread('${_escChat(t.uid)}','${_escChat(t.name)}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="chat-thread-name">👤 ${_escChat(t.name)}${badge}</div>
+        <div style="font-size:10px;color:var(--text-muted)">${dt}</div>
+      </div>
+      <div class="chat-thread-preview">🏷️ ${_escChat(t.latest.feature_tag || 'General')}</div>
+    </div>`;
+  }).join('');
+}
+
+async function chatOpenThread(uid, name) {
+  _chatAdminUserId   = uid;
+  _chatAdminUserName = name;
+  $('chat-admin-list-view').style.display = 'none';
+  $('chat-user-view').style.display = 'flex';
+  $('chat-back-btn').style.display = 'block';
+  $('chat-hdr-title').textContent = `💬 ${name}`;
+  $('chat-hdr-sub').textContent = 'Responder como administrador';
+  await _chatLoad();
+  _chatScrollBottom();
+  // Mark read
+  await sbClient.from('ece_obes_chat').update({ read_at: new Date().toISOString() })
+    .eq('user_id', uid).is('read_at', null);
+}
+
+function chatAdminBack() {
+  _chatAdminUserId   = null;
+  _chatAdminUserName = null;
+  _chatRenderAdminList();
+}
+
+async function _chatMarkRead() {
+  if (!currentUser || _isAdmin()) return;
+  await sbClient.from('ece_obes_chat').update({ read_at: new Date().toISOString() })
+    .eq('reply_to_user_id', currentUser.id).is('read_at', null);
+}
+
+function _chatUpdateBadge(rows) {
+  if (!rows) { _chatLoad(); return; }
+  const unread = rows.filter(r => r.is_admin_reply && !r.read_at).length;
+  const badge  = $('chat-badge');
+  if (!badge) return;
+  badge.textContent = unread > 0 ? unread : '';
+  badge.style.display = unread > 0 ? 'flex' : 'none';
+}
 </script>
+
+<!-- ─── CHAT FAB + PANEL ─────────────────────────────────────────── -->
+<button id="chat-fab" onclick="toggleChat()" title="Feedback y Soporte — Cifrado">
+  💬
+  <span id="chat-badge"></span>
+</button>
+
+<div id="chat-panel">
+  <!-- Header -->
+  <div class="chat-hdr">
+    <button id="chat-back-btn" onclick="chatAdminBack()" style="display:none">←</button>
+    <div class="chat-hdr-info">
+      <div class="chat-hdr-title" id="chat-hdr-title">💬 Feedback & Soporte</div>
+      <div class="chat-hdr-sub" id="chat-hdr-sub">Cifrado · Solo visible para el administrador</div>
+    </div>
+    <div class="chat-enc-pill">🔒 AES-256</div>
+    <button id="chat-close-btn" onclick="toggleChat()">✕</button>
+  </div>
+
+  <!-- User conversation view -->
+  <div id="chat-user-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div id="chat-msgs"></div>
+    <div class="chat-input-area">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--text-muted)">Módulo:</span>
+        <select id="chat-tag-sel" class="chat-tag-sel">
+          <option>General</option>
+          <option>Médico / EOSS</option>
+          <option>Lancet 2025</option>
+          <option>Fenotipificación</option>
+          <option>Nutrición</option>
+          <option>Farmacoterapia</option>
+          <option>CME / Diplomado</option>
+          <option>Referencia</option>
+          <option>Sugerencia de mejora</option>
+          <option>Error / Bug</option>
+        </select>
+      </div>
+      <div class="chat-input-row">
+        <textarea id="chat-input" placeholder="Escribe tu comentario o pregunta…" rows="2" onkeydown="chatKeydown(event)"></textarea>
+        <button id="chat-send-btn" onclick="sendChatMessage()" title="Enviar (Enter)">➤</button>
+      </div>
+      <div style="font-size:9.5px;color:var(--text-muted);display:flex;align-items:center;gap:4px">
+        🔒 Cifrado extremo a extremo · AES-256-GCM · Visible solo para el administrador
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin thread list view -->
+  <div id="chat-admin-list-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div id="chat-admin-list"></div>
+  </div>
+</div>
 </body>
 </html>
