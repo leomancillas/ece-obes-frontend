@@ -4560,16 +4560,13 @@ async function loadOBESData(p) {
     obesData = raw ? Object.assign({}, def, JSON.parse(raw)) : def;
   }
 
-  await new Promise(resolve => requestAnimationFrame(() => {
-    renderDashboard();
-    renderMedicoView();
-    renderNutritionView();
-    renderPsychologyView();
-    renderRehabView();
-    renderDentalView();
-    renderSleepView();
-    resolve();
-  }));
+  renderDashboard();
+  renderMedicoView();
+  renderNutritionView();
+  renderPsychologyView();
+  renderRehabView();
+  renderDentalView();
+  renderSleepView();
 }
 
 async function saveOBESData() {
