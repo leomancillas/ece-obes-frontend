@@ -876,9 +876,10 @@
 
     /* ── VISUAL ENHANCEMENTS ── */
 
-    /* Module view fade animation */
+    /* Module view fade animation — solo en navegación entre módulos, NO en carga de paciente */
     @keyframes obesFadeIn { from{opacity:0} to{opacity:1} }
     .module-view.visible { animation: obesFadeIn .12s ease forwards; }
+    body.patient-loading .module-view.visible { animation: none !important; }
 
     /* Module header color variants */
     #view-medico .module-header      { --mod-color: var(--mod-medico); }
@@ -4493,6 +4494,7 @@ async function saveNewPatient() {
 }
 
 async function selectPatient(id) {
+  document.body.classList.add('patient-loading'); // suprime animación fadeIn del módulo
   showLoading(); // z-index 600 cubre modal (500) y todo lo demás
   try {
     const p = await apiFetch(`/api/patients/${id}`);
@@ -4516,9 +4518,12 @@ async function selectPatient(id) {
           bc.style.display = 'none';
         }
       }
-      hideLoading(); // spinner desaparece cuando la vista ya está lista
+      hideLoading(); // overlay hace fade-out 0.15s — revela el dashboard sin parpadeo
+      // Re-habilitar animación después del fade-out del overlay
+      setTimeout(() => document.body.classList.remove('patient-loading'), 200);
     });
   } catch (e) {
+    document.body.classList.remove('patient-loading');
     closeModal('modal-search');
     hideLoading();
     showToast('Error al cargar paciente: ' + e.message, 'error');
