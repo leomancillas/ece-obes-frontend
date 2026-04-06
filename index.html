@@ -4379,16 +4379,22 @@ async function loadRecentPatients() {
 }
 
 let searchTimeout = null;
+let _lastSearchQ = '';
 function searchPatients(q) {
   clearTimeout(searchTimeout);
   if (q.length < 2) { loadRecentPatients(); return; }
+  // Dim existing results instead of replacing with "Buscando…"
+  const sr = $('search-results');
+  sr.style.opacity = '0.5';
   searchTimeout = setTimeout(async () => {
-    $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Buscando…</div>';
+    _lastSearchQ = q;
     try {
       const res = await apiFetch(`/api/patients?search=${encodeURIComponent(q)}&limit=20`);
+      if (q !== _lastSearchQ) return; // stale result — a newer query is in flight
       const patients = Array.isArray(res) ? res : (res?.patients || []);
-      if (!patients.length) { $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Sin resultados</div>'; return; }
-      $('search-results').innerHTML = patients.map(p => {
+      sr.style.opacity = '1';
+      if (!patients.length) { sr.innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Sin resultados</div>'; return; }
+      sr.innerHTML = patients.map(p => {
         const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
         const initials = name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
         return `<div class="patient-result-item" onclick="selectPatient('${p.id}')">
@@ -4400,9 +4406,10 @@ function searchPatients(q) {
         </div>`;
       }).join('');
     } catch (e) {
-      $('search-results').innerHTML = `<div class="text-muted text-sm text-center" style="padding:20px">Error: ${e.message}</div>`;
+      sr.style.opacity = '1';
+      sr.innerHTML = `<div class="text-muted text-sm text-center" style="padding:20px">Error: ${e.message}</div>`;
     }
-  }, 350);
+  }, 320);
 }
 
 async function saveNewPatient() {
@@ -4483,8 +4490,8 @@ async function saveNewPatient() {
 }
 
 async function selectPatient(id) {
-  closeModal('modal-search');
   showLoading();
+  closeModal('modal-search');
   try {
     const p = await apiFetch(`/api/patients/${id}`);
     if (!p) return;
