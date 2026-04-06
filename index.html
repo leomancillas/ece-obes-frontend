@@ -4488,9 +4488,13 @@ async function selectPatient(id) {
     if (!p) return;
     currentPatient = p;
     await loadOBESData(p);
-    renderPatientHeader();
 
-    // Actualizar breadcrumb antes del switch
+    // Todo listo: cerrar modal + actualizar UI visible en un solo bloque síncrono
+    // (el browser no pinta entre instrucciones síncronas consecutivas)
+    closeModal('modal-search');
+    renderPatientHeader();          // ahora el header cambia junto con la vista
+    $('no-patient').style.display = 'none';
+    switchView('dashboard');
     const retUrl = localStorage.getItem('ece_meta_return_url');
     const bc = document.getElementById('meta-breadcrumb');
     if (bc) {
@@ -4502,11 +4506,6 @@ async function selectPatient(id) {
         bc.style.display = 'none';
       }
     }
-
-    // Todo listo: cerrar modal y mostrar expediente en un solo frame
-    closeModal('modal-search');
-    $('no-patient').style.display = 'none';
-    switchView('dashboard');
 
   } catch (e) {
     closeModal('modal-search');
