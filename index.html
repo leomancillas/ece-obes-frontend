@@ -4489,7 +4489,7 @@ async function selectPatient(id) {
     const p = await apiFetch(`/api/patients/${id}`);
     if (!p) return;
     currentPatient = p;
-    loadOBESData(p);
+    await loadOBESData(p);
     renderPatientHeader();
     switchView('dashboard');
     $('no-patient').style.display = 'none';
@@ -4559,13 +4559,16 @@ async function loadOBESData(p) {
     obesData = raw ? Object.assign({}, def, JSON.parse(raw)) : def;
   }
 
-  renderDashboard();
-  renderMedicoView();
-  renderNutritionView();
-  renderPsychologyView();
-  renderRehabView();
-  renderDentalView();
-  renderSleepView();
+  await new Promise(resolve => requestAnimationFrame(() => {
+    renderDashboard();
+    renderMedicoView();
+    renderNutritionView();
+    renderPsychologyView();
+    renderRehabView();
+    renderDentalView();
+    renderSleepView();
+    resolve();
+  }));
 }
 
 async function saveOBESData() {
