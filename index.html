@@ -297,6 +297,86 @@
     }
     #no-patient .btn-search:hover { box-shadow:0 6px 28px rgba(26,82,118,.5); transform:translateY(-2px); }
 
+    /* ─── SEARCH VIEW (full-page, replaces modal) ────────────── */
+    #view-search {
+      display: none;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 32px 0 40px;
+    }
+    #view-search.visible { display: block; animation: obesFadeIn .15s ease forwards; }
+    .search-view-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .search-view-header .sv-icon {
+      font-size: 40px;
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg,rgba(26,82,118,.1),rgba(26,82,118,.04));
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(26,82,118,.12);
+      margin-bottom: 12px;
+    }
+    .search-view-header h2 {
+      font-size: 18px; font-weight: 700; color: var(--text);
+      margin: 0 0 4px;
+    }
+    .search-view-header p {
+      font-size: 13px; color: var(--text-muted); margin: 0;
+    }
+    .search-view-input-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .search-view-input-wrap input {
+      width: 100%;
+      padding: 14px 18px 14px 46px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .search-view-input-wrap input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(26,82,118,.1);
+    }
+    .search-view-input-wrap .sv-search-icon {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      font-size: 18px; color: var(--text-muted); pointer-events: none;
+    }
+    .search-view-actions {
+      display: flex; justify-content: flex-end; margin-bottom: 16px;
+    }
+    .search-view-actions .btn-new-patient {
+      background: var(--primary); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: background .15s;
+    }
+    .search-view-actions .btn-new-patient:hover { background: var(--primary-lt); }
+    .search-view-results {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 120px;
+    }
+    .search-view-results .patient-result-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .search-view-results .patient-result-item:last-child { border-bottom: none; }
+    .search-view-results .patient-result-item:hover { background: var(--bg); }
+    /* Loading state inside search results */
+    .sv-loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 40px; color: var(--text-muted);
+      gap: 10px; font-size: 13px;
+    }
+
     /* ─── DASHBOARD ──────────────────────────────────────────── */
     #view-dashboard { display: none; }
     #view-dashboard.visible { display: block; }
@@ -1132,7 +1212,7 @@
       </div>
     </div>
 
-    <div class="header-patient" id="header-patient-btn" onclick="openModal('modal-search')" title="Cambiar paciente">
+    <div class="header-patient" id="header-patient-btn" onclick="showSearchView()" title="Cambiar paciente">
       <div id="header-patient-info">
         <span style="opacity:.6;font-size:13px">← Seleccionar paciente</span>
       </div>
@@ -1140,7 +1220,7 @@
 
     <div class="header-actions">
       <button class="dark-toggle" id="btn-dark-toggle" onclick="toggleDarkMode()" title="Modo oscuro">🌙 Oscuro</button>
-      <button onclick="openModal('modal-search')">🔍 Paciente</button>
+      <button onclick="showSearchView()">🔍 Paciente</button>
       <a href="https://leomancillas.github.io/ece-metacore-frontend" target="_blank">
         <button>↩ META CORE</button>
       </a>
@@ -1216,7 +1296,26 @@
         <h3>ECE OBES</h3>
         <p>Expediente Clínico Multidisciplinario de Obesidad</p>
         <p class="text-muted">Busca o selecciona un paciente para comenzar</p>
-        <button class="btn-search" onclick="openModal('modal-search')">🔍 Buscar paciente</button>
+        <button class="btn-search" onclick="showSearchView()">🔍 Buscar paciente</button>
+      </div>
+
+      <!-- Search view (full-page, replaces old search modal) -->
+      <div id="view-search" class="module-view">
+        <div class="search-view-header">
+          <div class="sv-icon">🔍</div>
+          <h2>Buscar paciente</h2>
+          <p>Escribe nombre, apellido o número de expediente</p>
+        </div>
+        <div class="search-view-input-wrap">
+          <span class="sv-search-icon">🔍</span>
+          <input type="text" id="sv-search-input" placeholder="Nombre, apellido o expediente..." oninput="searchPatients(this.value)" autocomplete="off" />
+        </div>
+        <div class="search-view-actions">
+          <button class="btn-new-patient" onclick="openModal('modal-new-patient')">+ Nuevo paciente</button>
+        </div>
+        <div class="search-view-results" id="sv-search-results">
+          <div class="sv-loading">Cargando pacientes…</div>
+        </div>
       </div>
 
       <!-- Dashboard view -->
@@ -2073,27 +2172,7 @@
 
 <!-- ─── MODALS ─────────────────────────────────────────────────── -->
 
-<!-- Patient Search -->
-<div class="modal-overlay" id="modal-search">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>🔍 Buscar paciente</h3>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn-add" onclick="closeModal('modal-search');openModal('modal-new-patient')">+ Nuevo paciente</button>
-        <button class="modal-close" onclick="closeModal('modal-search')">×</button>
-      </div>
-    </div>
-    <div class="modal-body">
-      <div class="search-input-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="search-input" placeholder="Nombre, apellido o expediente..." oninput="searchPatients(this.value)" />
-      </div>
-      <div id="search-results">
-        <div class="text-muted text-sm text-center" style="padding:20px">Escribe para buscar…</div>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Patient Search modal removed — replaced by inline #view-search -->
 
 <!-- New Patient Modal -->
 <div class="modal-overlay" id="modal-new-patient">
@@ -2161,7 +2240,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('modal-new-patient');openModal('modal-search')">← Regresar</button>
+      <button class="btn-secondary" onclick="closeModal('modal-new-patient');showSearchView()">← Regresar</button>
       <button class="btn-save" id="btn-save-new-patient" onclick="saveNewPatient()">💾 Crear paciente</button>
     </div>
   </div>
@@ -4070,12 +4149,8 @@ function openModal(id) {
   const todayVal = new Date().toISOString().split('T')[0];
   const el = $(id);
   el.querySelectorAll('input[type="date"]:not([value])').forEach(inp => { if (!inp.value) inp.value = todayVal; });
-  // Load recent patients when search modal opens
-  if (id === 'modal-search') {
-    const searchInput = $('search-input');
-    if (searchInput) { searchInput.value = ''; searchInput.focus(); }
-    loadRecentPatients();
-  }
+  // Legacy: if something still tries to open modal-search, redirect to the search view
+  if (id === 'modal-search') { showSearchView(); return; }
   // Cross-module auto-fill
   prefillModalFromObesData(id);
   // Fenotipificación: pre-llenar al abrir
@@ -4305,7 +4380,6 @@ $('btn-login').addEventListener('click', async () => {
     localStorage.setItem('ece_token', data.token);
     localStorage.setItem('ece_user', JSON.stringify(data.user));
     showApp();
-    await loadRecentPatients();
   } catch (err) {
     showAuthError(err.message || 'Error al iniciar sesión');
   } finally {
@@ -4336,9 +4410,22 @@ function logout() {
   location.reload();
 }
 
-// ─── PATIENT SEARCH ───────────────────────────────────────────────
+// ─── SEARCH VIEW (full-page, no modal) ───────────────────────────
+function showSearchView() {
+  // Hide no-patient, hide all module views, show search view
+  $('no-patient').style.display = 'none';
+  document.querySelectorAll('.module-view').forEach(v => v.classList.remove('visible'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  const sv = $('view-search');
+  sv.classList.add('visible');
+  // Focus input and clear it
+  const inp = $('sv-search-input');
+  if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 50); }
+  loadRecentPatients();
+}
+
 function renderPatientList(patients) {
-  if (!patients.length) return '<div class="text-muted text-sm text-center" style="padding:20px">Sin resultados</div>';
+  if (!patients.length) return '<div class="sv-loading">Sin resultados</div>';
   return patients.map(p => {
     const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
     const initials = name.split(' ').map(w => w[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
@@ -4355,15 +4442,17 @@ function renderPatientList(patients) {
 }
 
 async function loadRecentPatients() {
+  const sr = $('sv-search-results');
+  if (!sr) return;
   try {
-    $('search-results').innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Cargando pacientes…</div>';
+    sr.innerHTML = '<div class="sv-loading"><div class="spinner"></div>Cargando pacientes…</div>';
     const res = await apiFetch('/api/patients?limit=20');
     const patients = Array.isArray(res) ? res : (res?.patients || []);
-    $('search-results').innerHTML = patients.length
-      ? '<div class="text-muted text-sm" style="padding:4px 12px 8px;font-weight:600">Pacientes recientes</div>' + renderPatientList(patients)
-      : '<div class="text-muted text-sm text-center" style="padding:20px">No hay pacientes. Crea el primero con + Nuevo paciente.</div>';
+    sr.innerHTML = patients.length
+      ? '<div style="padding:8px 16px 4px;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Pacientes recientes</div>' + renderPatientList(patients)
+      : '<div class="sv-loading">No hay pacientes. Crea el primero con + Nuevo paciente.</div>';
   } catch(e) {
-    $('search-results').innerHTML = `<div class="text-muted text-sm text-center" style="padding:20px">Error al cargar: ${e.message}</div>`;
+    sr.innerHTML = `<div class="sv-loading">Error al cargar: ${e.message}</div>`;
   }
 }
 
@@ -4372,17 +4461,17 @@ let _lastSearchQ = '';
 function searchPatients(q) {
   clearTimeout(searchTimeout);
   if (q.length < 2) { loadRecentPatients(); return; }
-  // Dim existing results instead of replacing with "Buscando…"
-  const sr = $('search-results');
+  const sr = $('sv-search-results');
+  if (!sr) return;
   sr.style.opacity = '0.5';
   searchTimeout = setTimeout(async () => {
     _lastSearchQ = q;
     try {
       const res = await apiFetch(`/api/patients?search=${encodeURIComponent(q)}&limit=20`);
-      if (q !== _lastSearchQ) return; // stale result — a newer query is in flight
+      if (q !== _lastSearchQ) return;
       const patients = Array.isArray(res) ? res : (res?.patients || []);
       sr.style.opacity = '1';
-      if (!patients.length) { sr.innerHTML = '<div class="text-muted text-sm text-center" style="padding:20px">Sin resultados</div>'; return; }
+      if (!patients.length) { sr.innerHTML = '<div class="sv-loading">Sin resultados para "' + q.replace(/</g,'&lt;') + '"</div>'; return; }
       sr.innerHTML = patients.map(p => {
         const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
         const initials = name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
@@ -4396,7 +4485,7 @@ function searchPatients(q) {
       }).join('');
     } catch (e) {
       sr.style.opacity = '1';
-      sr.innerHTML = `<div class="text-muted text-sm text-center" style="padding:20px">Error: ${e.message}</div>`;
+      sr.innerHTML = `<div class="sv-loading">Error: ${e.message}</div>`;
     }
   }, 320);
 }
@@ -4479,9 +4568,9 @@ async function saveNewPatient() {
 }
 
 async function selectPatient(id) {
-  // El modal ya cubre el fondo — cargar datos sin cerrar el modal todavía
-  const sr = $('search-results');
-  if (sr) sr.innerHTML = '<div style="padding:32px;text-align:center;color:#666"><div class="spinner" style="margin:0 auto 12px"></div>Cargando expediente…</div>';
+  // Show loading state in the search results area (no modal, no overlay)
+  const sr = $('sv-search-results');
+  if (sr) sr.innerHTML = '<div class="sv-loading"><div class="spinner"></div>Cargando expediente…</div>';
 
   try {
     const p = await apiFetch(`/api/patients/${id}`);
@@ -4489,12 +4578,12 @@ async function selectPatient(id) {
     currentPatient = p;
     await loadOBESData(p);
 
-    // Todo listo: cerrar modal + actualizar UI visible en un solo bloque síncrono
-    // (el browser no pinta entre instrucciones síncronas consecutivas)
-    closeModal('modal-search');
-    renderPatientHeader();          // ahora el header cambia junto con la vista
+    // All data ready — switch from search view to dashboard in one synchronous block
+    renderPatientHeader();
     $('no-patient').style.display = 'none';
     switchView('dashboard');
+
+    // Breadcrumb for META CORE bridge
     const retUrl = localStorage.getItem('ece_meta_return_url');
     const bc = document.getElementById('meta-breadcrumb');
     if (bc) {
@@ -4508,7 +4597,6 @@ async function selectPatient(id) {
     }
 
   } catch (e) {
-    closeModal('modal-search');
     showToast('Error al cargar paciente: ' + e.message, 'error');
   }
 }
