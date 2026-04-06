@@ -1088,6 +1088,14 @@
 </head>
 <body>
 
+<!-- ─── META CORE BREADCRUMB ────────────────────────────────────── -->
+<div id="meta-breadcrumb" style="display:none;background:#1A3A5C;color:#fff;padding:8px 20px;font-size:0.85rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:1000">
+  <span>📋 ECE OBES</span>
+  <span style="opacity:0.5">|</span>
+  <button onclick="returnToMetaCore()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:4px 14px;border-radius:6px;cursor:pointer;font-size:0.82rem;font-weight:500">← Volver a META CORE</button>
+  <span id="meta-breadcrumb-patient" style="opacity:0.75;margin-left:auto;font-size:0.8rem"></span>
+</div>
+
 <!-- ─── AUTH SCREEN ──────────────────────────────────────────── -->
 <div id="auth-screen">
   <div class="auth-card">
@@ -4228,6 +4236,55 @@ async function apiFetch(path, opts = {}) {
   return res.json();
 }
 
+// ─── CROSS-APP BRIDGE (META CORE → OBES) ──────────────────────────
+async function checkMetaBridge() {
+  const raw = localStorage.getItem('ece_bridge_patient');
+  if (!raw) return;
+  try {
+    const bridge = JSON.parse(raw);
+    if (!bridge.patient_id) return;
+    localStorage.removeItem('ece_bridge_patient');
+    // Store return URL for back button
+    if (bridge.return_url) localStorage.setItem('ece_meta_return_url', bridge.return_url);
+    // Fetch patient data
+    const p = await apiFetch(`/api/patients/${bridge.patient_id}`);
+    if (!p) {
+      showToast('No se pudo cargar el paciente', 'error');
+      return;
+    }
+    currentPatient = p;
+    // Load OBES data and render
+    await loadOBESData(p);
+    renderPatientHeader();
+    switchView('dashboard');
+    $('no-patient').style.display = 'none';
+    // Show breadcrumb
+    const bc = document.getElementById('meta-breadcrumb');
+    if (bc) {
+      bc.style.display = 'flex';
+      const nameEl = document.getElementById('meta-breadcrumb-patient');
+      if (nameEl && currentPatient) nameEl.textContent = currentPatient.nombre || '';
+    }
+    showToast('Expediente cargado desde META CORE', 'success');
+  } catch(e) {
+    console.warn('Bridge error:', e);
+    showToast('Error al cargar expediente del puente', 'error');
+  }
+}
+
+function returnToMetaCore() {
+  const returnUrl = localStorage.getItem('ece_meta_return_url');
+  if (currentPatient) {
+    localStorage.setItem('ece_meta_return', JSON.stringify({ patient_id: currentPatient.id }));
+  }
+  localStorage.removeItem('ece_meta_return_url');
+  if (returnUrl) {
+    window.open(returnUrl, '_blank');
+  } else {
+    window.open('https://leomancillas.github.io/ece-metacore-frontend/', '_blank');
+  }
+}
+
 // ─── AUTH ─────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('ece_user');
@@ -4279,6 +4336,8 @@ function showApp() {
     $('user-name-hdr').textContent = currentUser.name || currentUser.email;
     // Init encrypted chat after login
     initChat().catch(console.error);
+    // Check for cross-app bridge from META CORE
+    checkMetaBridge();
   }
 }
 
@@ -4434,6 +4493,18 @@ async function selectPatient(id) {
     renderPatientHeader();
     switchView('dashboard');
     $('no-patient').style.display = 'none';
+    // Update breadcrumb visibility
+    const retUrl = localStorage.getItem('ece_meta_return_url');
+    const bc = document.getElementById('meta-breadcrumb');
+    if (bc) {
+      if (retUrl) {
+        bc.style.display = 'flex';
+        const nameEl = document.getElementById('meta-breadcrumb-patient');
+        if (nameEl && currentPatient) nameEl.textContent = currentPatient.nombre || '';
+      } else {
+        bc.style.display = 'none';
+      }
+    }
   } catch (e) {
     showToast('Error al cargar paciente: ' + e.message, 'error');
   } finally {
