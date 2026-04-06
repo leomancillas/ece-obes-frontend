@@ -821,7 +821,7 @@
       position: fixed; inset: 0;
       background: rgba(255,255,255,.7);
       backdrop-filter: blur(2px);
-      z-index: 400;
+      z-index: 600;
       display: none;
       align-items: center;
       justify-content: center;
@@ -4490,32 +4490,35 @@ async function saveNewPatient() {
 }
 
 async function selectPatient(id) {
-  showLoading();
-  closeModal('modal-search');
+  showLoading(); // z-index 600 cubre modal (500) y todo lo demás
   try {
     const p = await apiFetch(`/api/patients/${id}`);
     if (!p) return;
     currentPatient = p;
-    await loadOBESData(p);
+    await loadOBESData(p);  // datos y renders listos antes de cambiar vista
     renderPatientHeader();
-    switchView('dashboard');
-    $('no-patient').style.display = 'none';
-    // Update breadcrumb visibility
-    const retUrl = localStorage.getItem('ece_meta_return_url');
-    const bc = document.getElementById('meta-breadcrumb');
-    if (bc) {
-      if (retUrl) {
-        bc.style.display = 'flex';
-        const nameEl = document.getElementById('meta-breadcrumb-patient');
-        if (nameEl && currentPatient) nameEl.textContent = currentPatient.nombre || '';
-      } else {
-        bc.style.display = 'none';
+    // Todo preparado — cambio visual atómico en un solo frame
+    requestAnimationFrame(() => {
+      closeModal('modal-search');
+      switchView('dashboard');
+      $('no-patient').style.display = 'none';
+      const retUrl = localStorage.getItem('ece_meta_return_url');
+      const bc = document.getElementById('meta-breadcrumb');
+      if (bc) {
+        if (retUrl) {
+          bc.style.display = 'flex';
+          const nameEl = document.getElementById('meta-breadcrumb-patient');
+          if (nameEl) nameEl.textContent = currentPatient.nombre || '';
+        } else {
+          bc.style.display = 'none';
+        }
       }
-    }
+      hideLoading(); // spinner desaparece cuando la vista ya está lista
+    });
   } catch (e) {
-    showToast('Error al cargar paciente: ' + e.message, 'error');
-  } finally {
+    closeModal('modal-search');
     hideLoading();
+    showToast('Error al cargar paciente: ' + e.message, 'error');
   }
 }
 
