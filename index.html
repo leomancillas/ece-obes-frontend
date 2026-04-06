@@ -821,15 +821,12 @@
       position: fixed; inset: 0;
       background: rgba(255,255,255,.7);
       backdrop-filter: blur(2px);
-      z-index: 1200;
-      display: flex;           /* siempre en el DOM — opacity controla visibilidad */
+      z-index: 2000;
+      display: none;
       align-items: center;
       justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.15s ease;
     }
-    .loading-overlay.show { opacity: 1; pointer-events: auto; }
+    .loading-overlay.show { display: flex; }
     .spinner {
       width: 38px; height: 38px;
       border: 3px solid var(--border);
@@ -876,10 +873,9 @@
 
     /* ── VISUAL ENHANCEMENTS ── */
 
-    /* Module view fade animation — solo en navegación entre módulos, NO en carga de paciente */
+    /* Module view fade — navegación entre módulos */
     @keyframes obesFadeIn { from{opacity:0} to{opacity:1} }
     .module-view.visible { animation: obesFadeIn .12s ease forwards; }
-    body.patient-loading .module-view.visible { animation: none !important; }
 
     /* Module header color variants */
     #view-medico .module-header      { --mod-color: var(--mod-medico); }
@@ -4483,38 +4479,37 @@ async function saveNewPatient() {
 }
 
 async function selectPatient(id) {
-  document.body.classList.add('patient-loading'); // suprime animación fadeIn del módulo
-  showLoading(); // z-index 600 cubre modal (500) y todo lo demás
+  // El modal ya cubre el fondo — cargar datos sin cerrar el modal todavía
+  const sr = $('search-results');
+  if (sr) sr.innerHTML = '<div style="padding:32px;text-align:center;color:#666"><div class="spinner" style="margin:0 auto 12px"></div>Cargando expediente…</div>';
+
   try {
     const p = await apiFetch(`/api/patients/${id}`);
     if (!p) return;
     currentPatient = p;
-    await loadOBESData(p);  // datos y renders listos antes de cambiar vista
+    await loadOBESData(p);
     renderPatientHeader();
-    // Todo preparado — cambio visual atómico en un solo frame
-    requestAnimationFrame(() => {
-      closeModal('modal-search');
-      switchView('dashboard');
-      $('no-patient').style.display = 'none';
-      const retUrl = localStorage.getItem('ece_meta_return_url');
-      const bc = document.getElementById('meta-breadcrumb');
-      if (bc) {
-        if (retUrl) {
-          bc.style.display = 'flex';
-          const nameEl = document.getElementById('meta-breadcrumb-patient');
-          if (nameEl) nameEl.textContent = currentPatient.nombre || '';
-        } else {
-          bc.style.display = 'none';
-        }
+
+    // Actualizar breadcrumb antes del switch
+    const retUrl = localStorage.getItem('ece_meta_return_url');
+    const bc = document.getElementById('meta-breadcrumb');
+    if (bc) {
+      if (retUrl) {
+        bc.style.display = 'flex';
+        const nameEl = document.getElementById('meta-breadcrumb-patient');
+        if (nameEl) nameEl.textContent = currentPatient.nombre || '';
+      } else {
+        bc.style.display = 'none';
       }
-      hideLoading(); // overlay hace fade-out 0.15s — revela el dashboard sin parpadeo
-      // Re-habilitar animación después del fade-out del overlay
-      setTimeout(() => document.body.classList.remove('patient-loading'), 200);
-    });
-  } catch (e) {
-    document.body.classList.remove('patient-loading');
+    }
+
+    // Todo listo: cerrar modal y mostrar expediente en un solo frame
     closeModal('modal-search');
-    hideLoading();
+    $('no-patient').style.display = 'none';
+    switchView('dashboard');
+
+  } catch (e) {
+    closeModal('modal-search');
     showToast('Error al cargar paciente: ' + e.message, 'error');
   }
 }
