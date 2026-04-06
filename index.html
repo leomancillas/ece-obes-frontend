@@ -1739,9 +1739,11 @@
         <div class="module-header">
           <div class="module-icon-lg" style="background:var(--mod-nutri)">🥗</div>
           <div><h2>Nutrición</h2><div class="module-sub">Mifflin-St Jeor · Plan nutricional · Adherencia · TFEQ-R21</div></div>
-          <div style="margin-left:auto;display:flex;gap:8px">
+          <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-nutrition-plan')">+ Plan / GET</button>
             <button class="btn-add" style="background:#117A65" onclick="openModal('modal-adherencia')">+ Adherencia</button>
+            <button class="btn-add" style="background:#0E8A6B" onclick="openModal('modal-recall24h')">+ Recordatorio 24h</button>
+            <button class="btn-add" style="background:#148F77" onclick="openModal('modal-tfeq')">+ TFEQ-R21</button>
           </div>
         </div>
         <!-- Alerts -->
@@ -1859,8 +1861,9 @@
         <div class="module-header">
           <div class="module-icon-lg" style="background:var(--mod-dental)">🦷</div>
           <div><h2>Dental</h2><div class="module-sub">DMFT · BOP · OHIP-14 · Xerostomía · Interacciones farmacológicas</div></div>
-          <div style="margin-left:auto">
+          <div style="margin-left:auto;display:flex;gap:8px">
             <button class="btn-add" style="background:var(--mod-dental)" onclick="openModal('modal-dental-record')">+ Evaluación dental</button>
+            <button class="btn-add" style="background:#0E5244" onclick="openModal('modal-ohip14')">+ OHIP-14</button>
           </div>
         </div>
         <div class="stats-row" style="margin-bottom:16px">
@@ -3038,9 +3041,315 @@
   </div>
 </div>
 
+<!-- ── MODAL NUTRICIÓN: TFEQ-R21 ─────────────────────────────── -->
+<div class="modal-overlay" id="modal-tfeq">
+  <div class="modal wide">
+    <div class="modal-header"><h3>🧠 TFEQ-R21 — Conducta alimentaria</h3><button class="modal-close" onclick="closeModal('modal-tfeq')">×</button></div>
+    <div class="modal-body">
+      <div style="background:#EAF4F4;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#148F77">
+        <b>TFEQ-R21</b> (Karlsson et al., 2000) — 3 subescalas: Restricción Cognitiva (RC, 6 ítems), Ingesta no controlada (UE, 9 ítems), Ingesta emocional (EE, 6 ítems).<br>
+        Escala de respuesta: <b>1</b>=Definitivamente falso · <b>2</b>=Mayormente falso · <b>3</b>=Mayormente verdadero · <b>4</b>=Definitivamente verdadero.<br>
+        Puntaje subescala = (suma − mín) / (máx − mín) × 100. Puntos de corte clínicos: RC&gt;60 restricción alta; UE&gt;50 pérdida de control; EE&gt;50 ingesta emocional.
+      </div>
+      <div class="form-row cols-2" style="margin-bottom:8px">
+        <div class="form-group"><label>Fecha</label><input type="date" id="tfeq-fecha"></div>
+        <div></div>
+      </div>
+
+      <!-- RC: Restricción Cognitiva (6 ítems) -->
+      <div class="lab-section-title" style="color:#148F77">🔵 Restricción Cognitiva (RC) — ítems 1-6</div>
+      <div id="tfeq-rc-items">
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">1. Deliberadamente como menos de lo que me gustaría comer.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq1" value="1"> 1-Def. falso</label>
+          <label><input type="radio" name="tfeq1" value="2"> 2-May. falso</label>
+          <label><input type="radio" name="tfeq1" value="3"> 3-May. verd.</label>
+          <label><input type="radio" name="tfeq1" value="4"> 4-Def. verd.</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">2. Cuento deliberadamente las calorías cuando estoy eligiendo qué comer.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq2" value="1"> 1</label>
+          <label><input type="radio" name="tfeq2" value="2"> 2</label>
+          <label><input type="radio" name="tfeq2" value="3"> 3</label>
+          <label><input type="radio" name="tfeq2" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">3. Cuando como con otras personas, tiendo a comer menos de lo que querría.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq3" value="1"> 1</label>
+          <label><input type="radio" name="tfeq3" value="2"> 2</label>
+          <label><input type="radio" name="tfeq3" value="3"> 3</label>
+          <label><input type="radio" name="tfeq3" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">4. Cuando como algo muy calórico lo compenso comiendo menos después.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq4" value="1"> 1</label>
+          <label><input type="radio" name="tfeq4" value="2"> 2</label>
+          <label><input type="radio" name="tfeq4" value="3"> 3</label>
+          <label><input type="radio" name="tfeq4" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">5. ¿Con qué frecuencia evita comer cuando tiene hambre porque quiere controlar su peso?</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq5" value="1"> 1-Casi nunca</label>
+          <label><input type="radio" name="tfeq5" value="2"> 2-A veces</label>
+          <label><input type="radio" name="tfeq5" value="3"> 3-Frecuente</label>
+          <label><input type="radio" name="tfeq5" value="4"> 4-Siempre</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">6. ¿Cuánto esfuerzo hace para comer menos de lo que desearía?</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq6" value="1"> 1-Ninguno</label>
+          <label><input type="radio" name="tfeq6" value="2"> 2-Poco</label>
+          <label><input type="radio" name="tfeq6" value="3"> 3-Moderado</label>
+          <label><input type="radio" name="tfeq6" value="4"> 4-Mucho</label>
+        </div>
+      </div>
+
+      <!-- UE: Ingesta no controlada (9 ítems) -->
+      <div class="lab-section-title" style="color:#E67E22;margin-top:12px">🟠 Ingesta no controlada (UE) — ítems 7-15</div>
+      <div id="tfeq-ue-items">
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">7. Cuando huelo o veo comida apetitosa, me cuesta resistirme aunque acabe de comer.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq7" value="1"> 1</label>
+          <label><input type="radio" name="tfeq7" value="2"> 2</label>
+          <label><input type="radio" name="tfeq7" value="3"> 3</label>
+          <label><input type="radio" name="tfeq7" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">8. Cuando estoy comiendo, me es difícil controlar cuánto como.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq8" value="1"> 1</label>
+          <label><input type="radio" name="tfeq8" value="2"> 2</label>
+          <label><input type="radio" name="tfeq8" value="3"> 3</label>
+          <label><input type="radio" name="tfeq8" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">9. Cuando como con otras personas, tiendo a comer más de lo que debería.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq9" value="1"> 1</label>
+          <label><input type="radio" name="tfeq9" value="2"> 2</label>
+          <label><input type="radio" name="tfeq9" value="3"> 3</label>
+          <label><input type="radio" name="tfeq9" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">10. Siento que tengo hambre aunque acabe de terminar de comer.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq10" value="1"> 1</label>
+          <label><input type="radio" name="tfeq10" value="2"> 2</label>
+          <label><input type="radio" name="tfeq10" value="3"> 3</label>
+          <label><input type="radio" name="tfeq10" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">11. Que me vean comer en exceso me hace sentir mal.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq11" value="1"> 1</label>
+          <label><input type="radio" name="tfeq11" value="2"> 2</label>
+          <label><input type="radio" name="tfeq11" value="3"> 3</label>
+          <label><input type="radio" name="tfeq11" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">12. Cuando encuentro una comida que me gusta, a veces como hasta sentirme mal.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq12" value="1"> 1</label>
+          <label><input type="radio" name="tfeq12" value="2"> 2</label>
+          <label><input type="radio" name="tfeq12" value="3"> 3</label>
+          <label><input type="radio" name="tfeq12" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">13. Cuando hay comida muy sabrosa disponible, como más de lo que debería.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq13" value="1"> 1</label>
+          <label><input type="radio" name="tfeq13" value="2"> 2</label>
+          <label><input type="radio" name="tfeq13" value="3"> 3</label>
+          <label><input type="radio" name="tfeq13" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">14. Me resulta difícil dejar comida en el plato aunque esté satisfecho/a.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq14" value="1"> 1</label>
+          <label><input type="radio" name="tfeq14" value="2"> 2</label>
+          <label><input type="radio" name="tfeq14" value="3"> 3</label>
+          <label><input type="radio" name="tfeq14" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">15. A veces cuando empiezo a comer me es casi imposible parar.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq15" value="1"> 1</label>
+          <label><input type="radio" name="tfeq15" value="2"> 2</label>
+          <label><input type="radio" name="tfeq15" value="3"> 3</label>
+          <label><input type="radio" name="tfeq15" value="4"> 4</label>
+        </div>
+      </div>
+
+      <!-- EE: Ingesta emocional (6 ítems) -->
+      <div class="lab-section-title" style="color:#8E44AD;margin-top:12px">🟣 Ingesta emocional (EE) — ítems 16-21</div>
+      <div id="tfeq-ee-items">
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">16. Cuando estoy ansioso/a o tenso/a siento el impulso de comer.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq16" value="1"> 1</label>
+          <label><input type="radio" name="tfeq16" value="2"> 2</label>
+          <label><input type="radio" name="tfeq16" value="3"> 3</label>
+          <label><input type="radio" name="tfeq16" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">17. Cuando estoy triste o desanimado/a, suelo comer más.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq17" value="1"> 1</label>
+          <label><input type="radio" name="tfeq17" value="2"> 2</label>
+          <label><input type="radio" name="tfeq17" value="3"> 3</label>
+          <label><input type="radio" name="tfeq17" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">18. Cuando estoy aburrido/a, como para entretenerme.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq18" value="1"> 1</label>
+          <label><input type="radio" name="tfeq18" value="2"> 2</label>
+          <label><input type="radio" name="tfeq18" value="3"> 3</label>
+          <label><input type="radio" name="tfeq18" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">19. Cuando estoy solo/a, me consuelo comiendo.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq19" value="1"> 1</label>
+          <label><input type="radio" name="tfeq19" value="2"> 2</label>
+          <label><input type="radio" name="tfeq19" value="3"> 3</label>
+          <label><input type="radio" name="tfeq19" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">20. Cuando alguien me decepciona, siento ganas de comer.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq20" value="1"> 1</label>
+          <label><input type="radio" name="tfeq20" value="2"> 2</label>
+          <label><input type="radio" name="tfeq20" value="3"> 3</label>
+          <label><input type="radio" name="tfeq20" value="4"> 4</label>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:4px"><label style="font-size:12px;grid-column:1/-1;color:var(--text-muted)">21. Cuando estoy disgustado/a o molesto/a, como aunque no tenga hambre.</label></div>
+        <div class="form-row cols-4" style="margin-bottom:8px">
+          <label><input type="radio" name="tfeq21" value="1"> 1</label>
+          <label><input type="radio" name="tfeq21" value="2"> 2</label>
+          <label><input type="radio" name="tfeq21" value="3"> 3</label>
+          <label><input type="radio" name="tfeq21" value="4"> 4</label>
+        </div>
+      </div>
+
+      <!-- Resultado en tiempo real -->
+      <div id="tfeq-result" style="display:none;margin-top:12px;background:#F0FAF7;border-radius:8px;padding:12px 14px">
+        <div style="font-size:12px;font-weight:700;color:#148F77;margin-bottom:8px">Resultado TFEQ-R21</div>
+        <div class="form-row cols-3">
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#148F77" id="tfeq-rc-score">—</div>
+            <div style="font-size:11px;color:var(--text-muted)">RC (0-100)</div>
+            <div style="font-size:11px;font-weight:600" id="tfeq-rc-interp">—</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#E67E22" id="tfeq-ue-score">—</div>
+            <div style="font-size:11px;color:var(--text-muted)">UE (0-100)</div>
+            <div style="font-size:11px;font-weight:600" id="tfeq-ue-interp">—</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#8E44AD" id="tfeq-ee-score">—</div>
+            <div style="font-size:11px;color:var(--text-muted)">EE (0-100)</div>
+            <div style="font-size:11px;font-weight:600" id="tfeq-ee-interp">—</div>
+          </div>
+        </div>
+        <div id="tfeq-pharma-tip" style="margin-top:8px;font-size:12px;color:#555;border-top:1px solid #C8EFDF;padding-top:8px"></div>
+      </div>
+      <div class="form-group" style="margin-top:8px"><label>Notas / interpretación clínica</label><textarea id="tfeq-notas" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-tfeq')">Cancelar</button>
+      <button class="btn-primary" style="background:#148F77" onclick="calcTFEQ()">🧮 Calcular</button>
+      <button class="btn-save" onclick="saveTFEQ()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL NUTRICIÓN: Recordatorio 24h ──────────────────────── -->
+<div class="modal-overlay" id="modal-recall24h">
+  <div class="modal wide">
+    <div class="modal-header"><h3>🍽️ Recordatorio alimentario 24 horas</h3><button class="modal-close" onclick="closeModal('modal-recall24h')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row cols-2" style="margin-bottom:8px">
+        <div class="form-group"><label>Fecha del recordatorio</label><input type="date" id="r24-fecha"></div>
+        <div class="form-group"><label>Día de la semana</label>
+          <select id="r24-dia">
+            <option value="Lunes">Lunes</option><option value="Martes">Martes</option>
+            <option value="Miércoles">Miércoles</option><option value="Jueves">Jueves</option>
+            <option value="Viernes">Viernes</option><option value="Sábado">Sábado</option><option value="Domingo">Domingo</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Ingrese los alimentos y porciones de cada tiempo de comida. Las kcal son estimadas.</div>
+
+      <!-- Desayuno -->
+      <div class="lab-section-title">☀️ Desayuno</div>
+      <div class="form-row cols-3">
+        <div class="form-group" style="grid-column:1/3"><label>Alimentos</label><input type="text" id="r24-des-foods" placeholder="Ej: 2 huevos revueltos, 1 tortilla de maíz, café con leche..."></div>
+        <div class="form-group"><label>Kcal estimadas</label><input type="number" id="r24-des-kcal" oninput="sumR24Kcal()" min="0"></div>
+      </div>
+
+      <!-- Colación AM -->
+      <div class="lab-section-title">🍎 Colación de media mañana</div>
+      <div class="form-row cols-3">
+        <div class="form-group" style="grid-column:1/3"><label>Alimentos</label><input type="text" id="r24-cam-foods" placeholder="Ej: 1 manzana, 1 yogur natural..."></div>
+        <div class="form-group"><label>Kcal estimadas</label><input type="number" id="r24-cam-kcal" oninput="sumR24Kcal()" min="0"></div>
+      </div>
+
+      <!-- Comida -->
+      <div class="lab-section-title">🍲 Comida (almuerzo)</div>
+      <div class="form-row cols-3">
+        <div class="form-group" style="grid-column:1/3"><label>Alimentos</label><input type="text" id="r24-com-foods" placeholder="Ej: 150g pollo a la plancha, 1 taza frijoles, ensalada, agua..."></div>
+        <div class="form-group"><label>Kcal estimadas</label><input type="number" id="r24-com-kcal" oninput="sumR24Kcal()" min="0"></div>
+      </div>
+
+      <!-- Colación PM -->
+      <div class="lab-section-title">☕ Colación de tarde</div>
+      <div class="form-row cols-3">
+        <div class="form-group" style="grid-column:1/3"><label>Alimentos</label><input type="text" id="r24-cpm-foods" placeholder="Ej: 1 vaso de leche descremada, 6 nueces..."></div>
+        <div class="form-group"><label>Kcal estimadas</label><input type="number" id="r24-cpm-kcal" oninput="sumR24Kcal()" min="0"></div>
+      </div>
+
+      <!-- Cena -->
+      <div class="lab-section-title">🌙 Cena</div>
+      <div class="form-row cols-3">
+        <div class="form-group" style="grid-column:1/3"><label>Alimentos</label><input type="text" id="r24-cen-foods" placeholder="Ej: 1 taza sopa de verduras, 2 quesadillas de flor de calabaza..."></div>
+        <div class="form-group"><label>Kcal estimadas</label><input type="number" id="r24-cen-kcal" oninput="sumR24Kcal()" min="0"></div>
+      </div>
+
+      <!-- Extras -->
+      <div class="lab-section-title">🧃 Extras / Colación nocturna</div>
+      <div class="form-row cols-3">
+        <div class="form-group" style="grid-column:1/3"><label>Alimentos</label><input type="text" id="r24-ext-foods" placeholder="Ej: 2 galletas, refrescos, botanas..."></div>
+        <div class="form-group"><label>Kcal estimadas</label><input type="number" id="r24-ext-kcal" oninput="sumR24Kcal()" min="0"></div>
+      </div>
+
+      <!-- Totales y calidad -->
+      <div style="background:#EAF4F4;border-radius:8px;padding:10px 14px;margin:10px 0">
+        <div class="form-row cols-3">
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#0E8A6B" id="r24-total-kcal">0</div>
+            <div style="font-size:11px;color:var(--text-muted)">Kcal totales estimadas</div>
+          </div>
+          <div class="form-group"><label>Vasos de agua (250 ml)</label><input type="number" id="r24-agua" min="0" max="20"></div>
+          <div class="form-group"><label>Porciones frutas+verduras</label><input type="number" id="r24-fv" min="0" max="20"></div>
+        </div>
+      </div>
+
+      <div class="form-row cols-2">
+        <div class="form-group"><label>Calidad de dieta percibida</label>
+          <select id="r24-calidad">
+            <option value="Buena">Buena — equilibrada, variada</option>
+            <option value="Regular">Regular — algunos excesos</option>
+            <option value="Mala">Mala — ultraprocesados, excesos importantes</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Contexto del día</label>
+          <select id="r24-contexto">
+            <option value="Día habitual">Día habitual</option>
+            <option value="Fin de semana">Fin de semana / festivo</option>
+            <option value="Día de estrés">Día de estrés / emoción negativa</option>
+            <option value="Día social">Reunión social / restaurante</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Observaciones del nutriólogo</label><textarea id="r24-notas" rows="2" placeholder="Patrones identificados, oportunidades de mejora..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-recall24h')">Cancelar</button>
+      <button class="btn-save" onclick="saveRecall24h()">💾 Guardar recordatorio</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── MODAL PSICOLOGÍA: Instrumento ────────────────────────────── -->
 <div class="modal-overlay" id="modal-psych-assessment">
-  <div class="modal">
+  <div class="modal wide">
     <div class="modal-header"><h3>📋 Aplicar instrumento psicológico</h3><button class="modal-close" onclick="closeModal('modal-psych-assessment')">×</button></div>
     <div class="modal-body">
       <div class="form-row cols-2">
@@ -3067,6 +3376,69 @@
           </select>
         </div>
       </div>
+
+      <!-- PHQ-9 ítems individuales (visible cuando instrumento = PHQ9) -->
+      <div id="phq9-items-block" style="display:none">
+        <div style="background:#F4ECF7;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#6C3483">
+          <b>PHQ-9</b> (Kroenke et al., 2001) — Durante las <b>últimas 2 semanas</b>, ¿qué tan seguido le han molestado los siguientes problemas?<br>
+          <span style="font-weight:600">0</span>=Nunca · <span style="font-weight:600">1</span>=Varios días · <span style="font-weight:600">2</span>=Más de la mitad de los días · <span style="font-weight:600">3</span>=Casi todos los días
+        </div>
+        <div id="phq9-alert9" style="display:none;background:#FDEDEC;border:1px solid #F5B7B1;border-radius:8px;padding:10px 14px;margin-bottom:10px;color:#C0392B;font-size:13px;font-weight:700">
+          ⚠️ ALERTA DE SEGURIDAD — Ítem 9 positivo (pensamientos de hacerse daño). Requiere evaluación de riesgo inmediata.
+        </div>
+        <table class="data-table" style="font-size:12px">
+          <thead><tr><th style="width:60%">Ítem</th><th>0</th><th>1</th><th>2</th><th>3</th></tr></thead>
+          <tbody>
+            <tr><td>1. Poco interés o placer en hacer las cosas</td>
+              <td><input type="radio" name="phq1" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq1" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq1" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq1" value="3" onchange="calcPHQ9Items()"></td></tr>
+            <tr><td>2. Se ha sentido decaído/a, deprimido/a o sin esperanzas</td>
+              <td><input type="radio" name="phq2" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq2" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq2" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq2" value="3" onchange="calcPHQ9Items()"></td></tr>
+            <tr><td>3. Ha tenido dificultad para dormir o ha dormido demasiado</td>
+              <td><input type="radio" name="phq3" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq3" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq3" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq3" value="3" onchange="calcPHQ9Items()"></td></tr>
+            <tr><td>4. Se ha sentido cansado/a o con poca energía</td>
+              <td><input type="radio" name="phq4" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq4" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq4" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq4" value="3" onchange="calcPHQ9Items()"></td></tr>
+            <tr><td>5. Ha tenido poco apetito o ha comido en exceso</td>
+              <td><input type="radio" name="phq5" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq5" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq5" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq5" value="3" onchange="calcPHQ9Items()"></td></tr>
+            <tr><td>6. Se ha sentido mal consigo mismo/a o que es un fracaso</td>
+              <td><input type="radio" name="phq6" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq6" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq6" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq6" value="3" onchange="calcPHQ9Items()"></td></tr>
+            <tr><td>7. Ha tenido dificultad para concentrarse en actividades</td>
+              <td><input type="radio" name="phq7" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq7" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq7" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq7" value="3" onchange="calcPHQ9Items()"></td></tr>
+            <tr><td>8. Se ha movido o hablado tan lento que otros lo notaron, o tan agitado/a que no podía quedarse quieto/a</td>
+              <td><input type="radio" name="phq8" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq8" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq8" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq8" value="3" onchange="calcPHQ9Items()"></td></tr>
+            <tr style="background:#FEF9E7"><td><b>9. Se le han ocurrido pensamientos de que sería mejor estar muerto/a o de hacerse daño</b></td>
+              <td><input type="radio" name="phq9i" value="0" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq9i" value="1" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq9i" value="2" onchange="calcPHQ9Items()"></td>
+              <td><input type="radio" name="phq9i" value="3" onchange="calcPHQ9Items()"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Score block (usado por BES, GAD7, IWQOL, TAS20; también para PHQ9 modo auto) -->
       <div id="psych-score-block">
         <div class="form-group"><label>Puntaje total</label>
           <input type="number" id="pa-score" oninput="autoPsychSeverity()" />
@@ -3077,7 +3449,7 @@
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin:4px 0 8px" id="pa-range-hint"></div>
       </div>
-      <div class="form-group"><label>Interpretación clínica</label><textarea id="pa-interpretacion" rows="3"></textarea></div>
+      <div class="form-group"><label>Interpretación clínica</label><textarea id="pa-interpretacion" rows="2"></textarea></div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-psych-assessment')">Cancelar</button>
@@ -3215,6 +3587,131 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-dental-record')">Cancelar</button>
       <button class="btn-save" onclick="saveDental()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL DENTAL: OHIP-14 ──────────────────────────────────── -->
+<div class="modal-overlay" id="modal-ohip14">
+  <div class="modal wide">
+    <div class="modal-header"><h3>🦷 OHIP-14 — Impacto en salud oral</h3><button class="modal-close" onclick="closeModal('modal-ohip14')">×</button></div>
+    <div class="modal-body">
+      <div style="background:#E8F8F5;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#0E6655">
+        <b>OHIP-14</b> (Slade, 1997) — ¿Con qué frecuencia ha experimentado estos problemas <b>en el último mes</b> debido a sus dientes, boca o dentadura?<br>
+        <span style="font-weight:600">0</span>=Nunca · <span style="font-weight:600">1</span>=Casi nunca · <span style="font-weight:600">2</span>=Ocasionalmente · <span style="font-weight:600">3</span>=Con bastante frecuencia · <span style="font-weight:600">4</span>=Con mucha frecuencia<br>
+        Puntaje total 0-56. Punto de corte: &gt;14 = impacto significativo en calidad de vida.
+      </div>
+      <div class="form-row cols-2" style="margin-bottom:8px">
+        <div class="form-group"><label>Fecha</label><input type="date" id="ohip-fecha"></div>
+        <div></div>
+      </div>
+      <table class="data-table" style="font-size:12px">
+        <thead><tr><th style="width:55%">Ítem</th><th>0<br><span style="font-weight:400">Nunca</span></th><th>1<br><span style="font-weight:400">Casi nunca</span></th><th>2<br><span style="font-weight:400">Ocas.</span></th><th>3<br><span style="font-weight:400">Freq.</span></th><th>4<br><span style="font-weight:400">Muy freq.</span></th></tr></thead>
+        <tbody>
+          <tr><td><b>Limitación funcional</b><br>1. Problemas para pronunciar palabras</td>
+            <td><input type="radio" name="ohip1" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip1" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip1" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip1" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip1" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td>2. Sabor de alimentos empeorado</td>
+            <td><input type="radio" name="ohip2" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip2" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip2" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip2" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip2" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td><b>Dolor físico</b><br>3. Dolor en la boca</td>
+            <td><input type="radio" name="ohip3" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip3" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip3" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip3" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip3" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td>4. Incomodidad al comer</td>
+            <td><input type="radio" name="ohip4" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip4" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip4" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip4" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip4" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td><b>Malestar psicológico</b><br>5. Preocupación por dientes / boca</td>
+            <td><input type="radio" name="ohip5" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip5" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip5" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip5" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip5" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td>6. Estrés por problemas bucales</td>
+            <td><input type="radio" name="ohip6" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip6" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip6" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip6" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip6" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td><b>Incapacidad física</b><br>7. Dificultad para comer correctamente</td>
+            <td><input type="radio" name="ohip7" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip7" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip7" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip7" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip7" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td>8. Interrumpir comidas por dolor bucal</td>
+            <td><input type="radio" name="ohip8" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip8" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip8" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip8" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip8" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td><b>Incapacidad psicológica</b><br>9. Dificultad para descansar / relajarse</td>
+            <td><input type="radio" name="ohip9" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip9" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip9" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip9" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip9" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td>10. Vergüenza por problemas bucales</td>
+            <td><input type="radio" name="ohip10" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip10" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip10" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip10" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip10" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td><b>Incapacidad social</b><br>11. Irritabilidad con otras personas</td>
+            <td><input type="radio" name="ohip11" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip11" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip11" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip11" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip11" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td>12. Dificultad en actividades diarias</td>
+            <td><input type="radio" name="ohip12" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip12" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip12" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip12" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip12" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td><b>Minusvalía</b><br>13. Vida menos satisfactoria en general</td>
+            <td><input type="radio" name="ohip13" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip13" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip13" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip13" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip13" value="4" onchange="calcOHIP14()"></td></tr>
+          <tr><td>14. Incapaz de realizar sus actividades</td>
+            <td><input type="radio" name="ohip14i" value="0" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip14i" value="1" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip14i" value="2" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip14i" value="3" onchange="calcOHIP14()"></td>
+            <td><input type="radio" name="ohip14i" value="4" onchange="calcOHIP14()"></td></tr>
+        </tbody>
+      </table>
+      <div id="ohip-result" style="display:none;margin-top:12px;background:#E8F8F5;border-radius:8px;padding:10px 14px">
+        <div class="form-row cols-3">
+          <div style="text-align:center">
+            <div style="font-size:24px;font-weight:800;color:#0E6655" id="ohip-total-display">—</div>
+            <div style="font-size:11px;color:var(--text-muted)">Puntaje OHIP-14 (0-56)</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:14px;font-weight:700" id="ohip-interp-display">—</div>
+            <div style="font-size:11px;color:var(--text-muted)">Impacto en CV</div>
+          </div>
+          <div style="text-align:center;font-size:12px;color:#555" id="ohip-domains-display"></div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:8px"><label>Notas clínicas</label><textarea id="ohip-notas" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-ohip14')">Cancelar</button>
+      <button class="btn-save" onclick="saveOHIP14()">💾 Guardar OHIP-14</button>
     </div>
   </div>
 </div>
@@ -3963,7 +4460,7 @@ async function loadOBESData(p) {
   const def = {
     measurements: [], labs: [], medications: [], eoss: null, eossNotes: '',
     psychology: { assessments: [], notas: [] },
-    nutrition: { plan: null, adherencia: [], recordatorio24h: null, tfeq: null },
+    nutrition: { plan: null, adherencia: [], recall24h: null, tfeq: null },
     rehabilitation: { evaluacionInicial: null, prescripcionFITT: null, seguimiento: [] },
     dental: { evaluacion: null, seguimiento: [] },
     sleep: { cuestionarios: [], psg: null, cpap: { fechaInicio: null, seguimiento: [] } },
@@ -5637,6 +6134,206 @@ function renderNutritionView() {
       alertEl.textContent = `⚠️ Adherencia promedio últimas ${recent.length} visitas: ${avg.toFixed(0)}% — Revisar barreras y estrategias de motivación.`;
     } else { alertEl.style.display = 'none'; }
   }
+
+  // TFEQ-R21 card
+  const tfeqEl = $('nutri-tfeq-body');
+  if (tfeqEl) {
+    const t = n.tfeq;
+    if (t) {
+      const rcColor = t.rc >= 60 ? '#148F77' : '#555';
+      const ueColor = t.ue >= 50 ? '#C0392B' : '#555';
+      const eeColor = t.ee >= 50 ? '#8E44AD' : '#555';
+      tfeqEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:8px;text-align:center">
+          <div><div style="font-size:22px;font-weight:800;color:${rcColor}">${t.rc}</div><div style="font-size:11px;color:var(--text-muted)">RC (0-100)</div><div style="font-size:11px;font-weight:600;color:${rcColor}">${t.rc >= 60 ? 'Alta restricción' : t.rc >= 40 ? 'Moderada' : 'Baja'}</div></div>
+          <div><div style="font-size:22px;font-weight:800;color:${ueColor}">${t.ue}</div><div style="font-size:11px;color:var(--text-muted)">UE (0-100)</div><div style="font-size:11px;font-weight:600;color:${ueColor}">${t.ue >= 50 ? 'Pérdida de control' : t.ue >= 30 ? 'Moderada' : 'Baja'}</div></div>
+          <div><div style="font-size:22px;font-weight:800;color:${eeColor}">${t.ee}</div><div style="font-size:11px;color:var(--text-muted)">EE (0-100)</div><div style="font-size:11px;font-weight:600;color:${eeColor}">${t.ee >= 50 ? 'Ingesta emocional' : t.ee >= 30 ? 'Moderada' : 'Baja'}</div></div>
+        </div>
+        ${t.farmaTip ? `<div style="font-size:11px;color:#555;background:#F0FAF7;border-radius:6px;padding:6px 8px;margin-top:4px">💊 ${t.farmaTip}</div>` : ''}
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Registrado ${new Date(t.fecha).toLocaleDateString('es-MX')}</div>`;
+    } else {
+      tfeqEl.innerHTML = '<div class="text-muted text-sm text-center" style="padding:16px">Sin evaluación registrada</div>';
+    }
+  }
+
+  // Recordatorio 24h card
+  const recallEl = $('nutri-recall-body');
+  if (recallEl) {
+    const r = n.recall24h;
+    if (r) {
+      recallEl.innerHTML = `
+        <div class="biometric-row"><span class="bio-label">Fecha</span><span class="bio-value">${new Date(r.fecha+'T12:00:00').toLocaleDateString('es-MX')} · ${r.dia || ''}</span></div>
+        <div class="biometric-row"><span class="bio-label">Kcal totales</span><span class="bio-value" style="font-weight:700;color:var(--primary)">${r.totalKcal || 0} kcal</span></div>
+        <div class="biometric-row"><span class="bio-label">Agua</span><span class="bio-value">${r.agua || 0} vasos</span></div>
+        <div class="biometric-row"><span class="bio-label">Frutas + verduras</span><span class="bio-value">${r.fv || 0} porciones</span></div>
+        <div class="biometric-row"><span class="bio-label">Calidad de dieta</span><span class="bio-value"><span class="pill ${r.calidad==='Buena'?'green':r.calidad==='Regular'?'yellow':'red'}">${r.calidad || '—'}</span></span></div>
+        <div class="biometric-row"><span class="bio-label">Contexto</span><span class="bio-value">${r.contexto || '—'}</span></div>`;
+    } else {
+      recallEl.innerHTML = '<div class="text-muted text-sm text-center" style="padding:16px">Sin recordatorio registrado</div>';
+    }
+  }
+}
+
+// ── TFEQ-R21 ─────────────────────────────────────────────────────
+function calcTFEQ() {
+  // Read all 21 radio groups
+  const getVal = n => { const el = document.querySelector(`input[name="${n}"]:checked`); return el ? parseInt(el.value) : null; };
+  const items = {};
+  for (let i = 1; i <= 21; i++) { items[i] = getVal(`tfeq${i}`); }
+  const missing = Object.entries(items).filter(([,v]) => v === null).map(([k]) => k);
+  if (missing.length > 0) { showToast(`Faltan ítems: ${missing.slice(0,5).join(', ')}${missing.length>5?'...':''}`, 'warn'); return null; }
+
+  // RC items 1-6 (min 6, max 24)
+  const rcSum = [1,2,3,4,5,6].reduce((s,i) => s + items[i], 0);
+  const rc = Math.round((rcSum - 6) / 18 * 100);
+  // UE items 7-15 (min 9, max 36)
+  const ueSum = [7,8,9,10,11,12,13,14,15].reduce((s,i) => s + items[i], 0);
+  const ue = Math.round((ueSum - 9) / 27 * 100);
+  // EE items 16-21 (min 6, max 24)
+  const eeSum = [16,17,18,19,20,21].reduce((s,i) => s + items[i], 0);
+  const ee = Math.round((eeSum - 6) / 18 * 100);
+
+  // Pharma tip
+  let farmaTip = '';
+  if (ue >= 50 && rc < 40) farmaTip = 'UE dominante + RC baja → Hambre gástrica/cerebral — Considerar GLP-1 (liraglutida/semaglutida).';
+  else if (ee >= 50) farmaTip = 'EE dominante → Hambre emocional — TCC + ISRS/naltrexona-bupropión si BES ≥18.';
+  else if (rc >= 60 && ue < 30) farmaTip = 'RC alta + UE baja → Perfil restrictivo — Evitar VLCDs; riesgo de efecto rebote.';
+  else farmaTip = 'Perfil mixto — Intervención conductual individualizada.';
+
+  // Show result panel
+  $('tfeq-result').style.display = 'block';
+  $('tfeq-rc-score').textContent = rc;
+  $('tfeq-ue-score').textContent = ue;
+  $('tfeq-ee-score').textContent = ee;
+  $('tfeq-rc-interp').textContent = rc >= 60 ? '🔵 Alta' : rc >= 40 ? 'Moderada' : 'Baja';
+  $('tfeq-ue-interp').textContent = ue >= 50 ? '🔴 Pérdida control' : ue >= 30 ? 'Moderada' : 'Baja';
+  $('tfeq-ee-interp').textContent = ee >= 50 ? '🟣 Emocional' : ee >= 30 ? 'Moderada' : 'Baja';
+  $('tfeq-pharma-tip').textContent = '💊 ' + farmaTip;
+
+  return { rc, ue, ee, items, farmaTip };
+}
+
+function saveTFEQ() {
+  if (!currentPatient) return;
+  const result = calcTFEQ();
+  if (!result) return;
+  if (!obesData.nutrition) obesData.nutrition = { plan: null, adherencia: [], tfeq: null, recall24h: null };
+  obesData.nutrition.tfeq = {
+    ...result,
+    fecha: $('tfeq-fecha').value || new Date().toISOString().split('T')[0],
+    notas: $('tfeq-notas').value,
+  };
+  saveOBESData();
+  renderNutritionView();
+  closeModal('modal-tfeq');
+  showToast('TFEQ-R21 guardado');
+  // Reset radios
+  document.querySelectorAll('[name^="tfeq"]').forEach(el => el.checked = false);
+  $('tfeq-result').style.display = 'none';
+  $('tfeq-notas').value = '';
+}
+
+// ── Recordatorio 24h ──────────────────────────────────────────────
+function sumR24Kcal() {
+  const ids = ['r24-des-kcal','r24-cam-kcal','r24-com-kcal','r24-cpm-kcal','r24-cen-kcal','r24-ext-kcal'];
+  const total = ids.reduce((s, id) => s + (parseFloat($(id)?.value) || 0), 0);
+  if ($('r24-total-kcal')) $('r24-total-kcal').textContent = Math.round(total);
+}
+
+function saveRecall24h() {
+  if (!currentPatient) return;
+  const ids = ['r24-des-kcal','r24-cam-kcal','r24-com-kcal','r24-cpm-kcal','r24-cen-kcal','r24-ext-kcal'];
+  const totalKcal = Math.round(ids.reduce((s, id) => s + (parseFloat($(id)?.value) || 0), 0));
+  const entry = {
+    fecha: $('r24-fecha').value || new Date().toISOString().split('T')[0],
+    dia: $('r24-dia').value,
+    comidas: {
+      desayuno: { foods: $('r24-des-foods').value, kcal: parseFloat($('r24-des-kcal').value)||0 },
+      colacion_am: { foods: $('r24-cam-foods').value, kcal: parseFloat($('r24-cam-kcal').value)||0 },
+      comida: { foods: $('r24-com-foods').value, kcal: parseFloat($('r24-com-kcal').value)||0 },
+      colacion_pm: { foods: $('r24-cpm-foods').value, kcal: parseFloat($('r24-cpm-kcal').value)||0 },
+      cena: { foods: $('r24-cen-foods').value, kcal: parseFloat($('r24-cen-kcal').value)||0 },
+      extras: { foods: $('r24-ext-foods').value, kcal: parseFloat($('r24-ext-kcal').value)||0 },
+    },
+    totalKcal,
+    agua: parseInt($('r24-agua').value)||0,
+    fv: parseInt($('r24-fv').value)||0,
+    calidad: $('r24-calidad').value,
+    contexto: $('r24-contexto').value,
+    notas: $('r24-notas').value,
+    id: Date.now(),
+  };
+  if (!obesData.nutrition) obesData.nutrition = { plan: null, adherencia: [], tfeq: null, recall24h: null };
+  obesData.nutrition.recall24h = entry;
+  saveOBESData();
+  renderNutritionView();
+  closeModal('modal-recall24h');
+  showToast('Recordatorio 24h guardado');
+}
+
+// ── OHIP-14 ───────────────────────────────────────────────────────
+function calcOHIP14() {
+  const getVal = n => { const el = document.querySelector(`input[name="${n}"]:checked`); return el ? parseInt(el.value) : null; };
+  const names = ['ohip1','ohip2','ohip3','ohip4','ohip5','ohip6','ohip7','ohip8','ohip9','ohip10','ohip11','ohip12','ohip13','ohip14i'];
+  let total = 0, answered = 0;
+  const domains = { funcional:[0,0], dolor:[0,0], psicologico:[0,0], fisico:[0,0], psicologicoI:[0,0], social:[0,0], minusvalia:[0,0] };
+  const domMap = [0,0,1,1,2,2,3,3,4,4,5,5,6,6]; // 0-based domain per item
+  const domNames = ['Limitación funcional','Dolor físico','Malestar psicológico','Incapacidad física','Incapacidad psicológica','Incapacidad social','Minusvalía'];
+  const domScores = Array(7).fill(0);
+
+  for (let i = 0; i < names.length; i++) {
+    const v = getVal(names[i]);
+    if (v !== null) { total += v; answered++; domScores[domMap[i]] += v; }
+  }
+  if (answered < 14) return;
+
+  const interp = total <= 14 ? 'Impacto mínimo' : total <= 28 ? 'Impacto moderado' : total <= 42 ? 'Impacto severo' : 'Impacto muy severo';
+  const color = total <= 14 ? '#148F77' : total <= 28 ? '#E67E22' : '#C0392B';
+
+  $('ohip-result').style.display = 'block';
+  $('ohip-total-display').textContent = total;
+  $('ohip-total-display').style.color = color;
+  $('ohip-interp-display').textContent = interp;
+  $('ohip-interp-display').style.color = color;
+  const worstDom = domScores.map((s,i)=>({s,n:domNames[i]})).sort((a,b)=>b.s-a.s).slice(0,2).map(d=>d.n).join(', ');
+  if ($('ohip-domains-display')) $('ohip-domains-display').textContent = 'Dominios más afectados: ' + worstDom;
+}
+
+function saveOHIP14() {
+  if (!currentPatient) return;
+  const getVal = n => { const el = document.querySelector(`input[name="${n}"]:checked`); return el ? parseInt(el.value) : null; };
+  const names = ['ohip1','ohip2','ohip3','ohip4','ohip5','ohip6','ohip7','ohip8','ohip9','ohip10','ohip11','ohip12','ohip13','ohip14i'];
+  const items = {};
+  let total = 0;
+  for (const n of names) {
+    const v = getVal(n);
+    if (v === null) { showToast('Completa todos los ítems del OHIP-14', 'warn'); return; }
+    items[n] = v; total += v;
+  }
+  const interp = total <= 14 ? 'Impacto mínimo' : total <= 28 ? 'Impacto moderado' : total <= 42 ? 'Impacto severo' : 'Impacto muy severo';
+
+  if (!obesData.dental) obesData.dental = { evaluacion: null, seguimiento: [] };
+  if (!obesData.dental.ohip14History) obesData.dental.ohip14History = [];
+  const entry = {
+    fecha: $('ohip-fecha').value || new Date().toISOString().split('T')[0],
+    total, interp, items,
+    notas: $('ohip-notas').value,
+    id: Date.now(),
+  };
+  obesData.dental.ohip14History.push(entry);
+  // Update evaluacion.ohip14 so it shows in the stats row and DMFT modal
+  if (!obesData.dental.evaluacion) {
+    obesData.dental.evaluacion = { fecha: entry.fecha, dmft: { d:0,m:0,f:0 }, bop: null, ohip14: total, xero: 0, id: Date.now() };
+  } else {
+    obesData.dental.evaluacion.ohip14 = total;
+  }
+  saveOBESData();
+  renderDentalView();
+  closeModal('modal-ohip14');
+  showToast('OHIP-14 guardado');
+  document.querySelectorAll('[name^="ohip"]').forEach(el => el.checked = false);
+  $('ohip-result').style.display = 'none';
+  $('ohip-notas').value = '';
 }
 
 function calcGET() {
@@ -5711,7 +6408,7 @@ function saveAdherencia() {
     notas: $('adh-notes').value,
     id: Date.now(),
   };
-  if (!obesData.nutrition) obesData.nutrition = { plan: null, adherencia: [], recordatorio24h: null, tfeq: null };
+  if (!obesData.nutrition) obesData.nutrition = { plan: null, adherencia: [], recall24h: null, tfeq: null };
   obesData.nutrition.adherencia.push(entry);
   saveOBESData();
   renderNutritionView();
@@ -5781,14 +6478,46 @@ function renderPsychologyView() {
 function updatePsychCutoffs() {
   const tipo = $('pa-tipo').value;
   const isProchaska = tipo === 'PROCHASKA';
+  const isPHQ9 = tipo === 'PHQ9';
   $('prochaska-select').style.display = isProchaska ? 'block' : 'none';
-  $('psych-score-block').style.display = isProchaska ? 'none' : 'block';
+  $('phq9-items-block').style.display = isPHQ9 ? 'block' : 'none';
+  // Score block: hidden for Prochaska; auto-calc for PHQ9 (read-only); editable for others
+  $('psych-score-block').style.display = (isProchaska || isPHQ9) ? 'none' : 'block';
   const cuts = PSYCH_CUTOFFS[tipo];
   const hint = $('pa-range-hint');
   if (hint && cuts) {
     hint.textContent = cuts.ranges.map(r => `${r[0]}-${r[1]}: ${r[2]}`).join(' · ');
   }
   $('pa-severity-box').style.display = 'none';
+  // Reset PHQ-9 alert
+  if ($('phq9-alert9')) $('phq9-alert9').style.display = 'none';
+}
+
+function calcPHQ9Items() {
+  const names = ['phq1','phq2','phq3','phq4','phq5','phq6','phq7','phq8','phq9i'];
+  let total = 0, allAnswered = true;
+  const vals = {};
+  for (const n of names) {
+    const sel = document.querySelector(`input[name="${n}"]:checked`);
+    if (!sel) { allAnswered = false; break; }
+    vals[n] = parseInt(sel.value);
+    total += vals[n];
+  }
+  if (!allAnswered) return;
+  // Item 9 suicidality alert
+  const item9 = document.querySelector('input[name="phq9i"]:checked');
+  if ($('phq9-alert9')) {
+    $('phq9-alert9').style.display = item9 && parseInt(item9.value) > 0 ? 'block' : 'none';
+  }
+  // Show auto-score in score block (read-only)
+  const cuts = PSYCH_CUTOFFS['PHQ9'];
+  const match = cuts?.ranges.find(r => total >= r[0] && total <= r[1]);
+  $('psych-score-block').style.display = 'block';
+  $('pa-score').value = total;
+  $('pa-score').readOnly = true;
+  if (match) { $('pa-severity-val').textContent = match[2]; $('pa-severity-box').style.display = 'flex'; }
+  const hint = $('pa-range-hint');
+  if (hint) hint.textContent = cuts?.ranges.map(r => `${r[0]}-${r[1]}: ${r[2]}`).join(' · ') || '';
 }
 
 function autoPsychSeverity() {
@@ -5807,9 +6536,24 @@ function savePsychAssessment() {
   if (!currentPatient) return;
   const tipo = $('pa-tipo').value;
   const isProchaska = tipo === 'PROCHASKA';
-  let puntaje = null, severidad = '';
+  const isPHQ9 = tipo === 'PHQ9';
+  let puntaje = null, severidad = '', items = null;
   if (isProchaska) {
     severidad = $('pa-prochaska-stage').value;
+  } else if (isPHQ9) {
+    // Collect PHQ-9 items
+    const names = ['phq1','phq2','phq3','phq4','phq5','phq6','phq7','phq8','phq9i'];
+    items = {};
+    puntaje = 0;
+    for (const n of names) {
+      const sel = document.querySelector(`input[name="${n}"]:checked`);
+      if (!sel) { showToast('Completa todos los ítems del PHQ-9', 'warn'); return; }
+      items[n] = parseInt(sel.value);
+      puntaje += items[n];
+    }
+    const cuts = PSYCH_CUTOFFS['PHQ9'];
+    const match = cuts?.ranges.find(r => puntaje >= r[0] && puntaje <= r[1]);
+    severidad = match ? match[2] : '';
   } else {
     puntaje = parseInt($('pa-score').value);
     if (isNaN(puntaje)) { showToast('Ingresa el puntaje', 'warn'); return; }
@@ -5820,7 +6564,7 @@ function savePsychAssessment() {
     }
   }
   const entry = {
-    tipo, puntaje, severidad,
+    tipo, puntaje, severidad, items,
     fecha: $('pa-fecha').value || new Date().toISOString().split('T')[0],
     interpretacion: $('pa-interpretacion').value,
     id: Date.now(),
@@ -5833,7 +6577,11 @@ function savePsychAssessment() {
   closeModal('modal-psych-assessment');
   showToast('Instrumento guardado');
   $('pa-score').value = '';
+  $('pa-score').readOnly = false;
   $('pa-interpretacion').value = '';
+  // Reset PHQ-9 radios
+  document.querySelectorAll('[name^="phq"]').forEach(el => el.checked = false);
+  if ($('phq9-alert9')) $('phq9-alert9').style.display = 'none';
 }
 
 function savePsychSOAP() {
