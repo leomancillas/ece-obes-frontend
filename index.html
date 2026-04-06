@@ -267,10 +267,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 65vh;
+      min-height: 80vh;
       gap: 14px;
       color: var(--text-muted);
       text-align: center;
+      position: relative;
+      z-index: 1;
+      background: var(--bg);
     }
     #no-patient .np-icon {
       font-size: 52px;
@@ -4392,6 +4395,9 @@ function showAuthError(msg) { const el = $('auth-error'); el.textContent = msg; 
 function showApp() {
   $('auth-screen').style.display = 'none';
   $('app').classList.add('visible');
+  // ── Clean initial state: hide ALL module views, show no-patient ──
+  document.querySelectorAll('.module-view').forEach(v => v.classList.remove('visible'));
+  $('no-patient').style.display = 'flex';
   if (currentUser) {
     const initials = (currentUser.name || 'U').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
     $('user-avatar-hdr').textContent = initials;
@@ -4679,7 +4685,12 @@ async function saveOBESData() {
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
 function switchView(view) {
-  if (!currentPatient && view !== 'dashboard') { showToast('Selecciona un paciente primero', 'warn'); return; }
+  // Block navigation to clinical views without a patient
+  if (!currentPatient && view !== 'dashboard' && view !== 'search') {
+    showToast('Selecciona un paciente primero', 'warn');
+    return;
+  }
+  // Hide ALL module views first (including search)
   document.querySelectorAll('.module-view').forEach(v => v.classList.remove('visible'));
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
 
@@ -4689,7 +4700,8 @@ function switchView(view) {
   const sidebarItem = document.querySelector(`.sidebar-item[data-view="${view}"]`);
   if (sidebarItem) sidebarItem.classList.add('active');
 
-  if (!currentPatient) { $('no-patient').style.display = 'flex'; } else { $('no-patient').style.display = 'none'; }
+  // Always sync no-patient visibility
+  $('no-patient').style.display = currentPatient ? 'none' : (view === 'search' ? 'none' : 'flex');
   if (view === 'cme') renderCMEView();
 }
 
