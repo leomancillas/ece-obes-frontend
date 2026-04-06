@@ -821,7 +821,7 @@
       position: fixed; inset: 0;
       background: rgba(255,255,255,.7);
       backdrop-filter: blur(2px);
-      z-index: 600;
+      z-index: 1200;
       display: flex;           /* siempre en el DOM — opacity controla visibilidad */
       align-items: center;
       justify-content: center;
@@ -1093,7 +1093,7 @@
 <body>
 
 <!-- ─── META CORE BREADCRUMB ────────────────────────────────────── -->
-<div id="meta-breadcrumb" style="display:none;background:#1A3A5C;color:#fff;padding:8px 20px;font-size:0.85rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:1000">
+<div id="meta-breadcrumb" style="display:none;background:#1A3A5C;color:#fff;padding:8px 20px;font-size:0.85rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:900">
   <span>📋 ECE OBES</span>
   <span style="opacity:0.5">|</span>
   <button onclick="returnToMetaCore()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:4px 14px;border-radius:6px;cursor:pointer;font-size:0.82rem;font-weight:500">← Volver a META CORE</button>
@@ -4256,19 +4256,8 @@ async function checkMetaBridge() {
       showToast('No se pudo cargar el paciente', 'error');
       return;
     }
-    currentPatient = p;
-    // Load OBES data and render
-    await loadOBESData(p);
-    renderPatientHeader();
-    switchView('dashboard');
-    $('no-patient').style.display = 'none';
-    // Show breadcrumb
-    const bc = document.getElementById('meta-breadcrumb');
-    if (bc) {
-      bc.style.display = 'flex';
-      const nameEl = document.getElementById('meta-breadcrumb-patient');
-      if (nameEl && currentPatient) nameEl.textContent = currentPatient.nombre || '';
-    }
+    // Usar selectPatient para aprovechar el loading overlay y evitar parpadeo
+    await selectPatient(p.id);
     showToast('Expediente cargado desde META CORE', 'success');
   } catch(e) {
     console.warn('Bridge error:', e);
