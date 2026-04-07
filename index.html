@@ -1649,23 +1649,66 @@
               <span class="section-card-title">🔢 Índices metabólicos</span>
             </div>
             <div class="section-card-body">
-              <div class="calc-result">
-                <span class="calc-label">IMC</span>
-                <span class="calc-value" id="cur-bmi">—</span>
-              </div>
-              <div class="calc-result">
-                <span class="calc-label">ICC</span>
-                <span class="calc-value" id="cur-icc">—</span>
-              </div>
-              <div class="calc-result">
-                <span class="calc-label">HOMA-IR</span>
-                <span class="calc-value" id="cur-homa">—</span>
-              </div>
-              <div class="calc-result">
-                <span class="calc-label">%TWL</span>
-                <span class="calc-value" id="cur-twl">—</span>
-              </div>
+              <div class="calc-result"><span class="calc-label">IMC</span><span class="calc-value" id="cur-bmi">—</span></div>
+              <div class="calc-result"><span class="calc-label">ICC</span><span class="calc-value" id="cur-icc">—</span></div>
+              <div class="calc-result"><span class="calc-label">ICT</span><span class="calc-value" id="cur-ict">—</span></div>
+              <div class="calc-result"><span class="calc-label">HOMA-IR</span><span class="calc-value" id="cur-homa">—</span></div>
+              <div class="calc-result"><span class="calc-label">HOMA-β</span><span class="calc-value" id="cur-homab">—</span></div>
+              <div class="calc-result"><span class="calc-label">QUICKI</span><span class="calc-value" id="cur-quicki">—</span></div>
+              <div class="calc-result"><span class="calc-label">TyG</span><span class="calc-value" id="cur-tyg">—</span></div>
+              <div class="calc-result"><span class="calc-label">TG/HDL</span><span class="calc-value" id="cur-tghdl">—</span></div>
+              <div class="calc-result"><span class="calc-label">eGFR (CKD-EPI)</span><span class="calc-value" id="cur-egfr">—</span></div>
+              <div class="calc-result"><span class="calc-label">%TWL</span><span class="calc-value" id="cur-twl">—</span></div>
+              <div class="calc-result"><span class="calc-label">%EWL</span><span class="calc-value" id="cur-ewl">—</span></div>
             </div>
+          </div>
+        </div>
+
+        <!-- ═══ Comorbilidades + Scores de riesgo ═══ -->
+        <div class="section-card" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">🫀 Comorbilidades y scores de riesgo</span>
+            <button class="btn-add" onclick="recalcMedicoComorb()">↻ Recalcular</button>
+          </div>
+          <div class="section-card-body">
+            <div id="medico-comorb-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+              <div class="text-muted text-sm">Carga labs y mediciones para evaluar.</div>
+            </div>
+            <div id="medico-scores-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px"></div>
+            <div id="medico-alerts" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <!-- ═══ Farmacoterapia anti-obesidad ═══ -->
+        <div class="section-card" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">💊 Farmacoterapia anti-obesidad</span>
+            <button class="btn-add" style="background:var(--mod-medico)" onclick="openMedicationModal()">+ Agregar fármaco</button>
+          </div>
+          <div class="section-card-body" id="medico-pharma-body">
+            <div class="text-muted text-sm">Sin fármacos registrados</div>
+          </div>
+        </div>
+
+        <!-- ═══ Tamizaje endocrino secundario ═══ -->
+        <div class="section-card" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">🔍 Tamizaje endocrino secundario</span>
+            <button class="btn-add" style="background:var(--mod-medico)" onclick="openModal('modal-endo-screen')">+ Tamizaje</button>
+          </div>
+          <div class="section-card-body" id="medico-endo-body">
+            <div class="text-muted text-sm">Sin tamizajes registrados. Banderas para investigar causas secundarias: estrías violáceas, cara de luna, hirsutismo, hipogonadismo, obesidad de inicio temprano (&lt;5 años), hiperfagia severa, HTA refractaria.</div>
+          </div>
+        </div>
+
+        <!-- ═══ Notas clínicas estructuradas (investigación) ═══ -->
+        <div class="section-card" style="margin-top:16px">
+          <div class="section-card-header">
+            <span class="section-card-title">📝 Notas clínicas estructuradas</span>
+            <button class="btn-add" style="background:var(--mod-medico)" onclick="openClinicalNoteModal()">+ Nota</button>
+          </div>
+          <div class="section-card-body" id="medico-notes-body">
+            <div class="text-muted text-sm">Sin notas registradas. Las notas estructuradas están diseñadas para reutilización en investigación (campos discretos + tags + flag de consentimiento).</div>
           </div>
         </div>
       </div>
@@ -2417,7 +2460,7 @@
       <div class="form-row">
         <div class="form-control">
           <label>Glucosa en ayuno (mg/dL)</label>
-          <input type="number" id="lab-glucose" step="0.1" />
+          <input type="number" id="lab-glucose" step="0.1" oninput="liveMetabCalc()" />
         </div>
         <div class="form-control">
           <label>HbA1c (%)</label>
@@ -2427,11 +2470,11 @@
       <div class="form-row">
         <div class="form-control">
           <label>Insulina en ayuno (μU/mL)</label>
-          <input type="number" id="lab-insulin" step="0.1" />
+          <input type="number" id="lab-insulin" step="0.1" oninput="liveMetabCalc()" />
         </div>
         <div class="form-control">
           <label>Triglicéridos (mg/dL)</label>
-          <input type="number" id="lab-trig" step="0.1" />
+          <input type="number" id="lab-trig" step="0.1" oninput="liveMetabCalc()" />
         </div>
       </div>
       <div class="form-row">
@@ -2488,7 +2531,70 @@
         <div style="font-size:11px;color:var(--text-muted)">📊 FIB-4 (calculado automáticamente desde edad, AST, ALT, plaquetas)</div>
         <div id="lab-fib4-calc" style="font-size:18px;font-weight:700;color:var(--primary)">—</div>
       </div>
-      <div class="form-control">
+
+      <!-- ── Bloque endocrino ─────────────────────────────────────────── -->
+      <div style="margin-top:14px;padding:10px;background:#F4ECF7;border-left:4px solid var(--mod-medico);border-radius:6px">
+        <div style="font-size:12px;font-weight:700;color:var(--mod-medico);margin-bottom:8px">🧪 PANEL ENDOCRINO AMPLIADO (opcional)</div>
+
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">Tiroides</div>
+        <div class="form-row">
+          <div class="form-control"><label>T4 libre (ng/dL)</label><input type="number" id="lab-t4l" step="0.01"></div>
+          <div class="form-control"><label>T3 libre (pg/mL)</label><input type="number" id="lab-t3l" step="0.01"></div>
+          <div class="form-control"><label>Anti-TPO (UI/mL)</label><input type="number" id="lab-tpo" step="0.1"></div>
+        </div>
+
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:8px 0 4px">Eje suprarrenal / hipófisis</div>
+        <div class="form-row">
+          <div class="form-control"><label>Cortisol AM (μg/dL)</label><input type="number" id="lab-cort" step="0.1"></div>
+          <div class="form-control"><label>ACTH (pg/mL)</label><input type="number" id="lab-acth" step="0.1"></div>
+          <div class="form-control"><label>Prolactina (ng/mL)</label><input type="number" id="lab-prl" step="0.1"></div>
+        </div>
+
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:8px 0 4px">Eje gonadal</div>
+        <div class="form-row">
+          <div class="form-control"><label>Testosterona total (ng/dL)</label><input type="number" id="lab-tt" step="0.1"></div>
+          <div class="form-control"><label>Testosterona libre (pg/mL)</label><input type="number" id="lab-tl" step="0.01"></div>
+          <div class="form-control"><label>SHBG (nmol/L)</label><input type="number" id="lab-shbg" step="0.1"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-control"><label>LH (mUI/mL)</label><input type="number" id="lab-lh" step="0.1"></div>
+          <div class="form-control"><label>FSH (mUI/mL)</label><input type="number" id="lab-fsh" step="0.1"></div>
+          <div class="form-control"><label>Estradiol (pg/mL)</label><input type="number" id="lab-e2" step="0.1"></div>
+        </div>
+
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:8px 0 4px">Adipoquinas, GH, paratiroides</div>
+        <div class="form-row">
+          <div class="form-control"><label>IGF-1 (ng/mL)</label><input type="number" id="lab-igf1" step="0.1"></div>
+          <div class="form-control"><label>Leptina (ng/mL)</label><input type="number" id="lab-lep" step="0.1"></div>
+          <div class="form-control"><label>Adiponectina (μg/mL)</label><input type="number" id="lab-adip" step="0.1"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-control"><label>PTH (pg/mL)</label><input type="number" id="lab-pth" step="0.1"></div>
+          <div class="form-control"><label>Creatinina (mg/dL)</label><input type="number" id="lab-creat" step="0.01" oninput="liveEgfrCalc()"></div>
+          <div class="form-control"><label>Microalbuminuria (mg/g)</label><input type="number" id="lab-malb" step="0.1"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:10px">
+          <div style="background:#fff;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:var(--text-muted)">HOMA-β</div>
+            <div id="lab-homab-calc" style="font-size:14px;font-weight:700">—</div>
+          </div>
+          <div style="background:#fff;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:var(--text-muted)">QUICKI</div>
+            <div id="lab-quicki-calc" style="font-size:14px;font-weight:700">—</div>
+          </div>
+          <div style="background:#fff;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:var(--text-muted)">TyG</div>
+            <div id="lab-tyg-calc" style="font-size:14px;font-weight:700">—</div>
+          </div>
+          <div style="background:#fff;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:var(--text-muted)">eGFR</div>
+            <div id="lab-egfr-calc" style="font-size:14px;font-weight:700">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-control" style="margin-top:10px">
         <label>Fecha de laboratorio</label>
         <input type="date" id="lab-date" />
       </div>
@@ -2527,6 +2633,216 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-eoss')">Cancelar</button>
       <button class="btn-submit" onclick="saveEOSS()">Guardar EOSS</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Medicación anti-obesidad -->
+<div class="modal-overlay" id="modal-medication">
+  <div class="modal-content" style="max-width:680px">
+    <div class="modal-header">
+      <h3 class="modal-title">💊 Farmacoterapia anti-obesidad</h3>
+      <button class="modal-close" onclick="closeModal('modal-medication')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-control">
+        <label>Clase farmacológica</label>
+        <select id="med-class" onchange="onMedClassChange()">
+          <option value="">Seleccionar clase</option>
+          <option value="glp1">Agonista GLP-1 (semaglutida, liraglutida)</option>
+          <option value="glp1_gip">Agonista dual GLP-1/GIP (tirzepatida)</option>
+          <option value="naltrexona_bupropion">Naltrexona/Bupropión</option>
+          <option value="fentermina_topiramato">Fentermina/Topiramato</option>
+          <option value="orlistat">Orlistat</option>
+          <option value="setmelanotida">Setmelanotida (MC4R)</option>
+          <option value="metformina">Metformina (adyuvante)</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Fármaco específico</label><input type="text" id="med-name" placeholder="Ej: Semaglutida 1 mg sc"></div>
+        <div class="form-control"><label>Dosis actual</label><input type="text" id="med-dose" placeholder="Ej: 1 mg sc/sem"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Fecha inicio</label><input type="date" id="med-start"></div>
+        <div class="form-control"><label>Peso basal (kg)</label><input type="number" id="med-baseline" step="0.1"></div>
+      </div>
+      <div class="form-control">
+        <label>Plan de escalación / titulación</label>
+        <textarea id="med-escalation" rows="2" placeholder="Ej: 0.25→0.5→1→1.7→2.4 mg cada 4 sem"></textarea>
+      </div>
+      <div id="med-contra-warn" style="display:none;background:#FADBD8;border-left:4px solid #C0392B;padding:8px;border-radius:4px;font-size:12px;margin-bottom:10px"></div>
+      <label style="display:flex;gap:6px;align-items:center;font-size:12px">
+        <input type="checkbox" id="med-contra-checked"> Contraindicaciones revisadas (MTC, MEN2, pancreatitis, embarazo, etc.)
+      </label>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-control"><label>%TWL alcanzado</label><input type="number" id="med-twl" step="0.1" placeholder="Ej: 12.4"></div>
+        <div class="form-control"><label>%EWL alcanzado</label><input type="number" id="med-ewl" step="0.1"></div>
+      </div>
+      <div class="form-control">
+        <label>Efectos adversos</label>
+        <textarea id="med-ae" rows="2" placeholder="Náusea, vómito, hipoglucemia, etc."></textarea>
+      </div>
+      <div class="form-control">
+        <label>Notas</label>
+        <textarea id="med-notes" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-medication')">Cancelar</button>
+      <button class="btn-submit" onclick="saveMedication()">Guardar fármaco</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Tamizaje endocrino secundario -->
+<div class="modal-overlay" id="modal-endo-screen">
+  <div class="modal-content" style="max-width:720px">
+    <div class="modal-header">
+      <h3 class="modal-title">🔍 Tamizaje endocrino secundario</h3>
+      <button class="modal-close" onclick="closeModal('modal-endo-screen')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#FEF9E7;border-left:4px solid #D68910;padding:8px;border-radius:4px;font-size:11px;margin-bottom:12px">
+        Indicaciones para investigar causa secundaria: ganancia rápida inexplicable, HTA refractaria, hipocalemia, estrías violáceas >1 cm, debilidad proximal, hipotiroidismo clínico, hirsutismo/oligomenorrea, obesidad inicio &lt;5 años, hiperfagia extrema, antecedente familiar fuerte.
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--mod-medico);margin-bottom:6px">🧂 Cushing</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <label class="feno-chip"><input type="checkbox" data-cush="estrias" style="display:none"> Estrías violáceas</label>
+        <label class="feno-chip"><input type="checkbox" data-cush="cara_luna" style="display:none"> Cara de luna</label>
+        <label class="feno-chip"><input type="checkbox" data-cush="joroba" style="display:none"> Joroba dorsal</label>
+        <label class="feno-chip"><input type="checkbox" data-cush="hta_dificil" style="display:none"> HTA refractaria</label>
+        <label class="feno-chip"><input type="checkbox" data-cush="debilidad" style="display:none"> Debilidad proximal</label>
+        <label class="feno-chip"><input type="checkbox" data-cush="hipok" style="display:none"> Hipocalemia</label>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Cortisol libre 24h (μg)</label><input type="number" id="cush-clu" step="0.1"></div>
+        <div class="form-control"><label>Supresión dexa 1mg (μg/dL)</label><input type="number" id="cush-dexa" step="0.1"></div>
+        <div class="form-control"><label>Status</label>
+          <select id="cush-status">
+            <option value="no_evaluado">No evaluado</option><option value="normal">Normal</option>
+            <option value="sospechoso">Sospechoso</option><option value="confirmado">Confirmado</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--mod-medico);margin:12px 0 6px">🦋 Hipotiroidismo</div>
+      <div class="form-control">
+        <label>Status</label>
+        <select id="hipo-status">
+          <option value="no_evaluado">No evaluado</option>
+          <option value="eutiroideo">Eutiroideo</option>
+          <option value="subclinico">Hipotiroidismo subclínico</option>
+          <option value="clinico">Hipotiroidismo clínico</option>
+        </select>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--mod-medico);margin:12px 0 6px">♀️ SOP — Criterios Rotterdam</div>
+      <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="sop-oligo"> Oligo/anovulación</label>
+      <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="sop-clinic"> Hiperandrogenismo clínico (hirsutismo, acné, alopecia)</label>
+      <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="sop-bioq"> Hiperandrogenismo bioquímico (T total/libre ↑)</label>
+      <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="sop-us"> Ovarios poliquísticos en US (≥12 folículos o vol &gt;10 mL)</label>
+      <div id="sop-result" style="font-size:12px;margin-top:4px;font-weight:600"></div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--mod-medico);margin:12px 0 6px">♂️ Hipogonadismo masculino</div>
+      <div class="form-row">
+        <div class="form-control">
+          <label>Status</label>
+          <select id="hipog-status">
+            <option value="no_evaluado">No evaluado</option><option value="normal">Normal</option>
+            <option value="sospechoso">Sospechoso</option><option value="confirmado">Confirmado</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--mod-medico);margin:12px 0 6px">🧬 Sospecha monogénica / inicio temprano</div>
+      <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="mono-early"> Obesidad inicio &lt;5 años</label>
+      <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="mono-consang"> Consanguinidad</label>
+      <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="mono-hyperph"> Hiperfagia severa</label>
+      <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="mono-panel"> Panel genético solicitado</label>
+      <div class="form-control">
+        <label>Resultado del panel</label>
+        <select id="mono-result">
+          <option value="">Pendiente / no aplica</option>
+          <option value="MC4R">MC4R</option><option value="leptina">Deficiencia leptina/LEPR</option>
+          <option value="POMC">POMC</option><option value="otra">Otra variante patogénica</option>
+          <option value="negativo">Negativo</option>
+        </select>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--mod-medico);margin:12px 0 6px">⚠️ Iatrogénica</div>
+      <div class="form-control">
+        <label>Causa farmacológica</label>
+        <input type="text" id="iatro-cause" placeholder="Corticoides, antipsicóticos, antidepresivos, insulina alta dosis...">
+      </div>
+
+      <div class="form-control">
+        <label>Notas</label>
+        <textarea id="endo-notes" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-endo-screen')">Cancelar</button>
+      <button class="btn-submit" onclick="saveEndocrineScreen()">Guardar tamizaje</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nota clínica estructurada -->
+<div class="modal-overlay" id="modal-clinical-note">
+  <div class="modal-content" style="max-width:780px">
+    <div class="modal-header">
+      <h3 class="modal-title">📝 Nota clínica estructurada</h3>
+      <button class="modal-close" onclick="closeModal('modal-clinical-note')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-control">
+          <label>Tipo de visita</label>
+          <select id="cn-type">
+            <option value="inicial">Inicial</option>
+            <option value="seguimiento">Seguimiento</option>
+            <option value="urgencia">Urgencia</option>
+            <option value="alta">Alta</option>
+          </select>
+        </div>
+        <div class="form-control"><label>Visita #</label><input type="number" id="cn-num" min="1"></div>
+        <div class="form-control"><label>Fecha</label><input type="date" id="cn-date"></div>
+      </div>
+
+      <div class="form-control"><label>Motivo de consulta</label><textarea id="cn-motivo" rows="2"></textarea></div>
+      <div class="form-control"><label>HPI / padecimiento actual</label><textarea id="cn-hpi" rows="3"></textarea></div>
+      <div class="form-control"><label>Antecedentes familiares relevantes</label><textarea id="cn-afam" rows="2"></textarea></div>
+      <div class="form-control"><label>Antecedentes personales de obesidad (edad inicio, disparadores)</label><textarea id="cn-apo" rows="2"></textarea></div>
+      <div class="form-control"><label>Intentos previos de pérdida de peso</label><textarea id="cn-intentos" rows="2"></textarea></div>
+      <div class="form-control"><label>Exploración física</label><textarea id="cn-ef" rows="2"></textarea></div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:8px 0 4px">Hallazgos exploratorios endocrinos</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:12px">
+        <label><input type="checkbox" id="cn-acanto"> Acantosis nigricans</label>
+        <label><input type="checkbox" id="cn-estrias"> Estrías violáceas</label>
+        <label><input type="checkbox" id="cn-hirsut"> Hirsutismo</label>
+        <label><input type="checkbox" id="cn-gineco"> Ginecomastia</label>
+        <label><input type="checkbox" id="cn-edema"> Edema</label>
+      </div>
+
+      <div class="form-control" style="margin-top:10px"><label>Plan diagnóstico</label><textarea id="cn-pdx" rows="2"></textarea></div>
+      <div class="form-control"><label>Plan terapéutico</label><textarea id="cn-ptx" rows="2"></textarea></div>
+      <div class="form-control"><label>Plan de seguimiento</label><textarea id="cn-pseg" rows="2"></textarea></div>
+      <div class="form-control"><label>Próxima cita</label><input type="date" id="cn-prox"></div>
+
+      <div style="background:#EBF5FB;padding:8px;border-radius:6px;margin-top:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px">🔬 Investigación</div>
+        <label style="display:block;font-size:12px;margin:3px 0"><input type="checkbox" id="cn-consent"> Consentimiento de investigación firmado</label>
+        <div class="form-control"><label>Tags de investigación (separados por coma)</label><input type="text" id="cn-tags" placeholder="ej: glp1_responder, masld, sop, hipogonadismo"></div>
+      </div>
+
+      <div class="form-control"><label>Notas libres</label><textarea id="cn-libre" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-clinical-note')">Cancelar</button>
+      <button class="btn-submit" onclick="saveClinicalNote()">Guardar nota</button>
     </div>
   </div>
 </div>
@@ -3038,6 +3354,12 @@ async function loadOBESData() {
       try { renderFenoSummaryCard(); } catch(e) {}
     }
 
+    // Load médico/endocrino datos
+    try { await loadMedications(); } catch(e) { console.warn('meds:', e.message); }
+    try { await loadEndocrineScreen(); } catch(e) { console.warn('endo screen:', e.message); }
+    try { await loadClinicalNotes(); } catch(e) { console.warn('notes:', e.message); }
+    try { recalcMedicoComorb(); } catch(e) { console.warn('comorb:', e.message); }
+
     // Load fenotipos
     await loadFenotipos();
   } catch (e) {
@@ -3173,6 +3495,7 @@ function renderDashboard() {
 
   // Render fenotipo summary card
   renderFenoSummaryCard();
+  try { recalcMedicoComorb(); } catch(e) {}
 
   // Draw weight chart
   renderWeightChart();
@@ -3381,6 +3704,10 @@ async function saveLabs() {
   const date = $('lab-date').value;
 
   const homaIR = glucose && insulin ? ((glucose * insulin) / 405).toFixed(2) : null;
+  const homaB = (glucose && insulin && glucose > 63) ? ((360 * insulin) / (glucose - 63)).toFixed(1) : null;
+  const quicki = (glucose && insulin) ? (1 / (Math.log10(glucose) + Math.log10(insulin))).toFixed(3) : null;
+  const trigVal = parseFloat($('lab-trig').value) || null;
+  const tyg = (trigVal && glucose) ? (Math.log(trigVal * glucose / 2)).toFixed(2) : null;
 
   // Calculate FIB-4 from age, AST, ALT, plt
   const dob = currentPatient.fecha_nacimiento ? new Date(currentPatient.fecha_nacimiento) : null;
@@ -3410,6 +3737,27 @@ async function saveLabs() {
       vitamin_d: parseFloat($('lab-vitd').value) || null,
       tsh: parseFloat($('lab-tsh').value) || null,
       uric_acid: parseFloat($('lab-uric').value) || null,
+      homa_beta: homaB ? parseFloat(homaB) : null,
+      quicki: quicki ? parseFloat(quicki) : null,
+      tyg_index: tyg ? parseFloat(tyg) : null,
+      t4_libre: parseFloat($('lab-t4l').value) || null,
+      t3_libre: parseFloat($('lab-t3l').value) || null,
+      anti_tpo: parseFloat($('lab-tpo').value) || null,
+      cortisol_am: parseFloat($('lab-cort').value) || null,
+      acth: parseFloat($('lab-acth').value) || null,
+      prolactina: parseFloat($('lab-prl').value) || null,
+      testosterona_total: parseFloat($('lab-tt').value) || null,
+      testosterona_libre: parseFloat($('lab-tl').value) || null,
+      shbg: parseFloat($('lab-shbg').value) || null,
+      lh: parseFloat($('lab-lh').value) || null,
+      fsh: parseFloat($('lab-fsh').value) || null,
+      estradiol: parseFloat($('lab-e2').value) || null,
+      igf1: parseFloat($('lab-igf1').value) || null,
+      leptina: parseFloat($('lab-lep').value) || null,
+      adiponectina: parseFloat($('lab-adip').value) || null,
+      pth: parseFloat($('lab-pth').value) || null,
+      creatinina: parseFloat($('lab-creat').value) || null,
+      microalbuminuria: parseFloat($('lab-malb').value) || null,
       created_at: date ? new Date(date).toISOString() : new Date().toISOString()
     });
 
@@ -3426,6 +3774,435 @@ async function saveLabs() {
   } finally {
     showLoading(false);
   }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   MÉDICO/ENDOCRINO — cálculos en vivo, comorbilidades, scores, render
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+function liveMetabCalc() {
+  const g = parseFloat($('lab-glucose')?.value);
+  const i = parseFloat($('lab-insulin')?.value);
+  const tg = parseFloat($('lab-trig')?.value);
+  // HOMA-β = (360 × insulina) / (glu - 63)
+  if (g && i && g > 63) {
+    const homab = ((360 * i) / (g - 63)).toFixed(1);
+    if ($('lab-homab-calc')) $('lab-homab-calc').textContent = homab;
+  }
+  // QUICKI = 1 / (log glu + log insulina)
+  if (g && i) {
+    const q = (1 / (Math.log10(g) + Math.log10(i))).toFixed(3);
+    if ($('lab-quicki-calc')) $('lab-quicki-calc').textContent = q;
+  }
+  // TyG = ln(TG × glu / 2)
+  if (tg && g) {
+    const tyg = (Math.log(tg * g / 2)).toFixed(2);
+    if ($('lab-tyg-calc')) $('lab-tyg-calc').textContent = tyg;
+  }
+}
+
+function liveEgfrCalc() {
+  // CKD-EPI 2021 simplificado
+  const cr = parseFloat($('lab-creat')?.value);
+  if (!cr || !currentPatient) return;
+  const dob = currentPatient.fecha_nacimiento ? new Date(currentPatient.fecha_nacimiento) : null;
+  const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : null;
+  if (!age) return;
+  const sex = currentPatient.sexo;
+  const k = sex === 'F' ? 0.7 : 0.9;
+  const a = sex === 'F' ? -0.241 : -0.302;
+  const f = sex === 'F' ? 1.012 : 1;
+  const min = Math.min(cr / k, 1);
+  const max = Math.max(cr / k, 1);
+  const egfr = (142 * Math.pow(min, a) * Math.pow(max, -1.200) * Math.pow(0.9938, age) * f).toFixed(0);
+  if ($('lab-egfr-calc')) $('lab-egfr-calc').textContent = egfr + ' mL/min';
+}
+
+function recalcMedicoComorb() {
+  if (!currentPatient) return;
+  const m = (currentPatient.measurements || [])[0] || {};
+  const labs = (currentPatient.labs || [])[0] || {};
+  const grid = $('medico-comorb-grid');
+  const sgrid = $('medico-scores-grid');
+  const alerts = $('medico-alerts');
+  if (!grid) return;
+
+  const dob = currentPatient.fecha_nacimiento ? new Date(currentPatient.fecha_nacimiento) : null;
+  const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : null;
+  const sex = currentPatient.sexo;
+  const bmi = m.bmi;
+  const waist = m.waist_cm;
+  const ict = m.ict;
+  const glu = labs.glucose_fasting;
+  const a1c = labs.hba1c;
+  const ins = labs.insulin_fasting;
+  const homaIR = labs.homa_ir;
+  const tg = labs.triglycerides;
+  const hdl = labs.hdl;
+  const ldl = labs.ldl;
+  const tot = labs.total_chol;
+  const alt = labs.alt;
+  const ast = labs.ast;
+  const fib4 = labs.fib4;
+  const cr = labs.creatinina;
+  const tsh = labs.tsh;
+
+  // ── Diagnósticos ─────────────────────────────────────────────────────────
+  const dx = [];
+  // DM2 / Prediabetes (ADA)
+  let dm = 'sin_eval';
+  if (a1c >= 6.5 || glu >= 126) dm = 'DM2';
+  else if (a1c >= 5.7 || glu >= 100) dm = 'Prediabetes';
+  else if (a1c) dm = 'Normoglucémico';
+  dx.push({label: 'Glucémico', value: dm, color: dm === 'DM2' ? '#C0392B' : dm === 'Prediabetes' ? '#D68910' : '#1D8348'});
+
+  // Dislipidemia
+  let dl = 'sin_eval';
+  const dlFlags = [];
+  if (ldl >= 160) dlFlags.push('LDL↑↑');
+  else if (ldl >= 130) dlFlags.push('LDL↑');
+  if (tg >= 200) dlFlags.push('TG↑↑');
+  else if (tg >= 150) dlFlags.push('TG↑');
+  if (hdl != null) {
+    if ((sex === 'M' && hdl < 40) || (sex === 'F' && hdl < 50)) dlFlags.push('HDL↓');
+  }
+  if (dlFlags.length > 0) dl = dlFlags.join(' '); else if (ldl || tg || hdl) dl = 'Normal';
+  dx.push({label: 'Dislipidemia', value: dl, color: dlFlags.length >= 2 ? '#C0392B' : dlFlags.length === 1 ? '#D68910' : '#1D8348'});
+
+  // MASLD/MASH
+  let masld = 'sin_eval';
+  if (fib4 >= 2.67) masld = 'MASLD alto riesgo';
+  else if (fib4 >= 1.3) masld = 'MASLD indeterminado';
+  else if ((alt && alt > 40) || (ast && ast > 40)) masld = 'MASLD probable';
+  else if (fib4 || alt) masld = 'Sin alarma';
+  dx.push({label: 'Hígado', value: masld, color: fib4 >= 2.67 ? '#C0392B' : (fib4 >= 1.3 || (alt > 40)) ? '#D68910' : '#1D8348'});
+
+  // Tiroides
+  let thy = 'sin_eval';
+  if (tsh != null) {
+    if (tsh > 10) thy = 'Hipotiroidismo clínico';
+    else if (tsh > 4.5) thy = 'Subclínico';
+    else if (tsh < 0.4) thy = 'Hipertiroideo';
+    else thy = 'Eutiroideo';
+  }
+  dx.push({label: 'Tiroides', value: thy, color: thy.includes('clínico') || thy === 'Hipertiroideo' ? '#C0392B' : thy === 'Subclínico' ? '#D68910' : '#1D8348'});
+
+  // Resistencia a insulina
+  let ri = 'sin_eval';
+  if (homaIR != null) ri = homaIR > 2.9 ? 'Resistencia (HOMA ' + homaIR + ')' : 'Sensible (HOMA ' + homaIR + ')';
+  dx.push({label: 'Insulina', value: ri, color: homaIR > 2.9 ? '#C0392B' : '#1D8348'});
+
+  // Renal
+  let renal = 'sin_eval';
+  if (labs.egfr) {
+    const e = labs.egfr;
+    if (e >= 90) renal = 'G1 (≥90)';
+    else if (e >= 60) renal = 'G2 (60–89)';
+    else if (e >= 45) renal = 'G3a (45–59)';
+    else if (e >= 30) renal = 'G3b (30–44)';
+    else if (e >= 15) renal = 'G4 (15–29)';
+    else renal = 'G5 (<15)';
+  }
+  dx.push({label: 'Renal (eGFR)', value: renal, color: labs.egfr < 60 ? '#C0392B' : labs.egfr < 90 ? '#D68910' : '#1D8348'});
+
+  grid.innerHTML = dx.map(d => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px">
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">${d.label}</div>
+      <div style="font-size:13px;font-weight:700;color:${d.color};margin-top:4px">${d.value}</div>
+    </div>`).join('');
+
+  // ── Scores de riesgo ─────────────────────────────────────────────────────
+  const scores = [];
+
+  // FINDRISC simplificado (necesita historia familiar; aquí estimamos parcial)
+  let findrisc = 0;
+  if (age >= 65) findrisc += 4; else if (age >= 55) findrisc += 3; else if (age >= 45) findrisc += 2;
+  if (bmi >= 30) findrisc += 3; else if (bmi >= 25) findrisc += 1;
+  if (waist) {
+    if (sex === 'M') { if (waist >= 102) findrisc += 4; else if (waist >= 94) findrisc += 3; }
+    else { if (waist >= 88) findrisc += 4; else if (waist >= 80) findrisc += 3; }
+  }
+  if (glu >= 100 && glu < 126) findrisc += 5;
+  scores.push({label: 'FINDRISC (parcial)', value: findrisc + '/26', color: findrisc >= 15 ? '#C0392B' : findrisc >= 12 ? '#D68910' : '#1D8348'});
+
+  // ASCVD 10y muy simplificado (Pooled cohort proxy) — requiere más, calculamos un score categórico
+  let ascvdNote = '—';
+  if (age >= 40 && tot && hdl) {
+    let pts = 0;
+    if (age >= 60) pts += 2; else if (age >= 50) pts += 1;
+    if (tot >= 240) pts += 2; else if (tot >= 200) pts += 1;
+    if (hdl < 40) pts += 1;
+    if (dm === 'DM2') pts += 2;
+    if (m.systolic_bp >= 140 || labs.systolic_bp >= 140) pts += 1;
+    ascvdNote = pts >= 5 ? 'Alto' : pts >= 3 ? 'Intermedio' : 'Bajo';
+  }
+  scores.push({label: 'ASCVD 10y (estim.)', value: ascvdNote, color: ascvdNote === 'Alto' ? '#C0392B' : ascvdNote === 'Intermedio' ? '#D68910' : '#1D8348'});
+
+  // %TWL acumulado
+  let twl = '—';
+  const meas = currentPatient.measurements || [];
+  if (meas.length >= 2) {
+    const baseline = meas[meas.length - 1].weight_kg;
+    const cur = meas[0].weight_kg;
+    if (baseline && cur) twl = (((baseline - cur) / baseline) * 100).toFixed(1) + '%';
+  }
+  scores.push({label: '%TWL acumulado', value: twl, color: '#1D8348'});
+
+  // Riesgo bariátrico (criterios clásicos)
+  let bari = '—';
+  if (bmi >= 40) bari = 'Indicación (IMC≥40)';
+  else if (bmi >= 35 && (dm === 'DM2' || dx[1].value !== 'Normal' || dx[2].value.includes('MASLD'))) bari = 'Indicación (IMC≥35 + comorbilidad)';
+  else if (bmi >= 30 && dm === 'DM2') bari = 'Considerar metab. (IMC≥30 + DM2)';
+  scores.push({label: 'Bariátrica', value: bari, color: bari.includes('Indicación') ? '#C0392B' : bari.includes('Considerar') ? '#D68910' : '#1D8348'});
+
+  sgrid.innerHTML = scores.map(d => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px">
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">${d.label}</div>
+      <div style="font-size:13px;font-weight:700;color:${d.color};margin-top:4px">${d.value}</div>
+    </div>`).join('');
+
+  // Alerts
+  const al = [];
+  if (fib4 >= 2.67) al.push('🔴 FIB-4 alto: derivar a hepatología (riesgo fibrosis avanzada).');
+  if (a1c >= 9) al.push('🔴 HbA1c ≥9%: intensificar terapia / considerar insulina.');
+  if (dx[1].value.includes('LDL↑↑')) al.push('🟠 LDL ≥160: estatina alta intensidad.');
+  if (m.eoss_stage >= 3) al.push('🔴 EOSS ≥3: priorizar manejo de daño orgánico.');
+  if (homaIR > 5) al.push('🟠 HOMA-IR muy alto: considerar metformina + GLP-1.');
+  alerts.innerHTML = al.length ? al.map(a => '<div style="background:#FDF2E9;border-left:3px solid #D68910;padding:6px;border-radius:4px;font-size:12px;margin-bottom:4px">' + a + '</div>').join('') : '';
+
+  // Update top 'cur-*' indices
+  if ($('cur-bmi')) $('cur-bmi').textContent = bmi || '—';
+  if ($('cur-icc')) $('cur-icc').textContent = m.icc || '—';
+  if ($('cur-ict')) $('cur-ict').textContent = ict || '—';
+  if ($('cur-homa')) $('cur-homa').textContent = homaIR || '—';
+  if ($('cur-homab')) $('cur-homab').textContent = labs.homa_beta || '—';
+  if ($('cur-quicki')) $('cur-quicki').textContent = labs.quicki || '—';
+  if ($('cur-tyg')) $('cur-tyg').textContent = labs.tyg_index || '—';
+  if ($('cur-tghdl') && tg && hdl) $('cur-tghdl').textContent = (tg / hdl).toFixed(2);
+  if ($('cur-egfr')) $('cur-egfr').textContent = labs.egfr || '—';
+  if ($('cur-twl')) $('cur-twl').textContent = twl;
+}
+
+/* ── Farmacoterapia ───────────────────────────────────────────────────── */
+const MED_CONTRA = {
+  glp1: 'MTC personal/familiar, MEN2, pancreatitis aguda activa, embarazo, gastroparesia severa.',
+  glp1_gip: 'Mismas que GLP-1 + colelitiasis sintomática.',
+  naltrexona_bupropion: 'Convulsiones, anorexia/bulimia, opioides crónicos, glaucoma agudo, embarazo.',
+  fentermina_topiramato: 'Glaucoma, hipertiroidismo, IMAOs, embarazo (categoría X), enfermedad cardiovascular inestable.',
+  orlistat: 'Síndrome de malabsorción crónica, colestasis.',
+  setmelanotida: 'Solo en obesidad monogénica confirmada (POMC/PCSK1/LEPR/MC4R/Bardet-Biedl).',
+  metformina: 'eGFR <30, acidosis metabólica.'
+};
+function onMedClassChange() {
+  const c = $('med-class').value;
+  const w = $('med-contra-warn');
+  if (MED_CONTRA[c]) {
+    w.style.display = 'block';
+    w.innerHTML = '<b>Contraindicaciones:</b> ' + MED_CONTRA[c];
+  } else {
+    w.style.display = 'none';
+  }
+}
+function openMedicationModal() {
+  if (!currentPatient) return showToast('Selecciona un paciente', 'error');
+  const last = (currentPatient.measurements || [])[0];
+  if (last && $('med-baseline')) $('med-baseline').value = last.weight_kg || '';
+  if ($('med-start')) $('med-start').value = new Date().toISOString().slice(0, 10);
+  openModal('modal-medication');
+}
+async function saveMedication() {
+  if (!currentPatient) return;
+  const drug_class = $('med-class').value;
+  const drug_name = $('med-name').value.trim();
+  if (!drug_class || !drug_name) return showToast('Clase y nombre del fármaco requeridos', 'error');
+  showLoading(true);
+  try {
+    const { error } = await sbClient.from('obes_medications').insert({
+      patient_id: currentPatient.id,
+      drug_class, drug_name,
+      dose: $('med-dose').value || null,
+      start_date: $('med-start').value || null,
+      escalation_plan: $('med-escalation').value || null,
+      baseline_weight_kg: parseFloat($('med-baseline').value) || null,
+      current_twl_pct: parseFloat($('med-twl').value) || null,
+      current_ewl_pct: parseFloat($('med-ewl').value) || null,
+      adverse_effects: $('med-ae').value || null,
+      contraindications_checked: $('med-contra-checked').checked,
+      notes: $('med-notes').value || null,
+      status: 'activo'
+    });
+    if (error) throw error;
+    closeModal('modal-medication');
+    ['med-name','med-dose','med-escalation','med-twl','med-ewl','med-ae','med-notes'].forEach(id => { if($(id)) $(id).value = ''; });
+    await loadMedications();
+    showToast('Fármaco guardado', 'success');
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+async function loadMedications() {
+  if (!currentPatient) return;
+  const { data } = await sbClient.from('obes_medications').select('*').eq('patient_id', currentPatient.id).order('start_date', { ascending: false });
+  currentPatient.medications = data || [];
+  renderMedications();
+}
+function renderMedications() {
+  const body = $('medico-pharma-body');
+  if (!body) return;
+  const meds = currentPatient?.medications || [];
+  if (!meds.length) { body.innerHTML = '<div class="text-muted text-sm">Sin fármacos registrados</div>'; return; }
+  body.innerHTML = meds.map(m => {
+    const statusColor = m.status === 'activo' ? '#1D8348' : '#7F8C8D';
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><b>${m.drug_name}</b> <span style="font-size:11px;color:var(--text-muted)">· ${m.drug_class}</span></div>
+        <span style="background:${statusColor};color:#fff;font-size:10px;padding:2px 6px;border-radius:4px">${m.status}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+        ${m.dose ? 'Dosis: <b>' + m.dose + '</b> · ' : ''}
+        ${m.start_date ? 'Inicio: ' + m.start_date + ' · ' : ''}
+        ${m.current_twl_pct != null ? '%TWL: <b>' + m.current_twl_pct + '%</b>' : ''}
+      </div>
+      ${m.escalation_plan ? '<div style="font-size:11px;margin-top:4px"><i>Escalación:</i> ' + m.escalation_plan + '</div>' : ''}
+      ${m.adverse_effects ? '<div style="font-size:11px;color:#C0392B;margin-top:4px">⚠️ ' + m.adverse_effects + '</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ── Tamizaje endocrino secundario ───────────────────────────────────── */
+async function saveEndocrineScreen() {
+  if (!currentPatient) return;
+  const cushFlags = [...document.querySelectorAll('[data-cush]:checked')].map(x => x.dataset.cush);
+  const sopRot = [$('sop-oligo').checked, $('sop-clinic').checked || $('sop-bioq').checked, $('sop-us').checked].filter(Boolean).length;
+  showLoading(true);
+  try {
+    const { error } = await sbClient.from('obes_endocrine_screen').insert({
+      patient_id: currentPatient.id,
+      cushing_clinical_flags: cushFlags.length ? cushFlags : null,
+      cushing_cortisol_libre_24h: parseFloat($('cush-clu').value) || null,
+      cushing_supresion_dexa: parseFloat($('cush-dexa').value) || null,
+      cushing_status: $('cush-status').value,
+      hipotiroidismo_status: $('hipo-status').value,
+      sop_oligo_anovulacion: $('sop-oligo').checked,
+      sop_hiperandrogenismo_clinico: $('sop-clinic').checked,
+      sop_hiperandrogenismo_bioquimico: $('sop-bioq').checked,
+      sop_ovarios_poliquisticos_us: $('sop-us').checked,
+      sop_status: sopRot >= 2 ? 'cumple_rotterdam' : 'no_cumple',
+      hipogonadismo_status: $('hipog-status').value,
+      obesidad_inicio_temprano: $('mono-early').checked,
+      consanguinidad: $('mono-consang').checked,
+      hiperfagia_severa: $('mono-hyperph').checked,
+      panel_genetico_solicitado: $('mono-panel').checked,
+      panel_genetico_resultado: $('mono-result').value || null,
+      causa_iatrogenica: $('iatro-cause').value || null,
+      notes: $('endo-notes').value || null
+    });
+    if (error) throw error;
+    closeModal('modal-endo-screen');
+    await loadEndocrineScreen();
+    showToast('Tamizaje guardado', 'success');
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+async function loadEndocrineScreen() {
+  if (!currentPatient) return;
+  const { data } = await sbClient.from('obes_endocrine_screen').select('*').eq('patient_id', currentPatient.id).order('screen_date', { ascending: false }).limit(5);
+  currentPatient.endoScreens = data || [];
+  renderEndocrineScreen();
+}
+function renderEndocrineScreen() {
+  const body = $('medico-endo-body');
+  if (!body) return;
+  const arr = currentPatient?.endoScreens || [];
+  if (!arr.length) return;
+  body.innerHTML = arr.map(s => {
+    const flags = [];
+    if (s.cushing_status && s.cushing_status !== 'no_evaluado') flags.push('Cushing: <b>' + s.cushing_status + '</b>');
+    if (s.hipotiroidismo_status && s.hipotiroidismo_status !== 'no_evaluado') flags.push('Tiroides: <b>' + s.hipotiroidismo_status + '</b>');
+    if (s.sop_status === 'cumple_rotterdam') flags.push('<b style="color:#C0392B">SOP Rotterdam ✓</b>');
+    if (s.hipogonadismo_status && s.hipogonadismo_status !== 'no_evaluado') flags.push('Hipogonad.: <b>' + s.hipogonadismo_status + '</b>');
+    if (s.panel_genetico_resultado && s.panel_genetico_resultado !== 'negativo') flags.push('🧬 <b>' + s.panel_genetico_resultado + '</b>');
+    if (s.causa_iatrogenica) flags.push('Iatrogénica: ' + s.causa_iatrogenica);
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+      <div style="font-size:11px;color:var(--text-muted)">${s.screen_date || ''}</div>
+      <div style="font-size:12px;margin-top:4px">${flags.length ? flags.join(' · ') : '<span class="text-muted">Sin hallazgos relevantes</span>'}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Notas clínicas estructuradas ─────────────────────────────────────── */
+function openClinicalNoteModal() {
+  if (!currentPatient) return showToast('Selecciona un paciente', 'error');
+  if ($('cn-date')) $('cn-date').value = new Date().toISOString().slice(0, 10);
+  openModal('modal-clinical-note');
+}
+async function saveClinicalNote() {
+  if (!currentPatient) return;
+  const tags = $('cn-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+  showLoading(true);
+  try {
+    const { error } = await sbClient.from('obes_clinical_notes').insert({
+      patient_id: currentPatient.id,
+      note_date: $('cn-date').value || null,
+      visit_type: $('cn-type').value,
+      visit_number: parseInt($('cn-num').value) || null,
+      motivo_consulta: $('cn-motivo').value || null,
+      hpi: $('cn-hpi').value || null,
+      antecedentes_familiares_relevantes: $('cn-afam').value || null,
+      ant_personales_obesidad: $('cn-apo').value || null,
+      ant_intentos_perdida_peso: $('cn-intentos').value || null,
+      exploracion_fisica: $('cn-ef').value || null,
+      acantosis_nigricans: $('cn-acanto').checked,
+      estrias_violaceas: $('cn-estrias').checked,
+      hirsutismo: $('cn-hirsut').checked,
+      ginecomastia: $('cn-gineco').checked,
+      edema: $('cn-edema').checked,
+      plan_dx: $('cn-pdx').value || null,
+      plan_tx: $('cn-ptx').value || null,
+      plan_seguimiento: $('cn-pseg').value || null,
+      proxima_cita: $('cn-prox').value || null,
+      consentimiento_investigacion: $('cn-consent').checked,
+      research_tags: tags.length ? tags : null,
+      notes_libres: $('cn-libre').value || null,
+      created_by: currentUser?.email || null
+    });
+    if (error) throw error;
+    closeModal('modal-clinical-note');
+    ['cn-motivo','cn-hpi','cn-afam','cn-apo','cn-intentos','cn-ef','cn-pdx','cn-ptx','cn-pseg','cn-tags','cn-libre'].forEach(id => { if($(id)) $(id).value = ''; });
+    await loadClinicalNotes();
+    showToast('Nota guardada', 'success');
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+async function loadClinicalNotes() {
+  if (!currentPatient) return;
+  const { data } = await sbClient.from('obes_clinical_notes').select('*').eq('patient_id', currentPatient.id).order('note_date', { ascending: false }).limit(10);
+  currentPatient.clinicalNotes = data || [];
+  renderClinicalNotes();
+}
+function renderClinicalNotes() {
+  const body = $('medico-notes-body');
+  if (!body) return;
+  const arr = currentPatient?.clinicalNotes || [];
+  if (!arr.length) return;
+  body.innerHTML = arr.map(n => {
+    const tagsHtml = (n.research_tags || []).map(t => '<span style="background:#EBF5FB;color:var(--primary);font-size:10px;padding:2px 5px;border-radius:3px;margin-right:3px">' + t + '</span>').join('');
+    const consent = n.consentimiento_investigacion ? '<span style="background:#1D8348;color:#fff;font-size:9px;padding:2px 5px;border-radius:3px">CONSENT ✓</span>' : '';
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between"><b style="font-size:12px">${n.visit_type || 'visita'} ${n.visit_number ? '#' + n.visit_number : ''}</b><span style="font-size:11px;color:var(--text-muted)">${n.note_date || ''} ${consent}</span></div>
+      ${n.motivo_consulta ? '<div style="font-size:12px;margin-top:4px"><i>Motivo:</i> ' + n.motivo_consulta + '</div>' : ''}
+      ${n.plan_tx ? '<div style="font-size:12px;margin-top:2px"><i>Plan tx:</i> ' + n.plan_tx + '</div>' : ''}
+      ${tagsHtml ? '<div style="margin-top:6px">' + tagsHtml + '</div>' : ''}
+    </div>`;
+  }).join('');
 }
 
 async function saveEOSS() {
