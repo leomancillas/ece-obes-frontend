@@ -1477,6 +1477,17 @@
           </div>
         </div>
 
+        <div class="panel mb-8" id="dash-feno-card" style="border-left:4px solid var(--mod-feno);display:none">
+          <div class="panel-header">
+            <span class="panel-title">🧬 Fenotipo (última evaluación)</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn-add" style="background:#777" onclick="openFenotiposHistory()">📜 Historial</button>
+              <button class="btn-add" style="background:var(--mod-feno)" onclick="switchView('fenotipos')">Abrir →</button>
+            </div>
+          </div>
+          <div class="panel-body" id="dash-feno-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:14px"></div>
+        </div>
+
         <div class="dashboard-grid">
           <div>
             <div class="panel mb-8">
@@ -2687,6 +2698,19 @@
 <!-- Toast Container -->
 <div id="toast-container"></div>
 
+<!-- Fenotipos History Modal -->
+<div class="modal-overlay" id="modal-feno-history">
+  <div class="modal-content" style="max-width:720px">
+    <div class="modal-header">
+      <span>📜 Historial de Fenotipificaciones</span>
+      <button class="btn-close" onclick="closeModal('modal-feno-history')">×</button>
+    </div>
+    <div class="modal-body" id="feno-history-body" style="max-height:60vh;overflow-y:auto">
+      <div class="text-muted text-center" style="padding:20px">Cargando…</div>
+    </div>
+  </div>
+</div>
+
 <!-- Loading Overlay -->
 <div id="loading-overlay">
   <div class="spinner"></div>
@@ -2925,6 +2949,15 @@ async function loadOBESData() {
       .limit(20);
     currentPatient.labs = labs || [];
 
+    // Load latest fenotipo into currentPatient for dashboard card
+    const { data: fenoLatest } = await sbClient
+      .from('obes_fenotipos')
+      .select('*')
+      .eq('patient_id', currentPatient.id)
+      .order('fecha_fenotipificacion', { ascending: false })
+      .limit(1);
+    currentPatient.latestFenotipo = fenoLatest?.[0] || null;
+
     // Load fenotipos
     await loadFenotipos();
   } catch (e) {
@@ -3058,8 +3091,66 @@ function renderDashboard() {
   $('stat-hba1c').textContent = '—';
   $('stat-twl').textContent = '—';
 
+  // Render fenotipo summary card
+  renderFenoSummaryCard();
+
   // Draw weight chart
   renderWeightChart();
+}
+
+function renderFenoSummaryCard() {
+  const card = $('dash-feno-card');
+  const body = $('dash-feno-body');
+  if (!card || !body) return;
+  const f = currentPatient?.latestFenotipo;
+  if (!f) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const cell = (label, value, color) =>
+    `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px">
+       <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">${label}</div>
+       <div style="font-size:14px;font-weight:700;color:${color || 'var(--text)'};margin-top:4px">${value || '—'}</div>
+     </div>`;
+  const fecha = f.fecha_fenotipificacion ? new Date(f.fecha_fenotipificacion).toLocaleDateString('es-MX') : '—';
+  const lancetColor = f.lancet_categoria === 'OC' ? '#C0392B' : f.lancet_categoria === 'OP' ? '#D68910' : 'var(--text)';
+  const soColor = (f.so_diagnostico && f.so_diagnostico.includes('confirmada')) ? '#C0392B' : 'var(--text)';
+  body.innerHTML = [
+    cell('Lancet 2025', f.lancet_categoria || 'sin clasificar', lancetColor),
+    cell('Fenotipo metab.', f.fenotipo_metabolico || '—'),
+    cell('Endotipo CBEC', f.endotipo_dominante && f.endotipo_dominante !== 'sin_evaluar' ? f.endotipo_dominante : '—'),
+    cell('Sarcopenia obes.', f.so_diagnostico || '—', soColor),
+    cell('Etiología', f.etiologia_principal || '—'),
+    cell('Fecha eval.', fecha)
+  ].join('');
+}
+
+async function openFenotiposHistory() {
+  if (!currentPatient) return;
+  openModal('modal-feno-history');
+  const body = $('feno-history-body');
+  body.innerHTML = '<div class="text-muted text-center" style="padding:20px">Cargando…</div>';
+  const { data, error } = await sbClient
+    .from('obes_fenotipos')
+    .select('fecha_fenotipificacion, lancet_categoria, fenotipo_metabolico, endotipo_dominante, so_diagnostico, etiologia_principal, metsyn_criterios_positivos')
+    .eq('patient_id', currentPatient.id)
+    .order('fecha_fenotipificacion', { ascending: false });
+  if (error || !data || data.length === 0) {
+    body.innerHTML = '<div class="text-muted text-center" style="padding:20px">Sin evaluaciones previas</div>';
+    return;
+  }
+  body.innerHTML = data.map((f, i) => {
+    const fecha = new Date(f.fecha_fenotipificacion).toLocaleString('es-MX');
+    const tag = i === 0 ? '<span style="background:var(--mod-feno);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px">ACTUAL</span>' : '';
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">
+      <div style="font-weight:600;font-size:13px">${fecha}${tag}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px;display:flex;flex-wrap:wrap;gap:10px">
+        <span>Lancet: <b>${f.lancet_categoria || '—'}</b></span>
+        <span>MetSyn: <b>${f.fenotipo_metabolico || '—'}</b> (${f.metsyn_criterios_positivos || 0}/5)</span>
+        <span>Endotipo: <b>${f.endotipo_dominante || '—'}</b></span>
+        <span>SO: <b>${f.so_diagnostico || '—'}</b></span>
+        <span>Etiología: <b>${f.etiologia_principal || '—'}</b></span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderWeightChart() {
@@ -3920,6 +4011,17 @@ async function saveFenotipos() {
     return;
   }
 
+  // Validation: require at least one of (Lancet adip, Lancet dysf, MetSyn, CBEC, etiology)
+  const hasAdip = ['lnc-imc','lnc-ict','lnc-bf','lnc-cin'].some(id => $(id)?.querySelector('input')?.checked);
+  const hasDysf = ['lnc-dm2','lnc-hta','lnc-dislip','lnc-masld','lnc-ir','lnc-ascvd','lnc-saos','lnc-sho','lnc-oa','lnc-erge','lnc-dep','lnc-bed','lnc-6mwt'].some(id => $(id)?.checked);
+  const hasMet = ['met-cin','met-tg','met-hdl','met-pa','met-glu'].some(id => $(id)?.querySelector('input')?.checked);
+  const hasCbec = Object.keys(cbecAnswers).length > 0;
+  const hasEtio = !!$('feno-etiologia')?.value;
+  if (!hasAdip && !hasDysf && !hasMet && !hasCbec && !hasEtio) {
+    showToast('Marca al menos un criterio antes de guardar', 'error');
+    return;
+  }
+
   // Gather all data
   const adipCriteria = ['lnc-imc','lnc-ict','lnc-bf','lnc-cin'].filter(id => $(id)?.querySelector('input')?.checked);
   const dysfCriteria = ['lnc-dm2','lnc-hta','lnc-dislip','lnc-masld','lnc-ir','lnc-ascvd','lnc-saos','lnc-sho','lnc-oa','lnc-erge','lnc-dep','lnc-bed','lnc-6mwt'].filter(id => $(id)?.checked);
@@ -3982,6 +4084,8 @@ async function saveFenotipos() {
   try {
     const { error } = await sbClient.from('obes_fenotipos').insert(fenoData);
     if (error) throw error;
+    currentPatient.latestFenotipo = fenoData;
+    if (typeof renderFenoSummaryCard === 'function') renderFenoSummaryCard();
     showToast('Fenotipo guardado (versión nueva)', 'success');
   } catch (e) {
     showToast('Error guardando fenotipo: ' + e.message, 'error');
