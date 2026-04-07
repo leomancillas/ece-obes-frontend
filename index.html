@@ -174,7 +174,7 @@
       color: var(--sb-text);
       font-size: 13px;
       font-weight: 500;
-      transition: all .15s;
+      transition: background .15s, color .15s;
       position: relative;
     }
     .sidebar-item:hover { background: var(--sb-hover); color: #fff; }
@@ -200,7 +200,6 @@
       overflow-y: auto;
       position: relative;
       background: var(--bg);
-      contain: layout style;
     }
 
     /* ─── AUTH SCREEN ────────────────────────────────────────── */
@@ -301,9 +300,9 @@
       font-family: inherit;
       cursor: pointer;
       box-shadow: 0 4px 20px rgba(26,82,118,.4);
-      transition: all .2s;
+      transition: box-shadow .2s;
     }
-    #no-patient .btn-search:hover { box-shadow:0 6px 28px rgba(26,82,118,.5); transform:translateY(-2px); }
+    #no-patient .btn-search:hover { box-shadow:0 6px 28px rgba(26,82,118,.5); }
 
     /* ─── SEARCH VIEW (full-page, replaces modal) ────────────── */
     #view-search {
@@ -440,9 +439,8 @@
       border-radius: 14px;
       box-shadow: var(--shadow);
       overflow: hidden;
-      transition: box-shadow .2s,transform .15s;
     }
-    .panel:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); transform:translateY(-1px); }
+    .panel:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); }
     .panel-header {
       padding: 12px 16px 10px;
       border-bottom: 1px solid var(--border);
@@ -580,9 +578,8 @@
       border-radius: 14px;
       box-shadow: var(--shadow);
       overflow: hidden;
-      transition: box-shadow .2s, transform .15s;
     }
-    .section-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); transform: translateY(-1px); }
+    .section-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); }
     .section-card-header {
       padding: 13px 18px;
       border-bottom: 1px solid var(--border);
@@ -604,11 +601,11 @@
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      transition: all .15s;
+      transition: box-shadow .15s;
       box-shadow: 0 2px 8px rgba(26,82,118,.3);
       letter-spacing:.1px;
     }
-    .btn-add:hover { box-shadow: 0 4px 16px rgba(26,82,118,.4); transform:translateY(-1px); }
+    .btn-add:hover { box-shadow: 0 4px 16px rgba(26,82,118,.4); }
 
     /* Stats row */
     .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
@@ -619,13 +616,12 @@
       box-shadow: var(--shadow);
       padding: 18px 20px;
       position: relative; overflow: hidden;
-      transition: box-shadow .2s, transform .2s;
     }
     .stat-card::after {
       content:''; position:absolute; top:0; left:0; right:0; height:3px;
       border-radius:14px 14px 0 0;
     }
-    .stat-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.10); transform:translateY(-1px); }
+    .stat-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.10); }
     .stats-row .stat-card:nth-child(1)::after { background:linear-gradient(90deg,var(--mod-medico),#2471A3); }
     .stats-row .stat-card:nth-child(2)::after { background:linear-gradient(90deg,#C96B10,#E67E22); }
     .stats-row .stat-card:nth-child(3)::after { background:linear-gradient(90deg,var(--mod-rehab),#E74C3C); }
@@ -651,7 +647,7 @@
       cursor: pointer;
       font-size: 12px;
       font-weight: 700;
-      transition: all .15s;
+      transition: border-color .15s;
     }
     .eoss-stage-btn.s0 { background: #D5F5E3; color: #1D8348; }
     .eoss-stage-btn.s1 { background: #FEF9E7; color: #9A7D0A; }
@@ -689,7 +685,7 @@
     .fenotipo-label { font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700; letter-spacing:.4px; margin-bottom:5px; }
     .fenotipo-value { font-size:12px; font-weight:700; color:var(--text); line-height:1.35; }
     .fenotipo-sub   { font-size:10px; color:var(--text-muted); margin-top:2px; }
-    .endotipo-opt { border:2px solid var(--border); border-radius:8px; padding:10px 12px; cursor:pointer; transition:all .15s; margin-bottom:8px; }
+    .endotipo-opt { border:2px solid var(--border); border-radius:8px; padding:10px 12px; cursor:pointer; transition:border-color .15s, background .15s; margin-bottom:8px; }
     .endotipo-opt.sel { border-color:var(--primary); background:rgba(26,82,118,.07); }
     .endotipo-opt:hover:not(.sel) { border-color:#aaa; }
     .lipedema-row { display:flex; align-items:flex-start; gap:10px; padding:8px; border-radius:6px; margin-bottom:6px; background:var(--bg); }
@@ -705,7 +701,7 @@
     .cbec-q { border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px; }
     .cbec-q-label { font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text); }
     .cbec-opts { display:flex;gap:8px; }
-    .cbec-opt { flex:1;text-align:center;border:1.5px solid var(--border);border-radius:6px;padding:7px 4px;cursor:pointer;font-size:11px;transition:all .15s; }
+    .cbec-opt { flex:1;text-align:center;border:1.5px solid var(--border);border-radius:6px;padding:7px 4px;cursor:pointer;font-size:11px;transition:border-color .15s, background .15s; }
     .cbec-opt.sel { border-color:var(--primary);background:rgba(26,82,118,.1);font-weight:700;color:var(--primary); }
     .cbec-score-bar { height:6px;border-radius:3px;background:var(--border);margin-top:4px;overflow:hidden; }
     .cbec-score-fill { height:100%;border-radius:3px;background:var(--primary);transition:width .3s; }
@@ -986,14 +982,13 @@
     #view-sueno .module-icon-lg       { background: linear-gradient(135deg,var(--mod-sueno),#1A5276); }
 
     /* Mod buttons on dashboard - colorized per module */
-    .mod-btn { transition: all .18s; }
-    .mod-btn:hover { transform: translateX(3px); box-shadow: 0 3px 14px rgba(0,0,0,.10); }
+    .mod-btn:hover { box-shadow: 0 3px 14px rgba(0,0,0,.10); }
 
     /* Better modal header */
     .modal-header { border-radius: 16px 16px 0 0; }
     .modal-footer { background: linear-gradient(to bottom,var(--bg),#E8EDF3); border-radius: 0 0 16px 16px; }
     .modal-header h3 { font-size:16px; font-weight:800; letter-spacing:-.2px; }
-    .modal-close { background:var(--bg); border:none; font-size:18px; cursor:pointer; color:var(--text-muted); width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all .15s; line-height:1; }
+    .modal-close { background:var(--bg); border:none; font-size:18px; cursor:pointer; color:var(--text-muted); width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:background .15s; line-height:1; }
     .modal-close:hover { background:var(--border); color:var(--text); }
 
     /* Enhanced pill styles */
@@ -1001,8 +996,8 @@
     .pill.gray   { background:#EDEEF0; color:#525D6A; }
 
     /* Traffic light items - stronger */
-    .tl-item { border: 1px solid var(--border); transition:all .15s; }
-    .tl-item:hover { box-shadow: var(--shadow); transform:translateX(2px); }
+    .tl-item { border: 1px solid var(--border); }
+    .tl-item:hover { box-shadow: var(--shadow); }
 
     /* Chart empty state */
     .chart-empty { display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);gap:8px; }
@@ -1077,7 +1072,7 @@
       background: none; border: 1px solid rgba(255,255,255,.25); border-radius: 20px;
       color: rgba(255,255,255,.85); padding: 5px 12px; cursor: pointer;
       font-size: 13px; display: flex; align-items: center; gap: 6px;
-      transition: all .2s; margin-left: 8px; white-space: nowrap;
+      transition: background .2s, border-color .2s; margin-left: 8px; white-space: nowrap;
     }
     .dark-toggle:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.4); }
 
@@ -1088,9 +1083,9 @@
       background: var(--primary); color: #fff; border: none; cursor: pointer;
       font-size: 22px; box-shadow: 0 4px 18px rgba(26,82,118,.38);
       display: none; align-items: center; justify-content: center;
-      transition: all .25s;
+      transition: box-shadow .25s;
     }
-    #chat-fab:hover { transform: scale(1.09); box-shadow: 0 6px 22px rgba(26,82,118,.48); }
+    #chat-fab:hover { box-shadow: 0 6px 22px rgba(26,82,118,.48); }
     #chat-badge {
       position: absolute; top: -3px; right: -3px;
       background: #C0392B; color: #fff; border-radius: 50%;
@@ -1340,7 +1335,7 @@
           </div>
           <div class="eoss-badge-lg" id="dash-eoss-badge">EOSS ?</div>
           <div class="identity-alerts" id="dash-alerts"></div>
-          <button onclick="exportPatientCSV()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--text-muted);transition:all .15s" onmouseover="this.style.borderColor=this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">⬇ CSV</button>
+          <button onclick="exportPatientCSV()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--text-muted);transition:border-color .15s, color .15s" onmouseover="this.style.borderColor=this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">⬇ CSV</button>
         </div>
 
         <!-- Stats row -->
@@ -2159,22 +2154,22 @@
             <span class="section-card-title">📖 Recursos y guías clínicas</span>
           </div>
           <div class="section-card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
-            <a href="https://www.obesitycanada.ca/guidelines/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <a href="https://www.obesitycanada.ca/guidelines/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:border-color .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
               <span style="font-size:20px">🍁</span><div><div style="font-size:12px;font-weight:700">Guías Canadienses de Obesidad 2020</div><div style="font-size:11px;color:var(--text-muted)">Obesity Canada — evidencia sólida</div></div>
             </a>
-            <a href="https://www.endocrine.org/clinical-practice-guidelines/obesity" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <a href="https://www.endocrine.org/clinical-practice-guidelines/obesity" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:border-color .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
               <span style="font-size:20px">🔬</span><div><div style="font-size:12px;font-weight:700">Endocrine Society — Obesity CPG</div><div style="font-size:11px;color:var(--text-muted)">Guía práctica endocrinológica</div></div>
             </a>
-            <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8329366/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8329366/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:border-color .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
               <span style="font-size:20px">📊</span><div><div style="font-size:12px;font-weight:700">EOSS — Edmonton Staging System</div><div style="font-size:11px;color:var(--text-muted)">Artículo original — Sharma & Kushner</div></div>
             </a>
-            <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2206038" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2206038" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:border-color .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
               <span style="font-size:20px">💉</span><div><div style="font-size:12px;font-weight:700">Tirzepatide SURMOUNT-1 (NEJM)</div><div style="font-size:11px;color:var(--text-muted)">%TWL hasta 20.9% — ensayo pivotal</div></div>
             </a>
-            <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2032183" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2032183" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:border-color .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
               <span style="font-size:20px">💊</span><div><div style="font-size:12px;font-weight:700">Semaglutide STEP-1 (NEJM)</div><div style="font-size:11px;color:var(--text-muted)">%TWL 14.9% — semaglutide 2.4mg</div></div>
             </a>
-            <a href="https://doi.org/10.1001/jama.2023.4803" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <a href="https://doi.org/10.1001/jama.2023.4803" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:border-color .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
               <span style="font-size:20px">❤️</span><div><div style="font-size:12px;font-weight:700">SELECT Trial — Sema Cardiovascular</div><div style="font-size:11px;color:var(--text-muted)">Reducción 20% eventos CV mayores</div></div>
             </a>
           </div>
@@ -7699,7 +7694,7 @@ function renderCMEView() {
   const grid = $('cme-modules-grid');
   grid.innerHTML = CME_MODULES.map(m => {
     const done = cmeData.completedModules.includes(m.id);
-    return `<div style="border:1px solid ${done ? '#7D6608' : 'var(--border)'};border-radius:10px;padding:14px;background:${done ? 'rgba(125,102,8,.07)' : 'var(--surface)'};cursor:pointer;transition:all .2s" onclick="startModule(${m.id})">
+    return `<div style="border:1px solid ${done ? '#7D6608' : 'var(--border)'};border-radius:10px;padding:14px;background:${done ? 'rgba(125,102,8,.07)' : 'var(--surface)'};cursor:pointer;transition:border-color .2s" onclick="startModule(${m.id})">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <span style="font-size:24px">${m.icon}</span>
         <div style="flex:1">
@@ -7751,7 +7746,7 @@ function renderQuizQuestion() {
     <div style="font-size:15px;font-weight:700;margin-bottom:16px;line-height:1.5">${q.p}</div>
     <div style="display:grid;gap:8px" id="quiz-options">
       ${q.ops.map((op, i) => `
-        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
           <input type="radio" name="quiz-opt" value="${i}" style="accent-color:var(--primary)" />
           <span style="font-size:13px">${op}</span>
         </label>`).join('')}
@@ -7828,7 +7823,7 @@ function loadNextCase() {
     <div style="font-size:13px;font-weight:700;margin-bottom:10px">❓ ${c.pregunta}</div>
     <div style="display:grid;gap:6px" id="case-options">
       ${c.opciones.map((op, i) => `
-        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;transition:all .2s">
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;transition:border-color .2s">
           <input type="radio" name="case-opt" value="${i}" style="accent-color:var(--primary);margin-top:2px" />
           <span>${op}</span>
         </label>`).join('')}
