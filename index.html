@@ -1765,39 +1765,96 @@
           <div class="module-icon-lg" style="background:var(--mod-nutri)">🥗</div>
           <div>
             <h2>Nutrición</h2>
-            <div class="module-sub">GET · Plan nutricional · Recordatorio 24h · TFEQ-R21</div>
+            <div class="module-sub">Composición · GET · Plan · R24h · TFEQ · Calorimetría · Perfil</div>
           </div>
-          <div style="margin-left:auto;display:flex;gap:8px">
-            <button class="btn-add" onclick="openModal('modal-nutrition-plan')">+ Plan nutricional</button>
+          <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-nutrition-plan')">+ Plan</button>
+            <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-food-recall')">+ R24h</button>
+            <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-eating-behavior')">+ TFEQ</button>
+            <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-calorimetry')">+ Calorimetría</button>
+            <button class="btn-add" style="background:var(--mod-nutri)" onclick="openNutritionProfileModal()">⚙ Perfil</button>
           </div>
         </div>
 
+        <!-- Snapshot strip -->
+        <div id="nutricion-snapshot" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+
+        <!-- Acciones recomendadas -->
+        <div class="section-card mb-8" style="border-left:4px solid var(--mod-nutri)">
+          <div class="section-card-header">
+            <span class="section-card-title">🎯 Acciones recomendadas <span id="nut-actions-count" class="text-muted text-sm"></span></span>
+          </div>
+          <div class="section-card-body" id="nut-actions-body">
+            <div class="text-muted text-sm">Cargando...</div>
+          </div>
+        </div>
+
+        <!-- GET y composición -->
         <div class="section-card mb-8">
           <div class="section-card-header">
-            <span class="section-card-title">⚡ Gasto Energético Total (GET)</span>
+            <span class="section-card-title">⚡ Gasto Energético + Composición Corporal</span>
           </div>
           <div class="section-card-body">
-            <div class="calc-result">
-              <span class="calc-label">TMB (Mifflin-St Jeor)</span>
-              <span class="calc-value" id="nut-tmb">—</span>
-            </div>
-            <div class="calc-result">
-              <span class="calc-label">GET (con AF)</span>
-              <span class="calc-value" id="nut-get">—</span>
-            </div>
-            <div class="calc-result">
-              <span class="calc-label">Objetivo calórico</span>
-              <span class="calc-value" id="nut-target">—</span>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+              <div class="calc-result"><span class="calc-label">TMB (Mifflin)</span><span class="calc-value" id="nut-tmb">—</span></div>
+              <div class="calc-result"><span class="calc-label">GET</span><span class="calc-value" id="nut-get">—</span></div>
+              <div class="calc-result"><span class="calc-label">Objetivo kcal</span><span class="calc-value" id="nut-target">—</span></div>
+              <div class="calc-result"><span class="calc-label">% grasa</span><span class="calc-value" id="nut-bf">—</span></div>
+              <div class="calc-result"><span class="calc-label">Masa magra (kg)</span><span class="calc-value" id="nut-lean">—</span></div>
+              <div class="calc-result"><span class="calc-label">FFMI</span><span class="calc-value" id="nut-ffmi">—</span></div>
+              <div class="calc-result"><span class="calc-label">FMI</span><span class="calc-value" id="nut-fmi">—</span></div>
+              <div class="calc-result"><span class="calc-label">Visceral</span><span class="calc-value" id="nut-visc">—</span></div>
             </div>
           </div>
         </div>
 
-        <div class="section-card">
+        <!-- Plan nutricional actual -->
+        <div class="section-card mb-8">
           <div class="section-card-header">
             <span class="section-card-title">📊 Plan nutricional actual</span>
           </div>
           <div class="section-card-body" id="nut-plan-display">
             <div class="text-muted text-sm">Sin plan registrado</div>
+          </div>
+        </div>
+
+        <!-- Calorimetría indirecta -->
+        <details class="section-card mb-8">
+          <summary class="section-card-header" style="cursor:pointer">
+            <span class="section-card-title">🔬 Calorimetría indirecta <span id="nut-calo-summary" class="text-muted text-sm"></span></span>
+          </summary>
+          <div class="section-card-body" id="nut-calo-body">
+            <div class="text-muted text-sm">Sin calorimetrías registradas</div>
+          </div>
+        </details>
+
+        <!-- Recordatorio 24h -->
+        <details class="section-card mb-8" open>
+          <summary class="section-card-header" style="cursor:pointer">
+            <span class="section-card-title">📋 Recordatorios 24h / Diario alimentario <span id="nut-recall-summary" class="text-muted text-sm"></span></span>
+          </summary>
+          <div class="section-card-body" id="nut-recall-body">
+            <div class="text-muted text-sm">Sin recordatorios registrados</div>
+          </div>
+        </details>
+
+        <!-- Conducta alimentaria -->
+        <details class="section-card mb-8">
+          <summary class="section-card-header" style="cursor:pointer">
+            <span class="section-card-title">🧠 Conducta alimentaria (TFEQ-R21 + PREDIMED) <span id="nut-eb-summary" class="text-muted text-sm"></span></span>
+          </summary>
+          <div class="section-card-body" id="nut-eb-body">
+            <div class="text-muted text-sm">Sin evaluaciones registradas</div>
+          </div>
+        </details>
+
+        <!-- Perfil nutricional -->
+        <div class="section-card">
+          <div class="section-card-header">
+            <span class="section-card-title">⚙ Perfil nutricional (intolerancias, comorbilidades, riesgo)</span>
+          </div>
+          <div class="section-card-body" id="nut-profile-body">
+            <div class="text-muted text-sm">Perfil sin configurar. Click en "⚙ Perfil" para definir alergias, intolerancias, comorbilidades y riesgo nutricional.</div>
           </div>
         </div>
       </div>
@@ -2929,6 +2986,21 @@
           <input type="number" id="np-fats" min="0" max="100" />
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-control"><label>Proteína (g/kg masa magra)</label><input type="number" step="0.1" id="np-prot-kg-lean" placeholder="1.6" /></div>
+        <div class="form-control"><label>Déficit (%)</label><input type="number" id="np-deficit" placeholder="20" /></div>
+        <div class="form-control"><label>Comidas/día</label><input type="number" id="np-meals" placeholder="4" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Proteína (g)</label><input type="number" id="np-prot-g" /></div>
+        <div class="form-control"><label>HC (g)</label><input type="number" id="np-carbs-g" /></div>
+        <div class="form-control"><label>Grasas (g)</label><input type="number" id="np-fats-g" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Fibra (g)</label><input type="number" id="np-fiber" placeholder="30" /></div>
+        <div class="form-control"><label>Sodio (mg)</label><input type="number" id="np-sodium" placeholder="2000" /></div>
+        <div class="form-control"><label>Agua (ml)</label><input type="number" id="np-water" placeholder="2500" /></div>
+      </div>
       <div class="form-control">
         <label>Notas del plan</label>
         <textarea id="np-notes" placeholder="Recomendaciones nutricionales..." rows="3"></textarea>
@@ -2938,6 +3010,151 @@
       <button class="btn-secondary" onclick="closeModal('modal-nutrition-plan')">Cancelar</button>
       <button class="btn-submit" onclick="saveNutritionPlan()">Guardar plan</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Calorimetría indirecta -->
+<div class="modal-overlay" id="modal-calorimetry">
+  <div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title">Calorimetría indirecta</h3><button class="modal-close" onclick="closeModal('modal-calorimetry')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-control"><label>Fecha</label><input type="date" id="calo-date" /></div>
+        <div class="form-control"><label>Método</label>
+          <select id="calo-method">
+            <option value="indirect_canopy">Indirecta canopy</option>
+            <option value="indirect_mask">Indirecta máscara</option>
+            <option value="doubly_labeled_water">Agua doblemente marcada</option>
+            <option value="predictive">Predictiva</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>REE medido (kcal)</label><input type="number" id="calo-ree-meas" /></div>
+        <div class="form-control"><label>REE predicho (kcal)</label><input type="number" id="calo-ree-pred" /></div>
+        <div class="form-control"><label>RQ</label><input type="number" step="0.01" id="calo-rq" placeholder="0.85" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>VO2 (ml/min)</label><input type="number" id="calo-vo2" /></div>
+        <div class="form-control"><label>VCO2 (ml/min)</label><input type="number" id="calo-vco2" /></div>
+      </div>
+      <div class="form-control"><label>Notas</label><textarea id="calo-notes" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-calorimetry')">Cancelar</button><button class="btn-submit" onclick="saveCalorimetry()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- Modal: Recordatorio 24h -->
+<div class="modal-overlay" id="modal-food-recall">
+  <div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title">Recordatorio 24h / Diario</h3><button class="modal-close" onclick="closeModal('modal-food-recall')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-control"><label>Fecha</label><input type="date" id="rec-date" /></div>
+        <div class="form-control"><label>Tipo</label>
+          <select id="rec-type">
+            <option value="24h">R24h</option><option value="3day">3 días</option><option value="7day">7 días</option><option value="food_diary">Diario</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Kcal totales</label><input type="number" id="rec-kcal" /></div>
+        <div class="form-control"><label>Proteína (g)</label><input type="number" id="rec-prot" /></div>
+        <div class="form-control"><label>HC (g)</label><input type="number" id="rec-carbs" /></div>
+        <div class="form-control"><label>Grasas (g)</label><input type="number" id="rec-fats" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Fibra (g)</label><input type="number" id="rec-fiber" /></div>
+        <div class="form-control"><label>Sodio (mg)</label><input type="number" id="rec-sodium" /></div>
+        <div class="form-control"><label>Agua (ml)</label><input type="number" id="rec-water" /></div>
+        <div class="form-control"><label># comidas</label><input type="number" id="rec-meals" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>% ultraprocesados</label><input type="number" id="rec-ultra" /></div>
+        <div class="form-control"><label>Frutas (porc)</label><input type="number" step="0.5" id="rec-fruits" /></div>
+        <div class="form-control"><label>Verduras (porc)</label><input type="number" step="0.5" id="rec-veg" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Az. añadida (g)</label><input type="number" id="rec-sugar" /></div>
+        <div class="form-control"><label>Alcohol (g)</label><input type="number" id="rec-alcohol" /></div>
+        <div class="form-control"><label>Hambre 0-10</label><input type="number" min="0" max="10" id="rec-hunger" /></div>
+        <div class="form-control"><label>Saciedad 0-10</label><input type="number" min="0" max="10" id="rec-satiety" /></div>
+      </div>
+      <div class="form-control"><label>Notas</label><textarea id="rec-notes" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-food-recall')">Cancelar</button><button class="btn-submit" onclick="saveFoodRecall()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- Modal: Conducta alimentaria -->
+<div class="modal-overlay" id="modal-eating-behavior">
+  <div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title">TFEQ-R21 + PREDIMED + Adherencia</h3><button class="modal-close" onclick="closeModal('modal-eating-behavior')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-control"><label>Fecha</label><input type="date" id="eb-date" /></div>
+      <h4 class="text-sm" style="margin:8px 0">TFEQ-R21 (subescalas 0-100)</h4>
+      <div class="form-row">
+        <div class="form-control"><label>Restricción cognitiva</label><input type="number" id="eb-tfeq-cr" min="0" max="100" /></div>
+        <div class="form-control"><label>Alim. descontrolada</label><input type="number" id="eb-tfeq-uc" min="0" max="100" /></div>
+        <div class="form-control"><label>Alim. emocional</label><input type="number" id="eb-tfeq-ee" min="0" max="100" /></div>
+      </div>
+      <h4 class="text-sm" style="margin:8px 0">PREDIMED-14</h4>
+      <div class="form-row">
+        <div class="form-control"><label>Score (0-14)</label><input type="number" id="eb-predimed" min="0" max="14" /></div>
+        <div class="form-control"><label>Adherencia plan (%)</label><input type="number" id="eb-adherence" min="0" max="100" /></div>
+        <div class="form-control"><label>Atracones/sem</label><input type="number" id="eb-binge" min="0" /></div>
+      </div>
+      <div class="form-control"><label>Patrón de hambre</label>
+        <select id="eb-hunger">
+          <option value="">—</option><option value="normal">Normal</option><option value="hyperphagia">Hiperfagia</option><option value="grazing">Picoteo</option><option value="night_eating">Nocturno</option>
+        </select>
+      </div>
+      <div class="form-control"><label>Notas</label><textarea id="eb-notes" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-eating-behavior')">Cancelar</button><button class="btn-submit" onclick="saveEatingBehavior()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- Modal: Perfil nutricional -->
+<div class="modal-overlay" id="modal-nutrition-profile">
+  <div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title">Perfil nutricional</h3><button class="modal-close" onclick="closeModal('modal-nutrition-profile')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-control"><label>Alergias alimentarias (separadas por coma)</label><input type="text" id="np-allergies" placeholder="mariscos, nueces" /></div>
+      <div class="form-control"><label>Intolerancias (lactosa, fructosa, FODMAPs...)</label><input type="text" id="np-intolerances" /></div>
+      <div class="form-control"><label>Preferencias (vegetariano, vegano, halal...)</label><input type="text" id="np-preferences" /></div>
+      <div class="form-row">
+        <div class="form-control"><label>Patrón cultural</label>
+          <select id="np-cultural"><option value="">—</option><option>mexicano</option><option>mediterraneo</option><option>asiatico</option><option>otro</option></select>
+        </div>
+        <div class="form-control"><label>Presupuesto</label>
+          <select id="np-budget"><option value="">—</option><option>bajo</option><option>medio</option><option>alto</option></select>
+        </div>
+        <div class="form-control"><label>Habilidad cocina</label>
+          <select id="np-cooking"><option value="">—</option><option>ninguno</option><option>basico</option><option>intermedio</option><option>avanzado</option></select>
+        </div>
+      </div>
+      <h4 class="text-sm" style="margin:10px 0">Comorbilidades nutricionales</h4>
+      <div class="form-row" style="flex-wrap:wrap">
+        <label><input type="checkbox" id="np-dm2"> DM2</label>
+        <label><input type="checkbox" id="np-erc"> ERC</label>
+        <label><input type="checkbox" id="np-dys"> Dislipidemia</label>
+        <label><input type="checkbox" id="np-hta"> HTA</label>
+        <label><input type="checkbox" id="np-masld"> MASLD</label>
+        <label><input type="checkbox" id="np-celiac"> Celíaco</label>
+        <label><input type="checkbox" id="np-ibd"> EII</label>
+        <label><input type="checkbox" id="np-sii"> SII</label>
+        <label><input type="checkbox" id="np-uric"> Hiperuricemia</label>
+      </div>
+      <h4 class="text-sm" style="margin:10px 0">Riesgo nutricional</h4>
+      <div class="form-row">
+        <div class="form-control"><label>MUST score (0-6)</label><input type="number" id="np-must" min="0" max="6" /></div>
+        <div class="form-control"><label>Alcohol (UBE/sem)</label><input type="number" id="np-alcohol-w" /></div>
+      </div>
+      <div class="form-control"><label>Deficiencias micro (vit_d, b12...)</label><input type="text" id="np-micro" /></div>
+      <div class="form-control"><label>Notas</label><textarea id="np-prof-notes" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-nutrition-profile')">Cancelar</button><button class="btn-submit" onclick="saveNutritionProfile()">Guardar</button></div>
   </div>
 </div>
 
@@ -3406,6 +3623,7 @@ async function loadOBESData() {
     try { await loadClinicalNotes(); } catch(e) { console.warn('notes:', e.message); }
     try { recalcMedicoComorb(); } catch(e) { console.warn('comorb:', e.message); }
     try { renderMedicoIntelligence(); } catch(e) { console.warn('intel:', e.message); }
+    try { await loadNutritionAll(); } catch(e) { console.warn('nut:', e.message); }
 
     // Load fenotipos
     await loadFenotipos();
@@ -4585,40 +4803,403 @@ function syncEOSSToFenotipos(stage) {
 
 async function saveNutritionPlan() {
   if (!currentPatient) return;
-
   const calories = parseInt($('np-calories').value);
-  const pattern = $('np-pattern').value;
-  const protein = parseInt($('np-protein').value) || 0;
-  const carbs = parseInt($('np-carbs').value) || 0;
-  const fats = parseInt($('np-fats').value) || 0;
-
-  if (!calories) {
-    showToast('Ingresa objetivo calórico', 'error');
-    return;
-  }
-
+  if (!calories) { showToast('Ingresa objetivo calórico', 'error'); return; }
   showLoading(true);
   try {
-    const { error } = await sbClient.from('obes_nutrition_plans').insert({
+    const row = {
       patient_id: currentPatient.id,
       caloric_goal: calories,
-      dietary_pattern: pattern,
-      protein_pct: protein,
-      carbs_pct: carbs,
-      fats_pct: fats,
+      get_kcal: calories,
+      dietary_pattern: $('np-pattern').value || null,
+      protein_pct: parseInt($('np-protein').value) || null,
+      carbs_pct: parseInt($('np-carbs').value) || null,
+      fats_pct: parseInt($('np-fats').value) || null,
+      protein_g: parseFloat($('np-prot-g').value) || null,
+      carbs_g: parseFloat($('np-carbs-g').value) || null,
+      fats_g: parseFloat($('np-fats-g').value) || null,
+      protein_g_per_kg_lean: parseFloat($('np-prot-kg-lean').value) || null,
+      deficit_pct: parseFloat($('np-deficit').value) || null,
+      meals_per_day: parseInt($('np-meals').value) || null,
+      fiber_g: parseFloat($('np-fiber').value) || null,
+      sodium_mg: parseFloat($('np-sodium').value) || null,
+      water_ml: parseFloat($('np-water').value) || null,
+      active: true,
+      start_date: new Date().toISOString().slice(0,10),
       created_at: new Date().toISOString()
-    });
-
+    };
+    const { error } = await sbClient.from('obes_nutrition_plans').insert(row);
     if (error) throw error;
-
     closeModal('modal-nutrition-plan');
-    clearModalInputs(['np-calories', 'np-pattern', 'np-protein', 'np-carbs', 'np-fats', 'np-notes']);
-    showToast('Plan nutricional guardado', 'success');
-  } catch (e) {
-    showToast('Error: ' + e.message, 'error');
-  } finally {
-    showLoading(false);
+    showToast('Plan guardado', 'success');
+    await loadNutritionAll();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  finally { showLoading(false); }
+}
+
+/* ── Calorimetría ── */
+async function saveCalorimetry() {
+  if (!currentPatient) return;
+  const meas = parseFloat($('calo-ree-meas').value);
+  const pred = parseFloat($('calo-ree-pred').value);
+  const ratio = (meas && pred) ? +(meas/pred).toFixed(2) : null;
+  let metabolic = null;
+  if (ratio !== null) metabolic = ratio < 0.85 ? 'hipometabólico' : ratio > 1.15 ? 'hipermetabólico' : 'normometabólico';
+  const rq = parseFloat($('calo-rq').value);
+  let subox = null;
+  if (rq) subox = rq < 0.8 ? 'fat_dominant' : rq > 0.9 ? 'carbs_dominant' : 'balanced';
+  showLoading(true);
+  try {
+    const { error } = await sbClient.from('obes_calorimetry').insert({
+      patient_id: currentPatient.id,
+      measure_date: $('calo-date').value || new Date().toISOString().slice(0,10),
+      method: $('calo-method').value,
+      ree_measured_kcal: meas || null,
+      ree_predicted_kcal: pred || null,
+      ree_ratio: ratio,
+      rq: rq || null,
+      vo2_ml_min: parseFloat($('calo-vo2').value) || null,
+      vco2_ml_min: parseFloat($('calo-vco2').value) || null,
+      substrate_oxidation: subox,
+      metabolic_status: metabolic,
+      notes: $('calo-notes').value || null
+    });
+    if (error) throw error;
+    closeModal('modal-calorimetry');
+    showToast('Calorimetría guardada', 'success');
+    await loadNutritionAll();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  finally { showLoading(false); }
+}
+
+/* ── Recordatorio 24h ── */
+async function saveFoodRecall() {
+  if (!currentPatient) return;
+  showLoading(true);
+  try {
+    const { error } = await sbClient.from('obes_food_recalls').insert({
+      patient_id: currentPatient.id,
+      recall_date: $('rec-date').value || new Date().toISOString().slice(0,10),
+      recall_type: $('rec-type').value,
+      total_kcal: parseFloat($('rec-kcal').value) || null,
+      protein_g: parseFloat($('rec-prot').value) || null,
+      carbs_g: parseFloat($('rec-carbs').value) || null,
+      fats_g: parseFloat($('rec-fats').value) || null,
+      fiber_g: parseFloat($('rec-fiber').value) || null,
+      sodium_mg: parseFloat($('rec-sodium').value) || null,
+      water_ml: parseFloat($('rec-water').value) || null,
+      meals_logged: parseInt($('rec-meals').value) || null,
+      ultra_processed_pct: parseFloat($('rec-ultra').value) || null,
+      fruits_servings: parseFloat($('rec-fruits').value) || null,
+      vegetables_servings: parseFloat($('rec-veg').value) || null,
+      added_sugar_g: parseFloat($('rec-sugar').value) || null,
+      alcohol_g: parseFloat($('rec-alcohol').value) || null,
+      hunger_score: parseInt($('rec-hunger').value) || null,
+      satiety_score: parseInt($('rec-satiety').value) || null,
+      notes: $('rec-notes').value || null
+    });
+    if (error) throw error;
+    closeModal('modal-food-recall');
+    showToast('Recordatorio guardado', 'success');
+    await loadNutritionAll();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  finally { showLoading(false); }
+}
+
+/* ── Conducta alimentaria ── */
+async function saveEatingBehavior() {
+  if (!currentPatient) return;
+  const predScore = parseInt($('eb-predimed').value);
+  const predCat = predScore >= 10 ? 'alta' : predScore >= 6 ? 'media' : predScore >= 0 ? 'baja' : null;
+  showLoading(true);
+  try {
+    const { error } = await sbClient.from('obes_eating_behavior').insert({
+      patient_id: currentPatient.id,
+      assessment_date: $('eb-date').value || new Date().toISOString().slice(0,10),
+      tfeq_cognitive_restraint: parseFloat($('eb-tfeq-cr').value) || null,
+      tfeq_uncontrolled_eating: parseFloat($('eb-tfeq-uc').value) || null,
+      tfeq_emotional_eating: parseFloat($('eb-tfeq-ee').value) || null,
+      predimed_score: isNaN(predScore) ? null : predScore,
+      predimed_category: predCat,
+      adherence_pct: parseFloat($('eb-adherence').value) || null,
+      hunger_pattern: $('eb-hunger').value || null,
+      binge_episodes_week: parseInt($('eb-binge').value) || null,
+      notes: $('eb-notes').value || null
+    });
+    if (error) throw error;
+    closeModal('modal-eating-behavior');
+    showToast('Evaluación guardada', 'success');
+    await loadNutritionAll();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  finally { showLoading(false); }
+}
+
+/* ── Perfil nutricional ── */
+function openNutritionProfileModal() {
+  const p = currentPatient && currentPatient.nutritionProfile;
+  if (p) {
+    $('np-allergies').value = (p.food_allergies || []).join(', ');
+    $('np-intolerances').value = (p.food_intolerances || []).join(', ');
+    $('np-preferences').value = (p.dietary_preferences || []).join(', ');
+    $('np-cultural').value = p.cultural_pattern || '';
+    $('np-budget').value = p.budget_constraint || '';
+    $('np-cooking').value = p.cooking_skill || '';
+    ['dm2','erc','dys','hta','masld','celiac','ibd','sii','uric'].forEach(k => {
+      const map = {dm2:'has_dm2',erc:'has_erc',dys:'has_dyslipidemia',hta:'has_hta',masld:'has_masld',celiac:'has_celiac',ibd:'has_ibd',sii:'has_sii',uric:'has_hyperuricemia'};
+      $('np-'+k).checked = !!p[map[k]];
+    });
+    $('np-must').value = p.must_score ?? '';
+    $('np-alcohol-w').value = p.alcohol_units_week ?? '';
+    $('np-micro').value = (p.micronutrient_deficiencies || []).join(', ');
+    $('np-prof-notes').value = p.notes || '';
   }
+  openModal('modal-nutrition-profile');
+}
+
+async function saveNutritionProfile() {
+  if (!currentPatient) return;
+  const toArr = id => $(id).value.split(',').map(s => s.trim()).filter(Boolean);
+  const must = parseInt($('np-must').value);
+  const mustCat = must >= 2 ? 'alto' : must === 1 ? 'medio' : must === 0 ? 'bajo' : null;
+  const row = {
+    patient_id: currentPatient.id,
+    food_allergies: toArr('np-allergies'),
+    food_intolerances: toArr('np-intolerances'),
+    dietary_preferences: toArr('np-preferences'),
+    cultural_pattern: $('np-cultural').value || null,
+    budget_constraint: $('np-budget').value || null,
+    cooking_skill: $('np-cooking').value || null,
+    has_dm2: $('np-dm2').checked, has_erc: $('np-erc').checked,
+    has_dyslipidemia: $('np-dys').checked, has_hta: $('np-hta').checked,
+    has_masld: $('np-masld').checked, has_celiac: $('np-celiac').checked,
+    has_ibd: $('np-ibd').checked, has_sii: $('np-sii').checked,
+    has_hyperuricemia: $('np-uric').checked,
+    must_score: isNaN(must) ? null : must,
+    must_category: mustCat,
+    alcohol_units_week: parseFloat($('np-alcohol-w').value) || null,
+    micronutrient_deficiencies: toArr('np-micro'),
+    notes: $('np-prof-notes').value || null,
+    updated_at: new Date().toISOString()
+  };
+  showLoading(true);
+  try {
+    const { error } = await sbClient.from('obes_nutrition_profile').upsert(row, { onConflict: 'patient_id' });
+    if (error) throw error;
+    closeModal('modal-nutrition-profile');
+    showToast('Perfil guardado', 'success');
+    await loadNutritionAll();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  finally { showLoading(false); }
+}
+
+/* ── Loaders & renderers ── */
+async function loadNutritionAll() {
+  if (!currentPatient) return;
+  try {
+    const [plans, calo, recalls, eb, prof] = await Promise.all([
+      sbClient.from('obes_nutrition_plans').select('*').eq('patient_id', currentPatient.id).order('created_at',{ascending:false}).limit(10),
+      sbClient.from('obes_calorimetry').select('*').eq('patient_id', currentPatient.id).order('measure_date',{ascending:false}).limit(10),
+      sbClient.from('obes_food_recalls').select('*').eq('patient_id', currentPatient.id).order('recall_date',{ascending:false}).limit(10),
+      sbClient.from('obes_eating_behavior').select('*').eq('patient_id', currentPatient.id).order('assessment_date',{ascending:false}).limit(10),
+      sbClient.from('obes_nutrition_profile').select('*').eq('patient_id', currentPatient.id).maybeSingle()
+    ]);
+    currentPatient.nutritionPlans = plans.data || [];
+    currentPatient.calorimetries = calo.data || [];
+    currentPatient.foodRecalls = recalls.data || [];
+    currentPatient.eatingBehaviors = eb.data || [];
+    currentPatient.nutritionProfile = prof.data || null;
+    renderNutritionAll();
+  } catch (e) { console.warn('loadNutritionAll:', e.message); }
+}
+
+function renderNutritionAll() {
+  renderNutritionGET();
+  renderNutritionPlanDisplay();
+  renderCalorimetries();
+  renderFoodRecalls();
+  renderEatingBehaviors();
+  renderNutritionProfile();
+  renderNutritionSnapshot();
+  renderNutritionActions();
+}
+
+function renderNutritionGET() {
+  const m = currentPatient?.measurements?.[0];
+  const p = currentPatient;
+  if (!m || !p) return;
+  const w = parseFloat(m.peso_kg), h = parseFloat(m.talla_cm);
+  if (!w || !h) return;
+  const dob = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
+  const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : (p.edad || 40);
+  const sex = p.sexo;
+  // Mifflin-St Jeor
+  const tmb = sex === 'M' ? (10*w + 6.25*h - 5*age + 5) : (10*w + 6.25*h - 5*age - 161);
+  const af = 1.4;
+  const get = tmb * af;
+  const target = Math.round(get * 0.8);
+  $('nut-tmb').textContent = Math.round(tmb) + ' kcal';
+  $('nut-get').textContent = Math.round(get) + ' kcal';
+  $('nut-target').textContent = target + ' kcal';
+  // Composición
+  if (m.body_fat_pct) $('nut-bf').textContent = m.body_fat_pct + '%';
+  if (m.lean_mass_kg) $('nut-lean').textContent = m.lean_mass_kg + ' kg';
+  if (m.visceral_fat_level) $('nut-visc').textContent = m.visceral_fat_level;
+  // FFMI = lean / (h_m^2)
+  const hm = h/100;
+  if (m.lean_mass_kg) {
+    const ffmi = (m.lean_mass_kg / (hm*hm)).toFixed(1);
+    $('nut-ffmi').textContent = ffmi;
+  }
+  if (m.fat_mass_kg) {
+    const fmi = (m.fat_mass_kg / (hm*hm)).toFixed(1);
+    $('nut-fmi').textContent = fmi;
+  }
+}
+
+function renderNutritionPlanDisplay() {
+  const plan = (currentPatient?.nutritionPlans || []).find(p => p.active) || currentPatient?.nutritionPlans?.[0];
+  const el = $('nut-plan-display');
+  if (!plan) { el.innerHTML = '<div class="text-muted text-sm">Sin plan registrado</div>'; return; }
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+      <div><strong>${plan.get_kcal || plan.caloric_goal || '—'}</strong> kcal/día</div>
+      <div>Patrón: <strong>${plan.dietary_pattern || '—'}</strong></div>
+      <div>Déficit: <strong>${plan.deficit_pct || '—'}%</strong></div>
+      <div>Comidas: <strong>${plan.meals_per_day || '—'}</strong></div>
+      <div>Prot: <strong>${plan.protein_g || '—'} g</strong></div>
+      <div>HC: <strong>${plan.carbs_g || '—'} g</strong></div>
+      <div>Grasa: <strong>${plan.fats_g || '—'} g</strong></div>
+      <div>Fibra: <strong>${plan.fiber_g || '—'} g</strong></div>
+      <div>Na: <strong>${plan.sodium_mg || '—'} mg</strong></div>
+      <div>Agua: <strong>${plan.water_ml || '—'} ml</strong></div>
+    </div>`;
+}
+
+function renderCalorimetries() {
+  const list = currentPatient?.calorimetries || [];
+  const el = $('nut-calo-body'); const sum = $('nut-calo-summary');
+  if (!list.length) { el.innerHTML = '<div class="text-muted text-sm">Sin registros</div>'; sum.textContent = ''; return; }
+  sum.textContent = `(${list.length})`;
+  el.innerHTML = list.map(c => `
+    <div style="padding:8px;border-bottom:1px solid var(--border)">
+      <strong>${c.measure_date}</strong> · ${c.method || ''} · REE ${c.ree_measured_kcal || '—'} kcal
+      ${c.ree_ratio ? `· ratio ${c.ree_ratio} (${c.metabolic_status})` : ''}
+      ${c.rq ? `· RQ ${c.rq} (${c.substrate_oxidation})` : ''}
+    </div>`).join('');
+}
+
+function renderFoodRecalls() {
+  const list = currentPatient?.foodRecalls || [];
+  const el = $('nut-recall-body'); const sum = $('nut-recall-summary');
+  if (!list.length) { el.innerHTML = '<div class="text-muted text-sm">Sin registros</div>'; sum.textContent = ''; return; }
+  sum.textContent = `(${list.length})`;
+  el.innerHTML = list.map(r => `
+    <div style="padding:8px;border-bottom:1px solid var(--border)">
+      <strong>${r.recall_date}</strong> · ${r.recall_type} · ${r.total_kcal || '—'} kcal
+      · P ${r.protein_g||'—'}g HC ${r.carbs_g||'—'}g G ${r.fats_g||'—'}g
+      ${r.ultra_processed_pct ? `· UPF ${r.ultra_processed_pct}%` : ''}
+      ${r.fiber_g ? `· fibra ${r.fiber_g}g` : ''}
+    </div>`).join('');
+}
+
+function renderEatingBehaviors() {
+  const list = currentPatient?.eatingBehaviors || [];
+  const el = $('nut-eb-body'); const sum = $('nut-eb-summary');
+  if (!list.length) { el.innerHTML = '<div class="text-muted text-sm">Sin evaluaciones</div>'; sum.textContent = ''; return; }
+  sum.textContent = `(${list.length})`;
+  el.innerHTML = list.map(e => `
+    <div style="padding:8px;border-bottom:1px solid var(--border)">
+      <strong>${e.assessment_date}</strong>
+      · TFEQ CR:${e.tfeq_cognitive_restraint||'—'} UC:${e.tfeq_uncontrolled_eating||'—'} EE:${e.tfeq_emotional_eating||'—'}
+      · PREDIMED ${e.predimed_score||'—'} (${e.predimed_category||'—'})
+      · Adh ${e.adherence_pct||'—'}%
+      ${e.binge_episodes_week ? `· atracones ${e.binge_episodes_week}/sem` : ''}
+    </div>`).join('');
+}
+
+function renderNutritionProfile() {
+  const p = currentPatient?.nutritionProfile;
+  const el = $('nut-profile-body');
+  if (!p) { el.innerHTML = '<div class="text-muted text-sm">Perfil sin configurar.</div>'; return; }
+  const comorbs = [];
+  if (p.has_dm2) comorbs.push('DM2'); if (p.has_erc) comorbs.push('ERC');
+  if (p.has_dyslipidemia) comorbs.push('Dislipidemia'); if (p.has_hta) comorbs.push('HTA');
+  if (p.has_masld) comorbs.push('MASLD'); if (p.has_celiac) comorbs.push('Celíaco');
+  if (p.has_ibd) comorbs.push('EII'); if (p.has_sii) comorbs.push('SII');
+  if (p.has_hyperuricemia) comorbs.push('Hiperuricemia');
+  el.innerHTML = `
+    <div><strong>Alergias:</strong> ${(p.food_allergies||[]).join(', ') || '—'}</div>
+    <div><strong>Intolerancias:</strong> ${(p.food_intolerances||[]).join(', ') || '—'}</div>
+    <div><strong>Preferencias:</strong> ${(p.dietary_preferences||[]).join(', ') || '—'} · ${p.cultural_pattern||''}</div>
+    <div><strong>Comorbilidades:</strong> ${comorbs.join(', ') || '—'}</div>
+    <div><strong>MUST:</strong> ${p.must_score ?? '—'} (${p.must_category||'—'}) · <strong>Alcohol:</strong> ${p.alcohol_units_week||'—'} UBE/sem</div>
+    <div><strong>Deficiencias micro:</strong> ${(p.micronutrient_deficiencies||[]).join(', ') || '—'}</div>
+    <div><strong>Cocina:</strong> ${p.cooking_skill||'—'} · <strong>Presupuesto:</strong> ${p.budget_constraint||'—'}</div>
+  `;
+}
+
+function renderNutritionSnapshot() {
+  const el = $('nutricion-snapshot');
+  if (!el) return;
+  const m = currentPatient?.measurements?.[0];
+  const plan = (currentPatient?.nutritionPlans || []).find(p => p.active) || currentPatient?.nutritionPlans?.[0];
+  const lastRecall = currentPatient?.foodRecalls?.[0];
+  const lastEB = currentPatient?.eatingBehaviors?.[0];
+  const prof = currentPatient?.nutritionProfile;
+  const cells = [];
+  if (m?.peso_kg) cells.push(`<div class="snap-cell"><div class="snap-label">Peso</div><div class="snap-val">${m.peso_kg} kg</div></div>`);
+  if (m?.body_fat_pct) cells.push(`<div class="snap-cell"><div class="snap-label">% grasa</div><div class="snap-val">${m.body_fat_pct}%</div></div>`);
+  if (plan?.get_kcal) cells.push(`<div class="snap-cell"><div class="snap-label">Plan</div><div class="snap-val">${plan.get_kcal} kcal</div></div>`);
+  if (lastRecall?.total_kcal) cells.push(`<div class="snap-cell"><div class="snap-label">R24h</div><div class="snap-val">${lastRecall.total_kcal} kcal</div></div>`);
+  if (lastEB?.adherence_pct != null) cells.push(`<div class="snap-cell"><div class="snap-label">Adherencia</div><div class="snap-val">${lastEB.adherence_pct}%</div></div>`);
+  if (prof?.must_category) cells.push(`<div class="snap-cell"><div class="snap-label">MUST</div><div class="snap-val">${prof.must_category}</div></div>`);
+  el.innerHTML = cells.length ? cells.map(c => `<div style="padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;min-width:100px">${c.replace(/<div class="snap-cell">|<\/div>$/g,'').replace('<div class="snap-label">','<div style="font-size:11px;color:var(--text-muted)">').replace('<div class="snap-val">','<div style="font-size:16px;font-weight:600">')}</div>`).join('') : '<div class="text-muted text-sm">Sin datos para snapshot</div>';
+}
+
+function renderNutritionActions() {
+  const el = $('nut-actions-body'); const cnt = $('nut-actions-count');
+  if (!el) return;
+  const actions = [];
+  const m = currentPatient?.measurements?.[0];
+  const plan = (currentPatient?.nutritionPlans || []).find(p => p.active) || currentPatient?.nutritionPlans?.[0];
+  const lastRecall = currentPatient?.foodRecalls?.[0];
+  const lastEB = currentPatient?.eatingBehaviors?.[0];
+  const prof = currentPatient?.nutritionProfile;
+
+  // Crítico
+  if (prof?.must_category === 'alto') actions.push({p:'crit', t:'MUST alto: riesgo nutricional severo, evaluar suplementación'});
+  if (prof?.has_erc && plan?.protein_g && m?.peso_kg && (plan.protein_g/m.peso_kg) > 0.8)
+    actions.push({p:'crit', t:`ERC + proteína ${(plan.protein_g/m.peso_kg).toFixed(1)} g/kg (>0.8): revisar restricción proteica`});
+  if (lastRecall?.sodium_mg > 2300 && prof?.has_hta)
+    actions.push({p:'crit', t:`HTA + sodio ${lastRecall.sodium_mg} mg (>2300): reducir sodio`});
+
+  // Accionable
+  if (!plan) actions.push({p:'act', t:'Sin plan nutricional activo: crear plan estructurado'});
+  if (!prof) actions.push({p:'act', t:'Perfil nutricional sin configurar: definir alergias/comorbilidades'});
+  if (lastEB?.adherence_pct != null && lastEB.adherence_pct < 60)
+    actions.push({p:'act', t:`Adherencia baja (${lastEB.adherence_pct}%): revisar barreras`});
+  if (lastEB?.tfeq_emotional_eating > 60)
+    actions.push({p:'act', t:`Alim. emocional alta (TFEQ EE ${lastEB.tfeq_emotional_eating}): referir a psicología`});
+  if (lastEB?.binge_episodes_week >= 2)
+    actions.push({p:'act', t:`Atracones ${lastEB.binge_episodes_week}/sem: tamizar BED`});
+  if (lastRecall?.ultra_processed_pct > 30)
+    actions.push({p:'act', t:`Ultraprocesados ${lastRecall.ultra_processed_pct}% (>30%): reducir`});
+  if (lastRecall?.fiber_g && lastRecall.fiber_g < 25)
+    actions.push({p:'act', t:`Fibra baja ${lastRecall.fiber_g}g/d (<25): aumentar verduras/legumbres`});
+  if (lastRecall && lastRecall.fruits_servings + lastRecall.vegetables_servings < 5)
+    actions.push({p:'act', t:`Frutas+verduras ${(lastRecall.fruits_servings||0)+(lastRecall.vegetables_servings||0)} porciones (<5)`});
+
+  // Informativo
+  if (!currentPatient?.calorimetries?.length && m?.peso_kg)
+    actions.push({p:'info', t:'Calorimetría no realizada: considerar si hay sospecha hipometabólica'});
+  if (!lastRecall) actions.push({p:'info', t:'Sin recordatorio 24h reciente'});
+  if (!lastEB) actions.push({p:'info', t:'Sin TFEQ-R21/PREDIMED registrado'});
+
+  cnt.textContent = actions.length ? `(${actions.length})` : '';
+  if (!actions.length) { el.innerHTML = '<div class="text-muted text-sm">Sin acciones recomendadas</div>'; return; }
+  const colors = {crit:'#C0392B', act:'#D68910', info:'#5D6D7E'};
+  const labels = {crit:'CRÍTICO', act:'ACCIONABLE', info:'INFO'};
+  el.innerHTML = actions.map(a => `<div style="padding:6px 10px;border-left:3px solid ${colors[a.p]};margin-bottom:4px;background:var(--surface)"><span style="font-size:10px;font-weight:700;color:${colors[a.p]}">${labels[a.p]}</span> · ${a.t}</div>`).join('');
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
