@@ -2916,6 +2916,15 @@ async function loadOBESData() {
 
     currentPatient.measurements = measurements || [];
 
+    // Load labs (latest)
+    const { data: labs } = await sbClient
+      .from('obes_lab_results')
+      .select('*')
+      .eq('patient_id', currentPatient.id)
+      .order('fecha_toma', { ascending: false })
+      .limit(20);
+    currentPatient.labs = labs || [];
+
     // Load fenotipos
     await loadFenotipos();
   } catch (e) {
@@ -3243,6 +3252,16 @@ async function saveEOSS() {
 function setEOSS(stage) {
   document.querySelectorAll('.eoss-stage-btn').forEach(btn => btn.classList.remove('selected'));
   $('eoss-btn-' + stage).classList.add('selected');
+  const sel = $('eoss-select'); if (sel) sel.value = stage;
+  syncEOSSToFenotipos(stage);
+}
+
+function syncEOSSToFenotipos(stage) {
+  const cell = $('syn-eoss');
+  if (cell) cell.textContent = 'EOSS ' + stage;
+  if (typeof updateSynthesisRecommendation === 'function') {
+    try { updateSynthesisRecommendation(); } catch(e) {}
+  }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -3461,6 +3480,39 @@ document.addEventListener('click', e => {
 });
 
 /* ── M0: Lancet 2025 ── */
+function autoPopulateLancet() {
+  if (!currentPatient) return;
+  const m = (currentPatient.measurements || [])[0];
+  const labs = currentPatient.labs || [];
+  const sex = currentPatient.sexo;
+  const setChip = (id, on) => {
+    const chip = $(id); if (!chip) return;
+    const cb = chip.querySelector('input'); if (!cb) return;
+    if (on) { cb.checked = true; chip.classList.add('active'); }
+  };
+  const setCb = (id, on) => { const el = $(id); if (el && on) el.checked = true; };
+
+  if (m) {
+    if (m.bmi >= 30 || (m.weight_kg && m.height_cm && (m.weight_kg/Math.pow(m.height_cm/100,2)) >= 30)) setChip('lnc-imc', true);
+    if (m.waist_cm && m.height_cm && (m.waist_cm/m.height_cm) >= 0.5) setChip('lnc-ict', true);
+    if (m.body_fat_pct && ((sex === 'M' && m.body_fat_pct >= 25) || (sex === 'F' && m.body_fat_pct >= 35))) setChip('lnc-bf', true);
+    if (m.waist_cm && ((sex === 'M' && m.waist_cm >= 90) || (sex === 'F' && m.waist_cm >= 80))) setChip('lnc-cin', true);
+  }
+  // Labs: scan all latest entries
+  const latestVal = (key) => { for (const l of labs) if (l[key] != null) return l[key]; return null; };
+  const glu = latestVal('glucose_mg_dl');
+  const hba1c = latestVal('hba1c_pct');
+  if ((glu && glu >= 126) || (hba1c && hba1c >= 6.5)) setCb('lnc-dm2', true);
+  const homa = latestVal('homa_ir');
+  if (homa && homa > 2.9) setCb('lnc-ir', true);
+  const tg = latestVal('triglycerides_mg_dl');
+  const hdl = latestVal('hdl_mg_dl');
+  if ((tg && tg >= 150) || (hdl && ((sex === 'M' && hdl < 40) || (sex === 'F' && hdl < 50)))) setCb('lnc-dislip', true);
+  const fib4 = latestVal('fib4');
+  if (fib4 && fib4 >= 1.3) setCb('lnc-masld', true);
+  calcLancet();
+}
+
 function calcLancet() {
   const adipCriteria = ['lnc-imc', 'lnc-ict', 'lnc-bf', 'lnc-cin'];
   const adipCount = adipCriteria.filter(id => {
@@ -3888,6 +3940,7 @@ async function saveFenotipos() {
     endotipo_dominante: dominante,
     endotipos_activos: actives,
     cbec_scores: { cerebral, gastrica, emocional, lento },
+    cbec_respuestas: { ...cbecAnswers },
     lipedema_screening_score: lipCount,
     lipedema_estadio_wold: parseInt($('lip-wold').value) || null,
     pcos_screening: pcosCount >= 2,
@@ -3900,18 +3953,11 @@ async function saveFenotipos() {
 
   showLoading(true);
   try {
-    const { error } = await sbClient.from('obes_fenotipos').upsert(fenoData, { onConflict: 'patient_id' });
+    const { error } = await sbClient.from('obes_fenotipos').insert(fenoData);
     if (error) throw error;
-    showToast('Fenotipo guardado exitosamente', 'success');
+    showToast('Fenotipo guardado (versión nueva)', 'success');
   } catch (e) {
-    // If table doesn't exist yet, try insert
-    try {
-      const { error: err2 } = await sbClient.from('obes_fenotipos').insert(fenoData);
-      if (err2) throw err2;
-      showToast('Fenotipo guardado', 'success');
-    } catch (e2) {
-      showToast('Error guardando fenotipo: ' + e2.message, 'error');
-    }
+    showToast('Error guardando fenotipo: ' + e.message, 'error');
   } finally {
     showLoading(false);
   }
@@ -3928,7 +3974,14 @@ async function loadFenotipos() {
       .order('fecha_fenotipificacion', { ascending: false })
       .limit(1);
 
-    if (!data || data.length === 0) return;
+    // Sync EOSS from latest measurement regardless
+    const mEoss = (currentPatient.measurements || [])[0]?.eoss_stage;
+    if (mEoss != null) syncEOSSToFenotipos(mEoss);
+
+    if (!data || data.length === 0) {
+      autoPopulateLancet();
+      return;
+    }
     const f = data[0];
 
     // Restore Lancet criteria
@@ -3957,6 +4010,15 @@ async function loadFenotipos() {
     // Contribuyentes
     (f.etiologia_contribuyentes || []).forEach(c => { const el = $('eti-' + c); if (el) el.checked = true; });
 
+    // CBEC individual responses
+    if (f.cbec_respuestas) {
+      Object.entries(f.cbec_respuestas).forEach(([q, v]) => {
+        cbecAnswers[q] = v;
+        document.querySelectorAll(`.cbec-opt[data-q="${q}"]`).forEach(o => o.classList.remove('selected'));
+        const opt = document.querySelector(`.cbec-opt[data-q="${q}"][data-v="${v}"]`);
+        if (opt) opt.classList.add('selected');
+      });
+    }
     // CBEC scores
     if (f.cbec_scores) {
       // Restore visual answers from scores (approximate — we know sums)
@@ -3976,6 +4038,7 @@ async function loadFenotipos() {
     (f.pcos_criterios || []).forEach(id => { const el = $(id); if (el) el.checked = true; });
 
     // Run calculations
+    autoPopulateLancet();
     calcLancet();
     calcMetSyn();
     calcComposicion();
