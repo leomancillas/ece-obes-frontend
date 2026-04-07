@@ -2957,6 +2957,9 @@ async function loadOBESData() {
       .order('fecha_fenotipificacion', { ascending: false })
       .limit(1);
     currentPatient.latestFenotipo = fenoLatest?.[0] || null;
+    if (typeof renderFenoSummaryCard === 'function') {
+      try { renderFenoSummaryCard(); } catch(e) {}
+    }
 
     // Load fenotipos
     await loadFenotipos();
