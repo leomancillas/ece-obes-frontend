@@ -194,12 +194,13 @@
       box-shadow: 0 0 4px currentColor;
     }
 
-    /* Main content — stacking context for absolute views */
+    /* Main content */
     .main-content {
       flex: 1;
-      overflow: hidden;
+      overflow-y: auto;
       position: relative;
       background: var(--bg);
+      contain: layout style;
     }
 
     /* ─── AUTH SCREEN ────────────────────────────────────────── */
@@ -277,9 +278,7 @@
       background: var(--bg);
     }
     #no-patient.hidden {
-      visibility: hidden;
-      pointer-events: none;
-      z-index: -1;
+      display: none;
     }
     #no-patient .np-icon {
       font-size: 52px;
@@ -534,27 +533,16 @@
     .mod-btn .mod-sub { font-size: 10px; color: var(--text-muted); }
 
     /* ─── MODULE VIEWS ───────────────────────────────────────── */
-    /* ─── STACKED VIEWS (zero-layout-shift architecture) ───────
-       All views are always absolutely positioned and fill main-content.
-       Switching only toggles visibility + z-index — NO display, NO position,
-       NO dimension changes — so the browser never recalculates layout.
-       Each view scrolls independently via overflow-y. */
     .module-view {
-      position: absolute;
-      inset: 0;
+      display: none;
       overflow-y: auto;
       padding: 22px 24px;
       background: var(--bg);
       background-image: radial-gradient(circle,rgba(26,82,118,.07) 1px,transparent 1px);
       background-size: 22px 22px;
-      visibility: hidden;
-      pointer-events: none;
-      z-index: 0;
     }
     .module-view.visible {
-      visibility: visible;
-      pointer-events: auto;
-      z-index: 2;
+      display: block;
     }
 
     .module-header {
@@ -4440,7 +4428,6 @@ function logout() {
 // ─── SEARCH VIEW (full-page, no modal) ───────────────────────────
 function showSearchView() {
   // Hide no-patient and all module views, show search view
-  // ── Visibility-only switch: no layout recalc ──
   $('no-patient').classList.add('hidden');
   document.querySelectorAll('.module-view').forEach(v => v.classList.remove('visible'));
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
@@ -4594,7 +4581,6 @@ async function saveNewPatient() {
 }
 
 async function selectPatient(id) {
-  // Show loading state in the search results area (no modal, no overlay)
   const sr = $('sv-search-results');
   if (sr) sr.innerHTML = '<div class="sv-loading"><div class="spinner"></div>Cargando expediente…</div>';
 
@@ -4603,15 +4589,16 @@ async function selectPatient(id) {
     if (!p) return;
     currentPatient = p;
 
-    // Render all views while they're invisibly stacked (no paint)
     await loadOBESData(p);
     renderPatientHeader();
 
-    // Pure visibility switch — no layout recalc
-    $('no-patient').classList.add('hidden');
-    const dashEl = $('view-dashboard');
-    if (dashEl) dashEl.scrollTop = 0;
-    switchView('dashboard');
+    // Batch all DOM changes into a single frame to prevent flicker
+    requestAnimationFrame(() => {
+      $('no-patient').classList.add('hidden');
+      const dashEl = $('view-dashboard');
+      if (dashEl) dashEl.scrollTop = 0;
+      switchView('dashboard');
+    });
 
     // Breadcrumb for META CORE bridge
     const retUrl = localStorage.getItem('ece_meta_return_url');
@@ -4725,7 +4712,7 @@ function switchView(view) {
   const sidebarItem = document.querySelector(`.sidebar-item[data-view="${view}"]`);
   if (sidebarItem) sidebarItem.classList.add('active');
 
-  // Sync no-patient visibility (class-based, no display toggle)
+  // Sync no-patient overlay
   if (currentPatient || view === 'search') {
     $('no-patient').classList.add('hidden');
   } else {
