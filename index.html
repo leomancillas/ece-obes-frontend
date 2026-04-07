@@ -199,6 +199,8 @@
       background: var(--bg);
       background-image: radial-gradient(circle,rgba(26,82,118,.07) 1px,transparent 1px);
       background-size: 22px 22px;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     /* ─── AUTH SCREEN ────────────────────────────────────────── */
@@ -532,7 +534,7 @@
     .mod-btn .mod-sub { font-size: 10px; color: var(--text-muted); }
 
     /* ─── MODULE VIEWS ───────────────────────────────────────── */
-    .module-view { display: none; }
+    .module-view { display: none; contain: content; }
     .module-view.visible { display: block; }
 
     .module-header {
@@ -4417,6 +4419,9 @@ function logout() {
 
 // ─── SEARCH VIEW (full-page, no modal) ───────────────────────────
 function showSearchView() {
+  // Reset scroll to prevent flash of old scroll position
+  const mc = document.querySelector('.main-content');
+  if (mc) mc.scrollTop = 0;
   // Hide no-patient, hide all module views, show search view
   $('no-patient').style.display = 'none';
   document.querySelectorAll('.module-view').forEach(v => v.classList.remove('visible'));
@@ -4468,14 +4473,12 @@ function searchPatients(q) {
   if (q.length < 2) { loadRecentPatients(); return; }
   const sr = $('sv-search-results');
   if (!sr) return;
-  sr.style.opacity = '0.5';
   searchTimeout = setTimeout(async () => {
     _lastSearchQ = q;
     try {
       const res = await apiFetch(`/api/patients?search=${encodeURIComponent(q)}&limit=20`);
       if (q !== _lastSearchQ) return;
       const patients = Array.isArray(res) ? res : (res?.patients || []);
-      sr.style.opacity = '1';
       if (!patients.length) { sr.innerHTML = '<div class="sv-loading">Sin resultados para "' + q.replace(/</g,'&lt;') + '"</div>'; return; }
       sr.innerHTML = patients.map(p => {
         const name = `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
@@ -4489,7 +4492,6 @@ function searchPatients(q) {
         </div>`;
       }).join('');
     } catch (e) {
-      sr.style.opacity = '1';
       sr.innerHTML = `<div class="sv-loading">Error: ${e.message}</div>`;
     }
   }, 320);
@@ -4581,10 +4583,19 @@ async function selectPatient(id) {
     const p = await apiFetch(`/api/patients/${id}`);
     if (!p) return;
     currentPatient = p;
-    await loadOBESData(p);
 
-    // All data ready — switch from search view to dashboard in one synchronous block
+    // Render all views while hidden (no paint yet)
+    await loadOBESData(p);
     renderPatientHeader();
+
+    // Atomic view switch: wait for next animation frame so the browser
+    // batches ALL DOM mutations into a single composite paint
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    // Reset scroll before switching to prevent scroll-jump flash
+    const mc = document.querySelector('.main-content');
+    if (mc) mc.scrollTop = 0;
+
     $('no-patient').style.display = 'none';
     switchView('dashboard');
 
