@@ -3116,8 +3116,11 @@ function renderFenoSummaryCard() {
   const fecha = f.fecha_fenotipificacion ? new Date(f.fecha_fenotipificacion).toLocaleDateString('es-MX') : '—';
   const lancetColor = f.lancet_categoria === 'OC' ? '#C0392B' : f.lancet_categoria === 'OP' ? '#D68910' : 'var(--text)';
   const soColor = (f.so_diagnostico && f.so_diagnostico.includes('confirmada')) ? '#C0392B' : 'var(--text)';
+  const eossVal = f.eoss_stage ?? (currentPatient.measurements || [])[0]?.eoss_stage;
+  const eossColor = eossVal >= 3 ? '#C0392B' : eossVal >= 2 ? '#D68910' : 'var(--text)';
   body.innerHTML = [
     cell('Lancet 2025', f.lancet_categoria || 'sin clasificar', lancetColor),
+    cell('EOSS', eossVal != null ? 'Estadio ' + eossVal : '—', eossColor),
     cell('Fenotipo metab.', f.fenotipo_metabolico || '—'),
     cell('Endotipo CBEC', f.endotipo_dominante && f.endotipo_dominante !== 'sin_evaluar' ? f.endotipo_dominante : '—'),
     cell('Sarcopenia obes.', f.so_diagnostico || '—', soColor),
@@ -3133,7 +3136,7 @@ async function openFenotiposHistory() {
   body.innerHTML = '<div class="text-muted text-center" style="padding:20px">Cargando…</div>';
   const { data, error } = await sbClient
     .from('obes_fenotipos')
-    .select('fecha_fenotipificacion, lancet_categoria, fenotipo_metabolico, endotipo_dominante, so_diagnostico, etiologia_principal, metsyn_criterios_positivos')
+    .select('fecha_fenotipificacion, lancet_categoria, fenotipo_metabolico, endotipo_dominante, so_diagnostico, etiologia_principal, metsyn_criterios_positivos, eoss_stage')
     .eq('patient_id', currentPatient.id)
     .order('fecha_fenotipificacion', { ascending: false });
   if (error || !data || data.length === 0) {
@@ -3147,6 +3150,7 @@ async function openFenotiposHistory() {
       <div style="font-weight:600;font-size:13px">${fecha}${tag}</div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:6px;display:flex;flex-wrap:wrap;gap:10px">
         <span>Lancet: <b>${f.lancet_categoria || '—'}</b></span>
+        <span>EOSS: <b>${f.eoss_stage ?? '—'}</b></span>
         <span>MetSyn: <b>${f.fenotipo_metabolico || '—'}</b> (${f.metsyn_criterios_positivos || 0}/5)</span>
         <span>Endotipo: <b>${f.endotipo_dominante || '—'}</b></span>
         <span>SO: <b>${f.so_diagnostico || '—'}</b></span>
@@ -4071,6 +4075,7 @@ async function saveFenotipos() {
     etiologia_contribuyentes: contribuyentes,
     endotipo_dominante: dominante,
     endotipos_activos: actives,
+    eoss_stage: (currentPatient.measurements || [])[0]?.eoss_stage ?? null,
     cbec_scores: { cerebral, gastrica, emocional, lento },
     cbec_respuestas: { ...cbecAnswers },
     lipedema_screening_score: lipCount,
