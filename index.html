@@ -2443,6 +2443,50 @@
           <input type="number" id="lab-hdl" step="0.1" />
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-control">
+          <label>LDL (mg/dL)</label>
+          <input type="number" id="lab-ldl" step="0.1" />
+        </div>
+        <div class="form-control">
+          <label>ALT / TGP (U/L)</label>
+          <input type="number" id="lab-alt" step="0.1" oninput="liveFib4Calc()" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-control">
+          <label>AST / TGO (U/L)</label>
+          <input type="number" id="lab-ast" step="0.1" oninput="liveFib4Calc()" />
+        </div>
+        <div class="form-control">
+          <label>Plaquetas (×10⁹/L)</label>
+          <input type="number" id="lab-plt" step="1" oninput="liveFib4Calc()" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-control">
+          <label>PCR ultrasensible (mg/L)</label>
+          <input type="number" id="lab-pcr" step="0.01" />
+        </div>
+        <div class="form-control">
+          <label>Vitamina D 25-OH (ng/mL)</label>
+          <input type="number" id="lab-vitd" step="0.1" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-control">
+          <label>TSH (μUI/mL)</label>
+          <input type="number" id="lab-tsh" step="0.01" />
+        </div>
+        <div class="form-control">
+          <label>Ácido úrico (mg/dL)</label>
+          <input type="number" id="lab-uric" step="0.1" />
+        </div>
+      </div>
+      <div class="form-control" style="background:#EBF5FB;border-radius:6px;padding:10px;margin-top:8px">
+        <div style="font-size:11px;color:var(--text-muted)">📊 FIB-4 (calculado automáticamente desde edad, AST, ALT, plaquetas)</div>
+        <div id="lab-fib4-calc" style="font-size:18px;font-weight:700;color:var(--primary)">—</div>
+      </div>
       <div class="form-control">
         <label>Fecha de laboratorio</label>
         <input type="date" id="lab-date" />
@@ -3310,9 +3354,20 @@ async function saveLabs() {
   const glucose = parseFloat($('lab-glucose').value);
   const insulin = parseFloat($('lab-insulin').value);
   const hba1c = parseFloat($('lab-hba1c').value);
+  const alt = parseFloat($('lab-alt').value) || null;
+  const ast = parseFloat($('lab-ast').value) || null;
+  const plt = parseFloat($('lab-plt').value) || null;
   const date = $('lab-date').value;
 
   const homaIR = glucose && insulin ? ((glucose * insulin) / 405).toFixed(2) : null;
+
+  // Calculate FIB-4 from age, AST, ALT, plt
+  const dob = currentPatient.fecha_nacimiento ? new Date(currentPatient.fecha_nacimiento) : null;
+  const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : null;
+  let fib4 = null;
+  if (age && ast && alt && plt && plt > 0 && alt > 0) {
+    fib4 = ((age * ast) / (plt * Math.sqrt(alt))).toFixed(2);
+  }
 
   showLoading(true);
   try {
@@ -3325,6 +3380,15 @@ async function saveLabs() {
       triglycerides: parseFloat($('lab-trig').value) || null,
       total_chol: parseFloat($('lab-chol').value) || null,
       hdl: parseFloat($('lab-hdl').value) || null,
+      ldl: parseFloat($('lab-ldl').value) || null,
+      alt: alt,
+      ast: ast,
+      platelets: plt,
+      fib4: fib4 ? parseFloat(fib4) : null,
+      crp: parseFloat($('lab-pcr').value) || null,
+      vitamin_d: parseFloat($('lab-vitd').value) || null,
+      tsh: parseFloat($('lab-tsh').value) || null,
+      uric_acid: parseFloat($('lab-uric').value) || null,
       created_at: date ? new Date(date).toISOString() : new Date().toISOString()
     });
 
@@ -3333,7 +3397,8 @@ async function saveLabs() {
     await loadOBESData();
     renderDashboard();
     closeModal('modal-labs');
-    clearModalInputs(['lab-glucose', 'lab-insulin', 'lab-hba1c', 'lab-trig', 'lab-chol', 'lab-hdl', 'lab-date']);
+    clearModalInputs(['lab-glucose','lab-insulin','lab-hba1c','lab-trig','lab-chol','lab-hdl','lab-ldl','lab-alt','lab-ast','lab-plt','lab-pcr','lab-vitd','lab-tsh','lab-uric','lab-date']);
+    if ($('lab-fib4-calc')) $('lab-fib4-calc').textContent = '—';
     showToast('Laboratorios guardados', 'success');
   } catch (e) {
     showToast('Error: ' + e.message, 'error');
@@ -3630,9 +3695,28 @@ function autoPopulateLancet() {
   const hdl = latestVal('hdl') ?? latestVal('hdl_mg_dl');
   if ((tg && tg >= 150) || (hdl && ((sex === 'M' && hdl < 40) || (sex === 'F' && hdl < 50)))) setCb('lnc-dislip', true);
   const fib4 = latestVal('fib4');
-  if (fib4 && fib4 >= 1.3) setCb('lnc-masld', true);
+  const alt = latestVal('alt');
+  const ast = latestVal('ast');
+  // MASLD risk: FIB-4 ≥1.3 OR ALT/AST elevated
+  if ((fib4 && fib4 >= 1.3) || (alt && alt > 40) || (ast && ast > 40)) setCb('lnc-masld', true);
+  // Auto-fill the FIB-4 numeric field in fenotipos for synthesis
+  if (fib4 && $('feno-fib4') && !$('feno-fib4').value) $('feno-fib4').value = fib4;
   autoPopulateMetSyn();
   calcLancet();
+}
+
+function liveFib4Calc() {
+  const ast = parseFloat($('lab-ast')?.value);
+  const alt = parseFloat($('lab-alt')?.value);
+  const plt = parseFloat($('lab-plt')?.value);
+  const out = $('lab-fib4-calc');
+  if (!out) return;
+  const dob = currentPatient?.fecha_nacimiento ? new Date(currentPatient.fecha_nacimiento) : null;
+  const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : null;
+  if (!age || !ast || !alt || !plt || plt <= 0 || alt <= 0) { out.textContent = '—'; out.style.color = ''; return; }
+  const fib4 = (age * ast) / (plt * Math.sqrt(alt));
+  out.textContent = fib4.toFixed(2);
+  out.style.color = fib4 > 2.67 ? '#C0392B' : fib4 >= 1.3 ? '#D68910' : '#1D8348';
 }
 
 function autoPopulateMetSyn() {
