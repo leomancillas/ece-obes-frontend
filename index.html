@@ -1672,20 +1672,38 @@
     </div>
     <div class="modal-body">
       <div class="form-control">
-        <label>Nombre completo</label>
-        <input type="text" id="np-name" placeholder="Nombre del paciente" />
+        <label>Nombre(s) *</label>
+        <input type="text" id="np-nombre" placeholder="Juan Pablo" />
       </div>
-      <div class="form-control">
-        <label>Correo electrónico</label>
-        <input type="email" id="np-email" placeholder="email@example.com" />
+      <div class="form-row">
+        <div class="form-control">
+          <label>Apellido paterno</label>
+          <input type="text" id="np-ap-paterno" placeholder="García" />
+        </div>
+        <div class="form-control">
+          <label>Apellido materno</label>
+          <input type="text" id="np-ap-materno" placeholder="López" />
+        </div>
       </div>
-      <div class="form-control">
-        <label>Teléfono</label>
-        <input type="text" id="np-phone" placeholder="+52 1234567890" />
+      <div class="form-row">
+        <div class="form-control">
+          <label>Fecha de nacimiento</label>
+          <input type="date" id="np-dob" />
+        </div>
+        <div class="form-control">
+          <label>Sexo</label>
+          <select id="np-sexo"><option value="">—</option><option value="M">Masculino</option><option value="F">Femenino</option></select>
+        </div>
       </div>
-      <div class="form-control">
-        <label>Fecha de nacimiento</label>
-        <input type="date" id="np-dob" />
+      <div class="form-row">
+        <div class="form-control">
+          <label>Teléfono</label>
+          <input type="text" id="np-phone" placeholder="+52 1234567890" />
+        </div>
+        <div class="form-control">
+          <label>Email</label>
+          <input type="email" id="np-email" placeholder="email@example.com" />
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -2178,7 +2196,8 @@ async function apiFetch(path, opts = {}) {
 
 async function loadPatientList() {
   try {
-    const patients = await apiFetch('/api/patients?limit=50');
+    const res = await apiFetch('/api/patients?limit=20');
+    const patients = Array.isArray(res) ? res : (res?.patients || []);
     displayPatientList(patients);
   } catch (e) {
     showToast('Error cargando pacientes: ' + e.message, 'error');
@@ -2186,14 +2205,15 @@ async function loadPatientList() {
 }
 
 async function searchPatients(query) {
-  if (!query) {
+  if (!query || query.length < 2) {
     loadPatientList();
     return;
   }
 
   try {
-    const results = await apiFetch(`/api/patients?search=${encodeURIComponent(query)}&limit=50`);
-    displayPatientList(results);
+    const res = await apiFetch(`/api/patients?search=${encodeURIComponent(query)}&limit=20`);
+    const patients = Array.isArray(res) ? res : (res?.patients || []);
+    displayPatientList(patients);
   } catch (e) {
     showToast('Error en búsqueda: ' + e.message, 'error');
   }
@@ -2206,13 +2226,21 @@ function displayPatientList(patients) {
     return;
   }
 
-  container.innerHTML = patients.map(p => `
-    <div class="patient-card" onclick="selectPatient(${p.id})">
-      <div class="patient-name">${p.name || 'Sin nombre'}</div>
-      <div class="patient-meta">ID: ${p.id}</div>
-      <div class="patient-meta">Edad: ${p.age || '—'}</div>
-    </div>
-  `).join('');
+  container.innerHTML = patients.map(p => {
+    const name = `${p.nombre || ''} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim() || 'Sin nombre';
+    const initials = name.split(' ').map(w => w[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
+    const dob = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
+    const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : p.edad;
+    return `<div class="patient-card" onclick="selectPatient('${p.id}')">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${initials}</div>
+        <div>
+          <div class="patient-name">${name}</div>
+          <div class="patient-meta">${age ? age + ' años' : ''} ${p.sexo === 'M' ? '· Masculino' : p.sexo === 'F' ? '· Femenino' : ''} ${p.expediente ? '· Exp. ' + p.expediente : ''}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function selectPatient(id) {
@@ -2255,38 +2283,47 @@ async function loadOBESData() {
   }
 }
 
+function patientName(p) {
+  if (!p) return 'Paciente';
+  return `${p.nombre || ''} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim() || 'Paciente';
+}
+
 function renderPatientHeader() {
   if (!currentPatient) return;
+  const p = currentPatient;
+  const name = patientName(p);
+  const dob = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
+  const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : p.edad;
+  const sex = p.sexo === 'M' ? 'M' : p.sexo === 'F' ? 'F' : '';
 
   $('header-patient-info').innerHTML = `
     <div style="color:#fff;font-size:13px">
-      <strong>${currentPatient.name || 'Paciente'}</strong><br>
-      <span style="opacity:.7;font-size:11px">ID: ${currentPatient.id}</span>
+      <strong>${name}</strong> · ${sex} ${age ? '· ' + age + 'a' : ''} ${p.expediente ? '· Exp. ' + p.expediente : ''}
     </div>
   `;
 }
 
 async function saveNewPatient() {
-  const name = $('np-name').value;
-  const email = $('np-email').value;
-  const phone = $('np-phone').value;
-  const dob = $('np-dob').value;
+  const nombre = $('np-nombre').value.trim();
+  const apellido_paterno = $('np-ap-paterno').value.trim();
+  const apellido_materno = $('np-ap-materno').value.trim();
+  const email = $('np-email').value.trim();
+  const telefono = $('np-phone').value.trim();
+  const fecha_nacimiento = $('np-dob').value;
+  const sexo = $('np-sexo').value;
 
-  if (!name) {
+  if (!nombre) {
     showToast('Ingresa el nombre del paciente', 'error');
     return;
   }
 
   showLoading(true);
   try {
+    const body = { nombre, apellido_paterno, apellido_materno, email, telefono, fecha_nacimiento, sexo };
+    Object.keys(body).forEach(k => !body[k] && delete body[k]);
     const newPatient = await apiFetch('/api/patients', {
       method: 'POST',
-      body: JSON.stringify({
-        name,
-        email,
-        phone,
-        date_of_birth: dob
-      })
+      body: JSON.stringify(body)
     });
 
     currentPatient = newPatient;
@@ -2340,9 +2377,16 @@ function renderDashboard() {
   if (!currentPatient) return;
 
   // Patient info
-  const age = currentPatient.age || '—';
-  $('dash-pt-name').textContent = currentPatient.name || '—';
-  $('dash-pt-details').textContent = `${age} años · ID: ${currentPatient.id}`;
+  const p = currentPatient;
+  const name = patientName(p);
+  const dob = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
+  const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : p.edad;
+  $('dash-pt-name').textContent = name;
+  $('dash-pt-details').textContent = [
+    age ? age + ' años' : null,
+    p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : null,
+    p.expediente ? 'Exp. ' + p.expediente : null,
+  ].filter(Boolean).join(' · ');
 
   // Latest measurement
   const latest = currentPatient.measurements?.[0];
