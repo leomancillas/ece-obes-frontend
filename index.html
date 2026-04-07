@@ -2700,13 +2700,25 @@
 
 <!-- Fenotipos History Modal -->
 <div class="modal-overlay" id="modal-feno-history">
-  <div class="modal-content" style="max-width:720px">
+  <div class="modal-content" style="max-width:860px">
     <div class="modal-header">
-      <span>📜 Historial de Fenotipificaciones</span>
+      <span>📜 Historial y evolución de Fenotipificaciones</span>
       <button class="btn-close" onclick="closeModal('modal-feno-history')">×</button>
     </div>
-    <div class="modal-body" id="feno-history-body" style="max-height:60vh;overflow-y:auto">
-      <div class="text-muted text-center" style="padding:20px">Cargando…</div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+      <div id="feno-timeline-wrap" style="display:none;border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;background:var(--surface)">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px">📈 Evolución temporal</div>
+        <div style="position:relative;height:240px"><canvas id="feno-timeline-chart"></canvas></div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:11px;color:var(--text-muted);margin-top:10px">
+          <span><b style="color:#C0392B">●</b> EOSS (0–4)</span>
+          <span><b style="color:#1A5276">●</b> MetSyn criterios (0–5)</span>
+          <span><b style="color:#7D6608">●</b> Lancet (0=OP, 1=OC)</span>
+          <span><b style="color:#1D8348">●</b> CBEC max score (0–8)</span>
+        </div>
+      </div>
+      <div id="feno-history-body">
+        <div class="text-muted text-center" style="padding:20px">Cargando…</div>
+      </div>
     </div>
   </div>
 </div>
@@ -3129,19 +3141,28 @@ function renderFenoSummaryCard() {
   ].join('');
 }
 
+let fenoTimelineChart = null;
+
 async function openFenotiposHistory() {
   if (!currentPatient) return;
   openModal('modal-feno-history');
   const body = $('feno-history-body');
+  const wrap = $('feno-timeline-wrap');
   body.innerHTML = '<div class="text-muted text-center" style="padding:20px">Cargando…</div>';
+  if (wrap) wrap.style.display = 'none';
   const { data, error } = await sbClient
     .from('obes_fenotipos')
-    .select('fecha_fenotipificacion, lancet_categoria, fenotipo_metabolico, endotipo_dominante, so_diagnostico, etiologia_principal, metsyn_criterios_positivos, eoss_stage')
+    .select('fecha_fenotipificacion, lancet_categoria, fenotipo_metabolico, endotipo_dominante, so_diagnostico, etiologia_principal, metsyn_criterios_positivos, eoss_stage, cbec_scores')
     .eq('patient_id', currentPatient.id)
     .order('fecha_fenotipificacion', { ascending: false });
   if (error || !data || data.length === 0) {
     body.innerHTML = '<div class="text-muted text-center" style="padding:20px">Sin evaluaciones previas</div>';
     return;
+  }
+  // Render timeline if 2+ versions
+  if (data.length >= 2 && wrap) {
+    wrap.style.display = 'block';
+    setTimeout(() => renderFenoTimelineChart(data.slice().reverse()), 100);
   }
   body.innerHTML = data.map((f, i) => {
     const fecha = new Date(f.fecha_fenotipificacion).toLocaleString('es-MX');
@@ -4102,6 +4123,44 @@ function updateSynthesisRecommendation() {
     recEl.textContent = 'Completa los módulos de fenotipificación para generar recomendaciones terapéuticas integradas.';
     recEl.className = 'feno-alert show info';
   }
+}
+
+function renderFenoTimelineChart(rowsAsc) {
+  const canvas = $('feno-timeline-chart');
+  if (!canvas || !window.Chart) return;
+  if (fenoTimelineChart) { try { fenoTimelineChart.destroy(); } catch(e) {} }
+  const labels = rowsAsc.map(r => {
+    const d = new Date(r.fecha_fenotipificacion);
+    return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(2)}`;
+  });
+  const eossData = rowsAsc.map(r => r.eoss_stage ?? null);
+  const metData = rowsAsc.map(r => r.metsyn_criterios_positivos ?? null);
+  const lancetData = rowsAsc.map(r => r.lancet_categoria === 'OC' ? 1 : r.lancet_categoria === 'OP' ? 0 : null);
+  const cbecMaxData = rowsAsc.map(r => {
+    const s = r.cbec_scores; if (!s) return null;
+    return Math.max(s.cerebral||0, s.gastrica||0, s.emocional||0, s.lento||0);
+  });
+  fenoTimelineChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'EOSS', data: eossData, borderColor: '#C0392B', backgroundColor: 'rgba(192,57,43,.08)', tension: .3, pointRadius: 4, spanGaps: true },
+        { label: 'MetSyn', data: metData, borderColor: '#1A5276', backgroundColor: 'rgba(26,82,118,.08)', tension: .3, pointRadius: 4, spanGaps: true },
+        { label: 'Lancet', data: lancetData, borderColor: '#7D6608', backgroundColor: 'rgba(125,102,8,.08)', tension: 0, pointRadius: 4, stepped: true, spanGaps: true },
+        { label: 'CBEC max', data: cbecMaxData, borderColor: '#1D8348', backgroundColor: 'rgba(29,131,72,.08)', tension: .3, pointRadius: 4, spanGaps: true }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, max: 8, ticks: { stepSize: 1, font: { size: 10 } } },
+        x: { ticks: { font: { size: 10 } } }
+      }
+    }
+  });
 }
 
 /* ── Save / Load Fenotipos ── */
