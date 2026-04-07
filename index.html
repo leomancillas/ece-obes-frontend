@@ -1587,6 +1587,52 @@
           </div>
         </div>
 
+        <!-- ═══ SNAPSHOT STRIP (zona superior fija) ═══ -->
+        <div id="medico-snapshot" class="section-card" style="margin-bottom:14px;border-left:5px solid var(--mod-medico)">
+          <div class="section-card-body" style="padding:12px">
+            <div id="snapshot-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px"></div>
+          </div>
+        </div>
+
+        <!-- ═══ ACCIONES RECOMENDADAS (CDSS hoy) ═══ -->
+        <div class="section-card" style="margin-bottom:14px">
+          <div class="section-card-header">
+            <span class="section-card-title">🎯 Qué hacer hoy</span>
+            <span id="actions-count" style="font-size:11px;color:var(--text-muted)"></span>
+          </div>
+          <div class="section-card-body" id="actions-body">
+            <div class="text-muted text-sm">Sin acciones recomendadas</div>
+          </div>
+        </div>
+
+        <!-- ═══ ESTUDIOS PENDIENTES ═══ -->
+        <details class="section-card" style="margin-bottom:14px">
+          <summary class="section-card-header" style="cursor:pointer;list-style:none">
+            <span class="section-card-title">📋 Estudios pendientes</span>
+            <span id="gaps-count" style="font-size:11px;color:var(--text-muted)"></span>
+          </summary>
+          <div class="section-card-body" id="gaps-body"></div>
+        </details>
+
+        <!-- ═══ RESPONDEDOR / TITULACIÓN ═══ -->
+        <details class="section-card" style="margin-bottom:14px">
+          <summary class="section-card-header" style="cursor:pointer;list-style:none">
+            <span class="section-card-title">📈 Respuesta a farmacoterapia</span>
+            <span id="responder-summary" style="font-size:11px;color:var(--text-muted)"></span>
+          </summary>
+          <div class="section-card-body" id="responder-body"></div>
+        </details>
+
+        <!-- ═══ TIMELINE UNIFICADO ═══ -->
+        <details class="section-card" style="margin-bottom:14px">
+          <summary class="section-card-header" style="cursor:pointer;list-style:none">
+            <span class="section-card-title">📊 Timeline clínico unificado</span>
+          </summary>
+          <div class="section-card-body" style="padding:8px">
+            <div style="position:relative;height:240px"><canvas id="medico-unified-timeline"></canvas></div>
+          </div>
+        </details>
+
         <div class="section-card mb-8" style="margin-bottom:16px">
           <div class="section-card-header">
             <span class="section-card-title">📊 Estadificación EOSS</span>
@@ -3359,6 +3405,7 @@ async function loadOBESData() {
     try { await loadEndocrineScreen(); } catch(e) { console.warn('endo screen:', e.message); }
     try { await loadClinicalNotes(); } catch(e) { console.warn('notes:', e.message); }
     try { recalcMedicoComorb(); } catch(e) { console.warn('comorb:', e.message); }
+    try { renderMedicoIntelligence(); } catch(e) { console.warn('intel:', e.message); }
 
     // Load fenotipos
     await loadFenotipos();
@@ -3774,6 +3821,290 @@ async function saveLabs() {
   } finally {
     showLoading(false);
   }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   MÉDICO/ENDOCRINO INTELLIGENCE LAYER
+   1. Snapshot strip + sparklines + semáforo
+   2. Motor "lo que falta" (estudios pendientes)
+   3. Motor respondedor / no respondedor
+   4. Timeline unificado
+   5. Motor titulación por fármaco
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+// Sparkline SVG inline (60×20)
+function sparkline(values, color) {
+  values = values.filter(v => v != null && !isNaN(v));
+  if (values.length < 2) return '';
+  const w = 60, h = 20, pad = 2;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const step = (w - 2*pad) / (values.length - 1);
+  const pts = values.map((v, i) => `${(pad + i*step).toFixed(1)},${(h - pad - ((v - min)/range)*(h - 2*pad)).toFixed(1)}`).join(' ');
+  const last = values[values.length-1], first = values[0];
+  const trend = last > first ? '↑' : last < first ? '↓' : '→';
+  return `<svg width="${w}" height="${h}" style="display:inline-block;vertical-align:middle"><polyline fill="none" stroke="${color}" stroke-width="1.5" points="${pts}"/></svg><span style="font-size:10px;color:${color};margin-left:2px">${trend}</span>`;
+}
+
+// Color por valor según target/threshold
+function rag(value, green, amber) {
+  if (value == null || isNaN(value)) return '#7F8C8D';
+  if (value <= green) return '#1D8348';
+  if (value <= amber) return '#D68910';
+  return '#C0392B';
+}
+
+function renderMedicoSnapshot() {
+  const strip = $('snapshot-strip');
+  if (!strip || !currentPatient) return;
+  const meas = currentPatient.measurements || [];
+  const labs = currentPatient.labs || [];
+  const m = meas[0] || {};
+  const l = labs[0] || {};
+  const baseline = meas[meas.length-1] || {};
+  const dW = (m.weight_kg && baseline.weight_kg && meas.length>1) ? (m.weight_kg - baseline.weight_kg).toFixed(1) : null;
+  const twl = (m.weight_kg && baseline.weight_kg && meas.length>1) ? (((baseline.weight_kg - m.weight_kg)/baseline.weight_kg)*100).toFixed(1) : null;
+
+  // Sparkline series (oldest→newest)
+  const wSeries = meas.slice().reverse().map(x => x.weight_kg);
+  const bmiSeries = meas.slice().reverse().map(x => x.bmi);
+  const a1cSeries = labs.slice().reverse().map(x => x.hba1c);
+  const fib4Series = labs.slice().reverse().map(x => x.fib4);
+
+  // Semáforo global
+  let globalRisk = 'verde';
+  if (m.eoss_stage >= 3 || l.fib4 >= 2.67 || l.hba1c >= 9) globalRisk = 'rojo';
+  else if (m.eoss_stage >= 2 || l.fib4 >= 1.3 || l.hba1c >= 6.5 || m.bmi >= 35) globalRisk = 'amarillo';
+  const riskColor = globalRisk === 'rojo' ? '#C0392B' : globalRisk === 'amarillo' ? '#D68910' : '#1D8348';
+  const riskLabel = globalRisk === 'rojo' ? 'Riesgo alto' : globalRisk === 'amarillo' ? 'Riesgo moderado' : 'Estable';
+
+  const cell = (label, val, sub, color, spark) =>
+    `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px">
+      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">${label}</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:4px">
+        <div style="font-size:18px;font-weight:700;color:${color || 'var(--text)'}">${val ?? '—'}</div>
+        ${spark || ''}
+      </div>
+      ${sub ? `<div style="font-size:10px;color:var(--text-muted);margin-top:2px">${sub}</div>` : ''}
+    </div>`;
+
+  strip.innerHTML = [
+    `<div style="background:${riskColor};color:#fff;border-radius:8px;padding:10px;display:flex;flex-direction:column;justify-content:center">
+      <div style="font-size:10px;opacity:.85;text-transform:uppercase">Estado global</div>
+      <div style="font-size:16px;font-weight:700">${riskLabel}</div>
+      <div style="font-size:10px;opacity:.85">EOSS ${m.eoss_stage ?? '?'}</div>
+    </div>`,
+    cell('Peso', m.weight_kg ? m.weight_kg.toFixed(1) + ' kg' : null, dW != null ? (dW > 0 ? '+' : '') + dW + ' kg vs basal' : '', null, sparkline(wSeries, '#1A5276')),
+    cell('IMC', m.bmi || null, m.bmi ? getBMICategory(parseFloat(m.bmi)) : '', rag(m.bmi, 25, 30), sparkline(bmiSeries, '#1A5276')),
+    cell('HbA1c', l.hba1c ? l.hba1c + '%' : null, l.hba1c ? (l.hba1c >= 6.5 ? 'DM2' : l.hba1c >= 5.7 ? 'Prediab' : 'Normal') : '', rag(l.hba1c, 5.6, 6.4), sparkline(a1cSeries, '#C0392B')),
+    cell('FIB-4', l.fib4 || null, l.fib4 >= 2.67 ? 'Alto' : l.fib4 >= 1.3 ? 'Indeterm.' : l.fib4 ? 'Bajo' : '', rag(l.fib4, 1.29, 2.66), sparkline(fib4Series, '#7D6608')),
+    cell('%TWL', twl ? twl + '%' : null, twl ? (twl >= 10 ? 'Excelente' : twl >= 5 ? 'Adecuado' : 'Insuficiente') : '', twl >= 10 ? '#1D8348' : twl >= 5 ? '#D68910' : '#C0392B'),
+    cell('Lancet', currentPatient.latestFenotipo?.lancet_categoria || null, currentPatient.latestFenotipo?.fenotipo_metabolico || '', currentPatient.latestFenotipo?.lancet_categoria === 'OC' ? '#C0392B' : '#D68910')
+  ].join('');
+}
+
+/* ── Motor 1 + 2: acciones recomendadas + estudios pendientes ───────────── */
+function renderMedicoActions() {
+  if (!currentPatient) return;
+  const m = (currentPatient.measurements || [])[0] || {};
+  const labs = (currentPatient.labs || [])[0] || {};
+  const allLabs = currentPatient.labs || [];
+  const meas = currentPatient.measurements || [];
+  const meds = currentPatient.medications || [];
+  const now = Date.now();
+  const monthsAgo = (d) => d ? (now - new Date(d).getTime()) / (1000*60*60*24*30) : Infinity;
+
+  const actions = [];
+  // Crítico
+  if (labs.fib4 >= 2.67) actions.push({pri:'crit', icon:'🔴', text:'<b>FIB-4 alto</b> — derivar a hepatología, considerar elastografía/biopsia.'});
+  if (labs.hba1c >= 9) actions.push({pri:'crit', icon:'🔴', text:'<b>HbA1c ≥9%</b> — intensificar antidiabético, considerar insulinización.'});
+  if (m.eoss_stage >= 3) actions.push({pri:'crit', icon:'🔴', text:'<b>EOSS 3+</b> — priorizar manejo de daño orgánico antes de pérdida agresiva.'});
+  // Accionable
+  if (labs.ldl >= 160) actions.push({pri:'act', icon:'🟠', text:'<b>LDL ≥160</b> — iniciar estatina alta intensidad (atorva 40-80 / rosuva 20-40).'});
+  if (labs.hba1c >= 6.5 && labs.hba1c < 9 && !meds.some(x => x.drug_class === 'metformina')) actions.push({pri:'act', icon:'🟠', text:'DM2 sin metformina — considerar iniciar metformina + GLP-1.'});
+  if (labs.tsh > 10) actions.push({pri:'act', icon:'🟠', text:'TSH >10 — iniciar levotiroxina (1.6 μg/kg/día).'});
+
+  // Titulación (Motor 5) — meds activas
+  meds.filter(x => x.status === 'activo').forEach(med => {
+    const weeks = med.start_date ? Math.floor((now - new Date(med.start_date).getTime())/(1000*60*60*24*7)) : 0;
+    const twl = med.current_twl_pct;
+    if (med.drug_class === 'glp1' || med.drug_class === 'glp1_gip') {
+      const dose = (med.dose || '').toLowerCase();
+      if (weeks >= 4 && /0\.25/.test(dose)) actions.push({pri:'act', icon:'💊', text:`<b>${med.drug_name}</b>: 4+ sem en 0.25 mg → escalar a 0.5 mg sc/sem.`});
+      else if (weeks >= 8 && /0\.5/.test(dose)) actions.push({pri:'act', icon:'💊', text:`<b>${med.drug_name}</b>: 8+ sem en 0.5 mg → escalar a 1 mg.`});
+      if (weeks >= 12 && twl != null && twl < 5) actions.push({pri:'act', icon:'⚠️', text:`<b>${med.drug_name}</b>: 12 sem con %TWL ${twl}% (&lt;5%) — no respondedor temprano, considerar cambio o adición.`});
+    }
+    if (!med.contraindications_checked) actions.push({pri:'act', icon:'⚠️', text:`<b>${med.drug_name}</b>: contraindicaciones no documentadas — revisar y marcar.`});
+  });
+
+  // Detección meseta
+  if (meas.length >= 4) {
+    const last4 = meas.slice(0, 4).map(x => x.weight_kg).filter(Boolean);
+    if (last4.length === 4) {
+      const range = Math.max(...last4) - Math.min(...last4);
+      if (range < 2) actions.push({pri:'act', icon:'📉', text:'<b>Meseta detectada</b>: ≤2 kg variación en 4 visitas — reevaluar adherencia, dosis, comorbilidades endocrinas.'});
+    }
+  }
+
+  // Renderizar acciones (críticas primero)
+  const crit = actions.filter(a => a.pri === 'crit');
+  const act = actions.filter(a => a.pri === 'act');
+  const ordered = [...crit, ...act];
+  const body = $('actions-body');
+  if (body) {
+    if (!ordered.length) {
+      body.innerHTML = '<div class="text-muted text-sm">✅ Sin acciones críticas. Continuar plan actual.</div>';
+    } else {
+      body.innerHTML = ordered.map(a => {
+        const bg = a.pri === 'crit' ? '#FADBD8' : '#FEF9E7';
+        const border = a.pri === 'crit' ? '#C0392B' : '#D68910';
+        return `<div style="background:${bg};border-left:3px solid ${border};padding:8px 10px;border-radius:4px;margin-bottom:6px;font-size:12px">${a.icon} ${a.text}</div>`;
+      }).join('');
+    }
+    const cnt = $('actions-count');
+    if (cnt) cnt.textContent = ordered.length ? `${crit.length} críticas · ${act.length} accionables` : '';
+  }
+
+  // ── Motor 2: estudios pendientes ───────────────────────────────────────
+  const gaps = [];
+  const requiredStudies = [
+    {key:'hba1c', label:'HbA1c', interval:3, source:'lab'},
+    {key:'fib4', label:'FIB-4', interval:6, source:'lab'},
+    {key:'ldl', label:'Perfil de lípidos', interval:12, source:'lab'},
+    {key:'tsh', label:'TSH', interval:12, source:'lab'},
+    {key:'creatinina', label:'Creatinina + eGFR', interval:12, source:'lab'},
+    {key:'microalbuminuria', label:'Microalbuminuria', interval:12, source:'lab', requiresDM:true},
+    {key:'vitamin_d', label:'Vitamina D', interval:12, source:'lab'},
+  ];
+  const isDM = labs.hba1c >= 6.5;
+  requiredStudies.forEach(s => {
+    if (s.requiresDM && !isDM) return;
+    const lastWithVal = allLabs.find(L => L[s.key] != null);
+    const months = lastWithVal ? monthsAgo(lastWithVal.created_at || lastWithVal.fecha_toma) : Infinity;
+    if (months > s.interval) {
+      gaps.push({label: s.label, months: months === Infinity ? 'nunca' : Math.floor(months) + ' m', overdue: true});
+    }
+  });
+  // Antropometría reciente
+  if (monthsAgo(meas[0]?.created_at) > 3) gaps.push({label:'Medición antropométrica', months: meas[0] ? Math.floor(monthsAgo(meas[0].created_at)) + ' m' : 'nunca', overdue:true});
+
+  const gbody = $('gaps-body');
+  if (gbody) {
+    if (!gaps.length) {
+      gbody.innerHTML = '<div class="text-muted text-sm">✅ Todos los estudios al día.</div>';
+    } else {
+      gbody.innerHTML = gaps.map(g =>
+        `<div style="display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--border);font-size:12px">
+          <span>📋 ${g.label}</span><span style="color:#C0392B">último: ${g.months}</span>
+        </div>`).join('');
+    }
+    const gc = $('gaps-count');
+    if (gc) gc.textContent = gaps.length ? `${gaps.length} pendientes` : 'al día';
+  }
+}
+
+/* ── Motor 3: respondedor vs no respondedor ─────────────────────────────── */
+function renderResponderEngine() {
+  if (!currentPatient) return;
+  const body = $('responder-body');
+  const sum = $('responder-summary');
+  if (!body) return;
+  const meds = (currentPatient.medications || []).filter(m => m.status === 'activo');
+  const meas = currentPatient.measurements || [];
+  if (!meds.length) {
+    body.innerHTML = '<div class="text-muted text-sm">Sin fármacos activos para evaluar respuesta.</div>';
+    if (sum) sum.textContent = '';
+    return;
+  }
+  // Umbrales por clase: %TWL esperado a (12sem, 6m, 12m)
+  const targets = {
+    glp1: [3, 8, 12],
+    glp1_gip: [5, 12, 18],
+    naltrexona_bupropion: [2, 5, 8],
+    fentermina_topiramato: [4, 8, 10],
+    orlistat: [2, 4, 5],
+    setmelanotida: [3, 8, 12],
+    metformina: [1, 2, 3]
+  };
+  body.innerHTML = meds.map(med => {
+    const weeks = med.start_date ? Math.floor((Date.now() - new Date(med.start_date).getTime())/(1000*60*60*24*7)) : 0;
+    const t = targets[med.drug_class] || [3, 6, 10];
+    let phase, expected;
+    if (weeks < 12) { phase = '12 sem'; expected = t[0]; }
+    else if (weeks < 26) { phase = '6 meses'; expected = t[1]; }
+    else { phase = '12 meses'; expected = t[2]; }
+    const twl = med.current_twl_pct;
+    let cls, color;
+    if (twl == null) { cls = 'Sin registro'; color = '#7F8C8D'; }
+    else if (twl >= expected) { cls = '✅ Respondedor'; color = '#1D8348'; }
+    else if (twl >= expected * 0.6) { cls = '🟡 Respuesta parcial'; color = '#D68910'; }
+    else { cls = '🔴 No respondedor'; color = '#C0392B'; }
+    const pct = twl != null ? Math.min((twl/expected)*100, 100) : 0;
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between"><b>${med.drug_name}</b><span style="color:${color};font-weight:700;font-size:12px">${cls}</span></div>
+      <div style="font-size:11px;color:var(--text-muted);margin:4px 0">${weeks} sem · esperado ${expected}% en ${phase} · alcanzado ${twl ?? '—'}%</div>
+      <div style="background:var(--bg);height:6px;border-radius:3px;overflow:hidden"><div style="background:${color};height:100%;width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  if (sum) {
+    const responders = meds.filter(m => {
+      const t = targets[m.drug_class]?.[1] || 6;
+      return m.current_twl_pct >= t;
+    }).length;
+    sum.textContent = `${responders}/${meds.length} respondedores`;
+  }
+}
+
+/* ── Motor 4: timeline unificado eventos + peso ─────────────────────────── */
+let medicoTimelineChart = null;
+function renderMedicoTimeline() {
+  const canvas = $('medico-unified-timeline');
+  if (!canvas || !currentPatient || typeof Chart === 'undefined') return;
+  const meas = (currentPatient.measurements || []).slice().reverse();
+  const labs = (currentPatient.labs || []).slice().reverse();
+  const meds = currentPatient.medications || [];
+  if (!meas.length) return;
+  const wPoints = meas.filter(m => m.weight_kg).map(m => ({x: m.created_at, y: m.weight_kg}));
+  const a1cPoints = labs.filter(l => l.hba1c).map(l => ({x: l.created_at || l.fecha_toma, y: l.hba1c}));
+
+  // Eventos: cada inicio de fármaco como anotación
+  const eventDatasets = meds.filter(m => m.start_date).map(m => ({
+    label: '💊 ' + m.drug_name,
+    data: [{x: m.start_date, y: meas[0]?.weight_kg || 80}],
+    backgroundColor: '#7D6608',
+    borderColor: '#7D6608',
+    pointRadius: 8,
+    pointStyle: 'triangle',
+    showLine: false
+  }));
+
+  if (medicoTimelineChart) medicoTimelineChart.destroy();
+  medicoTimelineChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      datasets: [
+        { label: 'Peso (kg)', data: wPoints, borderColor: '#1A5276', backgroundColor: '#1A527640', tension: 0.3, yAxisID: 'y' },
+        { label: 'HbA1c (%)', data: a1cPoints, borderColor: '#C0392B', backgroundColor: '#C0392B40', tension: 0.3, yAxisID: 'y2' },
+        ...eventDatasets
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { type: 'time', time: { unit: 'month' } },
+        y: { position: 'left', title: {display:true, text:'kg'} },
+        y2: { position: 'right', title: {display:true, text:'HbA1c %'}, grid: {drawOnChartArea:false} }
+      },
+      plugins: { legend: { labels: { font: { size: 10 } } } }
+    }
+  });
+}
+
+function renderMedicoIntelligence() {
+  try { renderMedicoSnapshot(); } catch(e) { console.warn('snapshot:', e); }
+  try { renderMedicoActions(); } catch(e) { console.warn('actions:', e); }
+  try { renderResponderEngine(); } catch(e) { console.warn('responder:', e); }
+  try { renderMedicoTimeline(); } catch(e) { console.warn('timeline:', e); }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
