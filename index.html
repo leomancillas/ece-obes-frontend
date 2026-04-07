@@ -3156,6 +3156,30 @@
         <label><input type="checkbox" id="np-sii"> SII</label>
         <label><input type="checkbox" id="np-uric"> Hiperuricemia</label>
       </div>
+      <h4 class="text-sm" style="margin:10px 0">Tiempo restringido / Ayuno intermitente</h4>
+      <div class="form-row">
+        <div class="form-control"><label>Protocolo</label>
+          <select id="np-fasting-protocol">
+            <option value="">Ninguno</option>
+            <option value="tre_16_8">TRE 16:8</option>
+            <option value="tre_14_10">TRE 14:10</option>
+            <option value="tre_18_6">TRE 18:6</option>
+            <option value="tre_20_4">TRE 20:4 (Warrior)</option>
+            <option value="omad">OMAD (1 comida/día)</option>
+            <option value="adf">Ayuno días alternos (ADF)</option>
+            <option value="5_2">5:2 (2 días VLCD)</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div class="form-control"><label>Inicio ventana (HH:MM)</label><input type="time" id="np-fasting-start" /></div>
+        <div class="form-control"><label>Fin ventana (HH:MM)</label><input type="time" id="np-fasting-end" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Días/semana</label><input type="number" id="np-fasting-days" min="0" max="7" placeholder="7" /></div>
+        <div class="form-control"><label>Adherencia (%)</label><input type="number" id="np-fasting-adh" min="0" max="100" /></div>
+        <div class="form-control"><label>Inicio</label><input type="date" id="np-fasting-since" /></div>
+      </div>
+      <div class="form-control"><label>Notas TRE/IF</label><textarea id="np-fasting-notes" rows="2" placeholder="Tolerancia, hipoglucemias, ajustes farmacoterapia..."></textarea></div>
       <h4 class="text-sm" style="margin:10px 0">Riesgo nutricional</h4>
       <div class="form-row">
         <div class="form-control"><label>MUST score (0-6)</label><input type="number" id="np-must" min="0" max="6" /></div>
@@ -4962,6 +4986,13 @@ function openNutritionProfileModal() {
     $('np-alcohol-w').value = p.alcohol_units_week ?? '';
     $('np-micro').value = (p.micronutrient_deficiencies || []).join(', ');
     $('np-prof-notes').value = p.notes || '';
+    $('np-fasting-protocol').value = p.fasting_protocol || '';
+    $('np-fasting-start').value = p.fasting_window_start || '';
+    $('np-fasting-end').value = p.fasting_window_end || '';
+    $('np-fasting-days').value = p.fasting_days_per_week ?? '';
+    $('np-fasting-adh').value = p.fasting_adherence_pct ?? '';
+    $('np-fasting-since').value = p.fasting_since || '';
+    $('np-fasting-notes').value = p.fasting_notes || '';
   }
   openModal('modal-nutrition-profile');
 }
@@ -4989,6 +5020,13 @@ async function saveNutritionProfile() {
     alcohol_units_week: parseFloat($('np-alcohol-w').value) || null,
     micronutrient_deficiencies: toArr('np-micro'),
     notes: $('np-prof-notes').value || null,
+    fasting_protocol: $('np-fasting-protocol').value || null,
+    fasting_window_start: $('np-fasting-start').value || null,
+    fasting_window_end: $('np-fasting-end').value || null,
+    fasting_days_per_week: parseInt($('np-fasting-days').value) || null,
+    fasting_adherence_pct: parseFloat($('np-fasting-adh').value) || null,
+    fasting_since: $('np-fasting-since').value || null,
+    fasting_notes: $('np-fasting-notes').value || null,
     updated_at: new Date().toISOString()
   };
   showLoading(true);
@@ -5145,6 +5183,7 @@ function renderNutritionProfile() {
     <div><strong>MUST:</strong> ${p.must_score ?? '—'} (${p.must_category||'—'}) · <strong>Alcohol:</strong> ${p.alcohol_units_week||'—'} UBE/sem</div>
     <div><strong>Deficiencias micro:</strong> ${(p.micronutrient_deficiencies||[]).join(', ') || '—'}</div>
     <div><strong>Cocina:</strong> ${p.cooking_skill||'—'} · <strong>Presupuesto:</strong> ${p.budget_constraint||'—'}</div>
+    ${p.fasting_protocol ? `<div style="margin-top:6px;padding:6px;background:var(--surface);border-radius:4px"><strong>⏱ TRE/IF:</strong> ${p.fasting_protocol} · ventana ${p.fasting_window_start||'—'}–${p.fasting_window_end||'—'} · ${p.fasting_days_per_week||'?'} días/sem · adherencia ${p.fasting_adherence_pct||'—'}%</div>` : ''}
   `;
 }
 
@@ -5163,6 +5202,7 @@ function renderNutritionSnapshot() {
   if (lastRecall?.total_kcal) cells.push(`<div class="snap-cell"><div class="snap-label">R24h</div><div class="snap-val">${lastRecall.total_kcal} kcal</div></div>`);
   if (lastEB?.adherence_pct != null) cells.push(`<div class="snap-cell"><div class="snap-label">Adherencia</div><div class="snap-val">${lastEB.adherence_pct}%</div></div>`);
   if (prof?.must_category) cells.push(`<div class="snap-cell"><div class="snap-label">MUST</div><div class="snap-val">${prof.must_category}</div></div>`);
+  if (prof?.fasting_protocol) cells.push(`<div class="snap-cell"><div class="snap-label">TRE/IF</div><div class="snap-val">${prof.fasting_protocol}</div></div>`);
   el.innerHTML = cells.length ? cells.map(c => `<div style="padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;min-width:100px">${c.replace(/<div class="snap-cell">|<\/div>$/g,'').replace('<div class="snap-label">','<div style="font-size:11px;color:var(--text-muted)">').replace('<div class="snap-val">','<div style="font-size:16px;font-weight:600">')}</div>`).join('') : '<div class="text-muted text-sm">Sin datos para snapshot</div>';
 }
 
@@ -5293,14 +5333,28 @@ function generateMenuSuggestion() {
     return picks;
   }
 
-  // Distribución: desayuno 25%, comida 40%, cena 25%, colación 10%
-  const meals = {
-    'Desayuno': pick(FOOD_BANK.desayuno, 1),
-    'Colación AM': pick(FOOD_BANK.colacion, 1),
-    'Comida': pick(FOOD_BANK.comida, 1),
-    'Colación PM': pick(FOOD_BANK.colacion, 1),
-    'Cena': pick(FOOD_BANK.cena, 1)
-  };
+  // TRE / Ayuno intermitente — distribución según ventana
+  let meals;
+  const fp = prof?.fasting_protocol;
+  if (fp === 'omad') {
+    meals = { 'Comida única (OMAD)': pick(FOOD_BANK.comida, 1) };
+  } else if (fp === 'tre_20_4') {
+    meals = { 'Comida': pick(FOOD_BANK.comida, 1), 'Cena ligera': pick(FOOD_BANK.cena, 1) };
+  } else if (fp === 'tre_18_6') {
+    meals = { 'Comida': pick(FOOD_BANK.comida, 1), 'Colación': pick(FOOD_BANK.colacion, 1), 'Cena': pick(FOOD_BANK.cena, 1) };
+  } else if (fp === 'tre_16_8') {
+    meals = { 'Primera comida (12-13h)': pick(FOOD_BANK.comida, 1), 'Colación': pick(FOOD_BANK.colacion, 1), 'Cena (19-20h)': pick(FOOD_BANK.cena, 1) };
+  } else if (fp === 'tre_14_10') {
+    meals = { 'Desayuno tardío': pick(FOOD_BANK.desayuno, 1), 'Comida': pick(FOOD_BANK.comida, 1), 'Cena temprana': pick(FOOD_BANK.cena, 1) };
+  } else {
+    meals = {
+      'Desayuno': pick(FOOD_BANK.desayuno, 1),
+      'Colación AM': pick(FOOD_BANK.colacion, 1),
+      'Comida': pick(FOOD_BANK.comida, 1),
+      'Colación PM': pick(FOOD_BANK.colacion, 1),
+      'Cena': pick(FOOD_BANK.cena, 1)
+    };
+  }
 
   let totalKcal = 0, totalP = 0, totalC = 0, totalF = 0;
   let html = '';
@@ -5322,6 +5376,9 @@ function generateMenuSuggestion() {
   const diffPct = Math.round((diff/targetKcal)*100);
   const summary = `Total: ${totalKcal} kcal (objetivo ${targetKcal}, ${diff>=0?'+':''}${diffPct}%) · P ${totalP}g · HC ${totalC}g · G ${totalF}g`;
 
+  if (prof?.fasting_protocol) {
+    html = `<div style="padding:8px;background:#F4ECF7;border-left:3px solid #6C3483;margin-bottom:8px"><strong>⏱ Protocolo:</strong> ${prof.fasting_protocol} · Ventana de alimentación: <strong>${prof.fasting_window_start||'—'} a ${prof.fasting_window_end||'—'}</strong></div>` + html;
+  }
   $('nut-menu-summary').textContent = '· ' + summary;
   $('nut-menu-card').style.display = 'block';
   $('nut-menu-body').innerHTML = html + `
@@ -5368,6 +5425,10 @@ function renderNutritionActions() {
     actions.push({p:'act', t:`Alim. emocional alta (TFEQ EE ${lastEB.tfeq_emotional_eating}): referir a psicología`});
   if (lastEB?.binge_episodes_week >= 2)
     actions.push({p:'act', t:`Atracones ${lastEB.binge_episodes_week}/sem: tamizar BED`});
+  if (prof?.fasting_protocol && prof?.fasting_adherence_pct != null && prof.fasting_adherence_pct < 60)
+    actions.push({p:'act', t:`Adherencia TRE/IF baja (${prof.fasting_adherence_pct}%): revisar tolerancia/horarios`});
+  if (prof?.fasting_protocol && currentPatient?.medications?.some(m => /sulfonilurea|insulin/i.test(m.drug_name||'')))
+    actions.push({p:'crit', t:'TRE/IF + insulina/sulfonilurea: riesgo hipoglucemia, ajustar dosis'});
   if (lastRecall?.ultra_processed_pct > 30)
     actions.push({p:'act', t:`Ultraprocesados ${lastRecall.ultra_processed_pct}% (>30%): reducir`});
   if (lastRecall?.fiber_g && lastRecall.fiber_g < 25)
