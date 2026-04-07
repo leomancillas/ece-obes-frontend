@@ -1773,7 +1773,17 @@
             <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-eating-behavior')">+ TFEQ</button>
             <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-calorimetry')">+ Calorimetría</button>
             <button class="btn-add" style="background:var(--mod-nutri)" onclick="openNutritionProfileModal()">⚙ Perfil</button>
+            <button class="btn-add" style="background:#6C3483" onclick="generateMenuSuggestion()">🍽 Sugerir menú</button>
           </div>
+        </div>
+
+        <!-- Menú sugerido -->
+        <div class="section-card mb-8" id="nut-menu-card" style="display:none;border-left:4px solid #6C3483">
+          <div class="section-card-header">
+            <span class="section-card-title">🍽 Menú sugerido <span id="nut-menu-summary" class="text-muted text-sm"></span></span>
+            <button class="btn-add" style="background:#6C3483" onclick="generateMenuSuggestion()">↻ Regenerar</button>
+          </div>
+          <div class="section-card-body" id="nut-menu-body"></div>
         </div>
 
         <!-- Snapshot strip -->
@@ -5154,6 +5164,182 @@ function renderNutritionSnapshot() {
   if (lastEB?.adherence_pct != null) cells.push(`<div class="snap-cell"><div class="snap-label">Adherencia</div><div class="snap-val">${lastEB.adherence_pct}%</div></div>`);
   if (prof?.must_category) cells.push(`<div class="snap-cell"><div class="snap-label">MUST</div><div class="snap-val">${prof.must_category}</div></div>`);
   el.innerHTML = cells.length ? cells.map(c => `<div style="padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;min-width:100px">${c.replace(/<div class="snap-cell">|<\/div>$/g,'').replace('<div class="snap-label">','<div style="font-size:11px;color:var(--text-muted)">').replace('<div class="snap-val">','<div style="font-size:16px;font-weight:600">')}</div>`).join('') : '<div class="text-muted text-sm">Sin datos para snapshot</div>';
+}
+
+/* ── Generador de menús ─────────────────────────────────────────────
+   Banco de comidas mexicano-mediterráneo, etiquetado por restricciones
+   tags: vegetarian, vegan, glutenfree, lactosefree, lowcarb, lowsodium,
+         lowpotassium (ERC), lowpurine (gota), nopork, halal, fodmap_low
+   contains: gluten, lactose, nuts, shellfish, egg, soy, fish
+*/
+const FOOD_BANK = {
+  desayuno: [
+    {name:'Huevos rancheros con frijoles y tortilla', kcal:420, p:22, c:42, f:18, cost:'bajo', cultural:['mexicano'], tags:['vegetarian','glutenfree','lactosefree'], contains:['egg']},
+    {name:'Avena con fruta y nueces', kcal:380, p:12, c:58, f:12, cost:'bajo', cultural:['mediterraneo','mexicano'], tags:['vegetarian'], contains:['nuts','gluten']},
+    {name:'Yogurt griego con granola y berries', kcal:350, p:22, c:40, f:10, cost:'medio', cultural:['mediterraneo'], tags:['vegetarian','glutenfree'], contains:['lactose']},
+    {name:'Omelette de espinacas con queso panela', kcal:340, p:26, c:8, f:22, cost:'medio', cultural:['mexicano','mediterraneo'], tags:['vegetarian','glutenfree','lowcarb'], contains:['egg','lactose']},
+    {name:'Tostada de aguacate con huevo pochado', kcal:400, p:18, c:32, f:22, cost:'medio', cultural:['mediterraneo'], tags:['vegetarian'], contains:['gluten','egg']},
+    {name:'Smoothie verde con proteína vegetal', kcal:320, p:25, c:38, f:6, cost:'medio', cultural:['mediterraneo'], tags:['vegan','glutenfree','lactosefree'], contains:['soy']},
+    {name:'Chilaquiles verdes con pollo y frijoles', kcal:480, p:28, c:48, f:18, cost:'bajo', cultural:['mexicano'], tags:['glutenfree','lactosefree'], contains:[]}
+  ],
+  comida: [
+    {name:'Pollo a la plancha con quinoa y verduras', kcal:520, p:42, c:48, f:14, cost:'medio', cultural:['mediterraneo','mexicano'], tags:['glutenfree','lactosefree'], contains:[]},
+    {name:'Salmón al horno con espárragos y arroz integral', kcal:580, p:38, c:52, f:20, cost:'alto', cultural:['mediterraneo'], tags:['glutenfree','lactosefree'], contains:['fish']},
+    {name:'Ensalada de atún con garbanzos y aceitunas', kcal:480, p:35, c:38, f:18, cost:'bajo', cultural:['mediterraneo'], tags:['glutenfree','lactosefree'], contains:['fish']},
+    {name:'Tacos de pescado con ensalada de col', kcal:500, p:32, c:48, f:18, cost:'medio', cultural:['mexicano'], tags:['lactosefree'], contains:['fish','gluten']},
+    {name:'Lentejas guisadas con verduras y arroz', kcal:520, p:22, c:78, f:10, cost:'bajo', cultural:['mediterraneo','mexicano'], tags:['vegan','glutenfree','lactosefree'], contains:[]},
+    {name:'Pechuga de pavo con puré de coliflor', kcal:440, p:42, c:22, f:18, cost:'medio', cultural:['mediterraneo'], tags:['glutenfree','lowcarb','lactosefree'], contains:[]},
+    {name:'Tofu salteado con verduras y arroz', kcal:480, p:24, c:58, f:14, cost:'medio', cultural:['asiatico'], tags:['vegan','glutenfree','lactosefree'], contains:['soy']},
+    {name:'Filete de res con ensalada mediterránea', kcal:560, p:42, c:18, f:32, cost:'alto', cultural:['mediterraneo'], tags:['glutenfree','lowcarb','lactosefree'], contains:[]},
+    {name:'Caldo de pollo con verduras y tortilla', kcal:420, p:32, c:42, f:12, cost:'bajo', cultural:['mexicano'], tags:['glutenfree','lactosefree'], contains:[]}
+  ],
+  cena: [
+    {name:'Sopa de verduras con queso fresco', kcal:280, p:14, c:32, f:10, cost:'bajo', cultural:['mediterraneo','mexicano'], tags:['vegetarian','glutenfree'], contains:['lactose']},
+    {name:'Tortilla francesa con espinacas', kcal:260, p:20, c:8, f:16, cost:'bajo', cultural:['mediterraneo'], tags:['vegetarian','glutenfree','lowcarb'], contains:['egg']},
+    {name:'Ensalada César con pollo', kcal:380, p:32, c:14, f:22, cost:'medio', cultural:['mediterraneo'], tags:['lowcarb'], contains:['lactose','egg','gluten']},
+    {name:'Crema de calabaza con pepitas', kcal:240, p:8, c:32, f:10, cost:'bajo', cultural:['mexicano','mediterraneo'], tags:['vegan','glutenfree','lactosefree'], contains:[]},
+    {name:'Pescado al vapor con ejotes', kcal:300, p:32, c:14, f:12, cost:'medio', cultural:['mediterraneo','asiatico'], tags:['glutenfree','lowcarb','lactosefree'], contains:['fish']},
+    {name:'Hummus con verduras crudas y pita integral', kcal:340, p:14, c:42, f:14, cost:'bajo', cultural:['mediterraneo'], tags:['vegan','lactosefree'], contains:['gluten']}
+  ],
+  colacion: [
+    {name:'Manzana con almendras', kcal:180, p:6, c:24, f:8, cost:'bajo', cultural:['mediterraneo','mexicano'], tags:['vegan','glutenfree','lactosefree'], contains:['nuts']},
+    {name:'Yogurt natural con fresas', kcal:140, p:12, c:18, f:2, cost:'bajo', cultural:['mediterraneo'], tags:['vegetarian','glutenfree'], contains:['lactose']},
+    {name:'Zanahoria con hummus', kcal:160, p:6, c:18, f:8, cost:'bajo', cultural:['mediterraneo'], tags:['vegan','glutenfree','lactosefree'], contains:[]},
+    {name:'Huevo cocido con pepino', kcal:120, p:10, c:4, f:7, cost:'bajo', cultural:['mexicano','mediterraneo'], tags:['vegetarian','glutenfree','lowcarb','lactosefree'], contains:['egg']},
+    {name:'Jícama con limón y chile', kcal:80, p:2, c:18, f:0, cost:'bajo', cultural:['mexicano'], tags:['vegan','glutenfree','lactosefree','lowcarb'], contains:[]}
+  ]
+};
+
+function generateMenuSuggestion() {
+  const plan = (currentPatient?.nutritionPlans || []).find(p => p.active) || currentPatient?.nutritionPlans?.[0];
+  const prof = currentPatient?.nutritionProfile;
+  const m = currentPatient?.measurements?.[0];
+  if (!m) { showToast('Necesitas mediciones antropométricas primero', 'error'); return; }
+
+  // Target kcal
+  let targetKcal = plan?.get_kcal || plan?.caloric_goal;
+  if (!targetKcal) {
+    // Calcular Mifflin × 1.4 × 0.8
+    const w = parseFloat(m.peso_kg), h = parseFloat(m.talla_cm);
+    const dob = currentPatient.fecha_nacimiento ? new Date(currentPatient.fecha_nacimiento) : null;
+    const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : 40;
+    const tmb = currentPatient.sexo === 'M' ? (10*w + 6.25*h - 5*age + 5) : (10*w + 6.25*h - 5*age - 161);
+    targetKcal = Math.round(tmb * 1.4 * 0.8);
+  }
+
+  // Construir filtros
+  const allergies = (prof?.food_allergies || []).map(s => s.toLowerCase());
+  const intolerances = (prof?.food_intolerances || []).map(s => s.toLowerCase());
+  const prefs = (prof?.dietary_preferences || []).map(s => s.toLowerCase());
+  const cultural = prof?.cultural_pattern || (plan?.dietary_pattern === 'mediterranean' ? 'mediterraneo' : null);
+  const budget = prof?.budget_constraint;
+
+  function passes(food) {
+    // Alergias
+    for (const a of allergies) {
+      if (a.includes('lacte') || a.includes('lácte')) { if (food.contains.includes('lactose')) return false; }
+      if (a.includes('gluten') || a.includes('trigo')) { if (food.contains.includes('gluten')) return false; }
+      if (a.includes('huevo')) { if (food.contains.includes('egg')) return false; }
+      if (a.includes('nue') || a.includes('mani') || a.includes('almen')) { if (food.contains.includes('nuts')) return false; }
+      if (a.includes('marisco') || a.includes('pesc')) { if (food.contains.includes('shellfish') || food.contains.includes('fish')) return false; }
+      if (a.includes('soya') || a.includes('soja')) { if (food.contains.includes('soy')) return false; }
+    }
+    // Intolerancias
+    for (const i of intolerances) {
+      if (i.includes('lact')) { if (food.contains.includes('lactose')) return false; }
+      if (i.includes('gluten')) { if (food.contains.includes('gluten')) return false; }
+      if (i.includes('fodmap')) { if (/lent|garbanzo|hummus|cebolla|ajo/i.test(food.name)) return false; }
+    }
+    // Preferencias
+    for (const p of prefs) {
+      if (p.includes('vegan')) { if (!food.tags.includes('vegan')) return false; }
+      else if (p.includes('vegetarian')) { if (!food.tags.includes('vegetarian') && !food.tags.includes('vegan')) return false; }
+      if (p.includes('halal') || p.includes('sin_cerdo') || p.includes('sin cerdo')) { if (/cerdo|jamón|tocino|chorizo/i.test(food.name)) return false; }
+      if (p.includes('pesce')) { if (/cerdo|res|pollo|pavo/i.test(food.name)) return false; }
+    }
+    // Comorbilidades
+    if (prof?.has_erc) {
+      if (/lent|garbanzo|frijol|nuez|almendra|aguacate/i.test(food.name)) return false;
+    }
+    if (prof?.has_hyperuricemia) {
+      if (/marisc|sardin|anchoa|hígado|res|cordero/i.test(food.name)) return false;
+    }
+    if (prof?.has_celiac) {
+      if (food.contains.includes('gluten')) return false;
+    }
+    // Cultural
+    if (cultural && food.cultural.length && !food.cultural.includes(cultural)) {
+      // permitir si es mediterráneo+mexicano cross
+      if (!(cultural === 'mexicano' && food.cultural.includes('mediterraneo')) &&
+          !(cultural === 'mediterraneo' && food.cultural.includes('mexicano'))) return false;
+    }
+    // Presupuesto
+    if (budget === 'bajo' && food.cost === 'alto') return false;
+    return true;
+  }
+
+  function pick(meals, count=1) {
+    const ok = meals.filter(passes);
+    if (!ok.length) return [];
+    const picks = [];
+    const used = new Set();
+    for (let i = 0; i < count; i++) {
+      const remaining = ok.filter(f => !used.has(f.name));
+      if (!remaining.length) break;
+      const choice = remaining[Math.floor(Math.random() * remaining.length)];
+      used.add(choice.name);
+      picks.push(choice);
+    }
+    return picks;
+  }
+
+  // Distribución: desayuno 25%, comida 40%, cena 25%, colación 10%
+  const meals = {
+    'Desayuno': pick(FOOD_BANK.desayuno, 1),
+    'Colación AM': pick(FOOD_BANK.colacion, 1),
+    'Comida': pick(FOOD_BANK.comida, 1),
+    'Colación PM': pick(FOOD_BANK.colacion, 1),
+    'Cena': pick(FOOD_BANK.cena, 1)
+  };
+
+  let totalKcal = 0, totalP = 0, totalC = 0, totalF = 0;
+  let html = '';
+  for (const [name, items] of Object.entries(meals)) {
+    if (!items.length) {
+      html += `<div style="padding:8px;border-bottom:1px solid var(--border)"><strong>${name}:</strong> <span class="text-muted">Sin opciones (revisa restricciones)</span></div>`;
+      continue;
+    }
+    for (const f of items) {
+      totalKcal += f.kcal; totalP += f.p; totalC += f.c; totalF += f.f;
+      html += `<div style="padding:8px;border-bottom:1px solid var(--border)">
+        <div><strong>${name}:</strong> ${f.name}</div>
+        <div class="text-sm text-muted">${f.kcal} kcal · P ${f.p}g · HC ${f.c}g · G ${f.f}g · ${f.cost}</div>
+      </div>`;
+    }
+  }
+
+  const diff = totalKcal - targetKcal;
+  const diffPct = Math.round((diff/targetKcal)*100);
+  const summary = `Total: ${totalKcal} kcal (objetivo ${targetKcal}, ${diff>=0?'+':''}${diffPct}%) · P ${totalP}g · HC ${totalC}g · G ${totalF}g`;
+
+  $('nut-menu-summary').textContent = '· ' + summary;
+  $('nut-menu-card').style.display = 'block';
+  $('nut-menu-body').innerHTML = html + `
+    <div style="padding:10px;background:var(--surface);margin-top:8px;border-radius:6px">
+      <strong>${summary}</strong>
+      <div class="text-sm text-muted" style="margin-top:4px">
+        Filtros aplicados: ${[
+          allergies.length ? `alergias(${allergies.length})` : null,
+          intolerances.length ? `intolerancias(${intolerances.length})` : null,
+          prefs.length ? `preferencias(${prefs.join(',')})` : null,
+          cultural ? `cultural=${cultural}` : null,
+          budget ? `presupuesto=${budget}` : null,
+          prof?.has_erc ? 'ERC' : null,
+          prof?.has_hyperuricemia ? 'gota' : null,
+          prof?.has_celiac ? 'celíaco' : null
+        ].filter(Boolean).join(' · ') || 'ninguno (perfil sin configurar)'}
+      </div>
+    </div>`;
 }
 
 function renderNutritionActions() {
