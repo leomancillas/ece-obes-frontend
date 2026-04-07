@@ -1774,6 +1774,7 @@
             <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-calorimetry')">+ Calorimetría</button>
             <button class="btn-add" style="background:var(--mod-nutri)" onclick="openNutritionProfileModal()">⚙ Perfil</button>
             <button class="btn-add" style="background:#6C3483" onclick="generateMenuSuggestion()">🍽 Sugerir menú</button>
+            <button class="btn-add" style="background:var(--mod-nutri)" onclick="openModal('modal-measurement')">+ Medición</button>
           </div>
         </div>
 
@@ -2546,9 +2547,34 @@
           <input type="number" id="m-hip" step="0.1" placeholder="105" />
         </div>
       </div>
-      <div class="form-control">
-        <label>Cuello (cm)</label>
-        <input type="number" id="m-neck" step="0.1" placeholder="38" />
+      <div class="form-row">
+        <div class="form-control"><label>Cuello (cm)</label><input type="number" id="m-neck" step="0.1" placeholder="38" /></div>
+        <div class="form-control"><label>Brazo (cm)</label><input type="number" id="m-arm" step="0.1" /></div>
+        <div class="form-control"><label>Muslo (cm)</label><input type="number" id="m-thigh" step="0.1" /></div>
+        <div class="form-control"><label>Pantorrilla (cm)</label><input type="number" id="m-calf" step="0.1" /></div>
+      </div>
+      <h4 class="text-sm" style="margin:12px 0 6px;color:var(--mod-nutri)">Composición corporal (BIA / DEXA)</h4>
+      <div class="form-row">
+        <div class="form-control"><label>% Grasa</label><input type="number" id="m-bf" step="0.1" /></div>
+        <div class="form-control"><label>Masa grasa (kg)</label><input type="number" id="m-fatmass" step="0.1" /></div>
+        <div class="form-control"><label>Masa magra (kg)</label><input type="number" id="m-leanmass" step="0.1" /></div>
+        <div class="form-control"><label>Masa muscular (kg)</label><input type="number" id="m-muscle" step="0.1" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-control"><label>Grasa visceral (nivel)</label><input type="number" id="m-visceral" step="0.1" /></div>
+        <div class="form-control"><label>% Agua corporal</label><input type="number" id="m-water" step="0.1" /></div>
+        <div class="form-control"><label>Masa ósea (kg)</label><input type="number" id="m-bone" step="0.1" /></div>
+      </div>
+      <h4 class="text-sm" style="margin:12px 0 6px;color:var(--mod-nutri)">Pliegues cutáneos (mm) — opcional</h4>
+      <div class="form-row">
+        <div class="form-control"><label>Tricipital</label><input type="number" id="m-sf-tri" step="0.1" /></div>
+        <div class="form-control"><label>Subescapular</label><input type="number" id="m-sf-sub" step="0.1" /></div>
+        <div class="form-control"><label>Suprailíaco</label><input type="number" id="m-sf-supra" step="0.1" /></div>
+      </div>
+      <h4 class="text-sm" style="margin:12px 0 6px;color:var(--mod-nutri)">Presión arterial</h4>
+      <div class="form-row">
+        <div class="form-control"><label>Sistólica (mmHg)</label><input type="number" id="m-sbp" /></div>
+        <div class="form-control"><label>Diastólica (mmHg)</label><input type="number" id="m-dbp" /></div>
       </div>
       <div class="form-control">
         <label>Fecha de medición</label>
@@ -3959,27 +3985,60 @@ async function saveMeasurement() {
   const icc = hip ? (waist / hip).toFixed(2) : null;
   const ict = (waist / height).toFixed(3);
 
+  // Composición + extras
+  const fatMass = parseFloat($('m-fatmass').value);
+  const leanMass = parseFloat($('m-leanmass').value);
+  let bodyFat = parseFloat($('m-bf').value);
+  // Auto-derivar grasa%/kg si solo viene uno
+  if (!bodyFat && fatMass) bodyFat = +(fatMass/weight*100).toFixed(1);
+  let fatMassCalc = fatMass;
+  if (!fatMassCalc && bodyFat) fatMassCalc = +(weight*bodyFat/100).toFixed(2);
+  let leanMassCalc = leanMass;
+  if (!leanMassCalc && fatMassCalc) leanMassCalc = +(weight - fatMassCalc).toFixed(2);
+  const hm = height/100;
+  const ffmi = leanMassCalc ? +(leanMassCalc/(hm*hm)).toFixed(1) : null;
+  const fmi = fatMassCalc ? +(fatMassCalc/(hm*hm)).toFixed(1) : null;
+
   showLoading(true);
   try {
-    const { error } = await sbClient.from('obes_measurements').insert({
+    const row = {
       patient_id: currentPatient.id,
-      weight_kg: weight,
-      height_cm: height,
+      // Doble nomenclatura para compatibilidad
+      peso_kg: weight, weight_kg: weight,
+      talla_cm: height, height_cm: height,
       bmi: parseFloat(bmi.toFixed(1)),
-      waist_cm: waist,
-      hip_cm: hip,
-      neck_cm: neck,
-      icc: icc,
-      ict: ict,
+      imc: parseFloat(bmi.toFixed(1)),
+      waist_cm: waist, cintura_cm: waist,
+      hip_cm: hip, cadera_cm: hip,
+      neck_cm: neck, cuello_cm: neck,
+      icc: icc, ict: parseFloat(ict),
+      arm_circumference: parseFloat($('m-arm').value) || null,
+      thigh_circumference: parseFloat($('m-thigh').value) || null,
+      calf_circumference: parseFloat($('m-calf').value) || null,
+      body_fat_pct: bodyFat || null,
+      fat_mass_kg: fatMassCalc || null,
+      lean_mass_kg: leanMassCalc || null,
+      muscle_mass_kg: parseFloat($('m-muscle').value) || null,
+      visceral_fat_level: parseFloat($('m-visceral').value) || null,
+      body_water_pct: parseFloat($('m-water').value) || null,
+      bone_mass_kg: parseFloat($('m-bone').value) || null,
+      ffmi, fmi,
+      skinfold_tricipital: parseFloat($('m-sf-tri').value) || null,
+      skinfold_subscapular: parseFloat($('m-sf-sub').value) || null,
+      skinfold_suprailiac: parseFloat($('m-sf-supra').value) || null,
+      systolic_bp: parseFloat($('m-sbp').value) || null,
+      diastolic_bp: parseFloat($('m-dbp').value) || null,
       created_at: date ? new Date(date).toISOString() : new Date().toISOString()
-    });
+    };
+    // Limpiar nulls
+    Object.keys(row).forEach(k => row[k] === null && delete row[k]);
+    const { error } = await sbClient.from('obes_measurements').insert(row);
 
     if (error) throw error;
 
     await loadOBESData();
-    renderDashboard();
+    if (typeof renderDashboard === 'function') renderDashboard();
     closeModal('modal-measurement');
-    clearModalInputs(['m-weight', 'm-height', 'm-waist', 'm-hip', 'm-neck', 'm-date']);
     showToast('Medición guardada', 'success');
   } catch (e) {
     showToast('Error: ' + e.message, 'error');
@@ -5075,7 +5134,7 @@ function renderNutritionGET() {
   const m = currentPatient?.measurements?.[0];
   const p = currentPatient;
   if (!m || !p) return;
-  const w = parseFloat(m.peso_kg), h = parseFloat(m.talla_cm);
+  const w = parseFloat(m.peso_kg ?? m.weight_kg), h = parseFloat(m.talla_cm ?? m.height_cm);
   if (!w || !h) return;
   const dob = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
   const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : (p.edad || 40);
