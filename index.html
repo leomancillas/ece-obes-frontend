@@ -1482,6 +1482,7 @@
             <span class="panel-title">🧬 Fenotipo (última evaluación)</span>
             <div style="display:flex;gap:6px">
               <button class="btn-add" style="background:#777" onclick="openFenotiposHistory()">📜 Historial</button>
+              <button class="btn-add" style="background:#333" onclick="printFenotipoReport()">🖨️ Imprimir / PDF</button>
               <button class="btn-add" style="background:var(--mod-feno)" onclick="switchView('fenotipos')">Abrir →</button>
             </div>
           </div>
@@ -2766,6 +2767,26 @@
     </div>
   </div>
 </div>
+
+<!-- Print container (hidden on screen, visible only when printing) -->
+<div id="print-fenotipo" style="display:none"></div>
+<style>
+@media print {
+  body * { visibility: hidden !important; }
+  #print-fenotipo, #print-fenotipo * { visibility: visible !important; }
+  #print-fenotipo { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: #fff; color: #000; font-family: -apple-system, sans-serif; }
+  #print-fenotipo h1 { font-size: 18px; margin: 0 0 4px; color: #6C3483; border-bottom: 2px solid #6C3483; padding-bottom: 6px; }
+  #print-fenotipo h2 { font-size: 12px; margin: 14px 0 6px; color: #333; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
+  #print-fenotipo .pf-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 11px; }
+  #print-fenotipo .pf-cell { border: 1px solid #ddd; padding: 6px 8px; border-radius: 3px; }
+  #print-fenotipo .pf-cell b { display: block; font-size: 9px; text-transform: uppercase; color: #666; margin-bottom: 2px; }
+  #print-fenotipo .pf-rec { font-size: 11px; line-height: 1.5; margin: 4px 0; }
+  #print-fenotipo .pf-section { font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; margin: 8px 0 3px; color: #6C3483; }
+  #print-fenotipo .pf-meta { font-size: 10px; color: #555; margin-top: 6px; }
+  #print-fenotipo .pf-footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 9px; color: #777; }
+  @page { size: A4; margin: 12mm; }
+}
+</style>
 
 <!-- Loading Overlay -->
 <div id="loading-overlay">
@@ -4245,6 +4266,74 @@ function renderFenoTimelineChart(rowsAsc) {
       }
     }
   });
+}
+
+function printFenotipoReport() {
+  if (!currentPatient || !currentPatient.latestFenotipo) {
+    showToast('No hay fenotipo guardado para imprimir', 'error');
+    return;
+  }
+  const f = currentPatient.latestFenotipo;
+  const p = currentPatient;
+  const m = (p.measurements || [])[0] || {};
+  const dob = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
+  const age = dob ? (new Date().getFullYear() - dob.getFullYear()) : '—';
+  const fecha = f.fecha_fenotipificacion ? new Date(f.fecha_fenotipificacion).toLocaleDateString('es-MX') : '—';
+  const today = new Date().toLocaleDateString('es-MX');
+  const cell = (label, value) => `<div class="pf-cell"><b>${label}</b>${value || '—'}</div>`;
+  const cbecScores = f.cbec_scores || {};
+  const recHTML = $('syn-recommendation')?.innerHTML || 'Sin recomendaciones generadas. Abra el módulo Fenotipificación para regenerar.';
+
+  $('print-fenotipo').innerHTML = `
+    <h1>🧬 Reporte de Fenotipificación de Obesidad</h1>
+    <div class="pf-meta">
+      <b>Paciente:</b> ${patientName(p)} · <b>${age} años</b> · ${p.sexo === 'M' ? 'Masculino' : 'Femenino'}
+      ${p.expediente ? ' · Exp. ' + p.expediente : ''}<br>
+      <b>Fecha de evaluación:</b> ${fecha} · <b>Impreso:</b> ${today}
+    </div>
+
+    <h2>Antropometría y composición corporal</h2>
+    <div class="pf-grid">
+      ${cell('Peso', m.weight_kg ? m.weight_kg + ' kg' : null)}
+      ${cell('Talla', m.height_cm ? m.height_cm + ' cm' : null)}
+      ${cell('IMC', m.bmi ? m.bmi.toFixed(1) + ' kg/m²' : null)}
+      ${cell('Cintura', m.waist_cm ? m.waist_cm + ' cm' : null)}
+      ${cell('ICT', m.waist_cm && m.height_cm ? (m.waist_cm/m.height_cm).toFixed(2) : null)}
+      ${cell('% grasa corporal', m.body_fat_pct ? m.body_fat_pct + ' %' : null)}
+      ${cell('FFMI', f.ffmi ? f.ffmi.toFixed(1) : null)}
+      ${cell('FMI', f.fmi ? f.fmi.toFixed(1) : null)}
+      ${cell('ASMI', f.asmi ? f.asmi.toFixed(1) : null)}
+    </div>
+
+    <h2>Diagnóstico fenotípico</h2>
+    <div class="pf-grid">
+      ${cell('Lancet 2025', f.lancet_categoria === 'OC' ? 'Obesidad Clínica' : f.lancet_categoria === 'OP' ? 'Obesidad Preclínica' : '—')}
+      ${cell('EOSS', f.eoss_stage != null ? 'Estadio ' + f.eoss_stage : (m.eoss_stage != null ? 'Estadio ' + m.eoss_stage : null))}
+      ${cell('Fenotipo metabólico', f.fenotipo_metabolico)}
+      ${cell('Criterios SM', f.metsyn_criterios_positivos != null ? f.metsyn_criterios_positivos + '/5' : null)}
+      ${cell('Sarcopenia obesidad', f.so_diagnostico)}
+      ${cell('Etiología principal', f.etiologia_principal)}
+    </div>
+
+    <h2>Endotipo conductual (CBEC-8)</h2>
+    <div class="pf-grid">
+      ${cell('Dominante', f.endotipo_dominante)}
+      ${cell('Cerebral', cbecScores.cerebral != null ? cbecScores.cerebral + '/8' : null)}
+      ${cell('Gástrica', cbecScores.gastrica != null ? cbecScores.gastrica + '/8' : null)}
+      ${cell('Emocional', cbecScores.emocional != null ? cbecScores.emocional + '/8' : null)}
+      ${cell('Lento', cbecScores.lento != null ? cbecScores.lento + '/8' : null)}
+      ${cell('Activos', (f.endotipos_activos || []).join(', '))}
+    </div>
+
+    <h2>Plan de tratamiento integrado (CDSS)</h2>
+    <div class="pf-rec">${recHTML}</div>
+
+    <div class="pf-footer">
+      ECE OBES — Expediente Clínico Multidisciplinario de Obesidad ·
+      Generado automáticamente. Documento clínico, no sustituye el juicio del médico tratante.
+    </div>
+  `;
+  setTimeout(() => window.print(), 100);
 }
 
 /* ── Save / Load Fenotipos ── */
